@@ -80,7 +80,6 @@ async function reauthenticate(request, env, data) {
 }
 async function handler(request, env) {
   const url = new URL(request.url); let path = url.pathname; const ip = request.headers.get('cf-connecting-ip') || 'local';
-  if (path === '/admin/login') return redirect('/login');
   if (path === '/login') path = '/admin/login';
   // Public probes do not disclose configuration, secrets, or database details.
   if (path === '/docs' || path.startsWith('/docs/')) {
