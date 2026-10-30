@@ -1,6 +1,7 @@
 import { HttpError, reply, redirect, hash, equal, email, text, cookie, local, sameOrigin, form, json, readBody, rate, audit, access, session, csrf, sessionCookie, bytes64, headers } from './security.js';
 import { config, saveSettings, saveSecret, PROVIDERS } from './config.js';
 import { dispatch, validateMail, verifyWebhook, applyWebhook, sendSmtp } from './providers.js';
+import { safeFetch } from './security.js';
 import * as ui from './ui.js';
 import { getProfile, saveProfile, profileForm, profileImage } from './profile.js';
 
@@ -16,7 +17,7 @@ async function activeIdentity(env, address) { return env.DB.prepare('SELECT * FR
 async function verifyDomainDns(domain, token) {
   if (!domain || !token) return false;
   try {
-    const res = await fetch('https://cloudflare-dns.com/dns-query?name=' + encodeURIComponent('_neomail-verification.' + domain) + '&type=TXT', { headers: { Accept: 'application/dns-json' } });
+    const res = await safeFetch('https://cloudflare-dns.com/dns-query?name=' + encodeURIComponent('_neomail-verification.' + domain) + '&type=TXT', { headers: { Accept: 'application/dns-json' } });
     if (!res.ok) return false;
     const data = await res.json();
     return (data.Answer || []).some(a => String(a.data || '').replace(/"/g, '').includes(token));
@@ -101,6 +102,7 @@ Idempotency-Key: unique-key
 
   if (request.method === 'OPTIONS') return reply({ error: 'Browser cross-origin API calls are not supported.' }, 405);
   if (!env.DB) throw new HttpError(503, 'Database binding unavailable.');
+  if (env.REQUIRES_CLOUDFLARE_PROXY === 'true' && !local(request, env) && !request.headers.get('cf-ray')) throw new HttpError(403, 'Direct access not allowed.');
   if (!local(request, env) && url.protocol !== 'https:') throw new HttpError(403, 'HTTPS required.');
   if (path === '/api/v1/send' || path === '/api/send') {
     requireMethod(request, ['POST']);

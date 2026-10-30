@@ -1,5 +1,6 @@
 import { HttpError, hash, email, text, escape, hmac, base64, equal } from './security.js';
 import { PROVIDERS } from './config.js';
+import { safeFetch } from './security.js';
 
 export async function sendSmtp(cfg, mail) {
   let connect;
@@ -100,7 +101,7 @@ async function send(provider, env, mail, requestId) {
     url = provider === 'mailtrap' ? 'https://send.api.mailtrap.io/api/send' : 'https://api.mailersend.com/v1/email';
     body = { from: { email: from, name: fromName }, to: [{ email: to }], subject, html, text: text || undefined };
   }
-  const response = await fetch(url, { method: 'POST', headers, body: body instanceof URLSearchParams ? body.toString() : JSON.stringify(body), signal: AbortSignal.timeout(+env.REQUEST_TIMEOUT_MS), redirect: 'manual' });
+  const response = await safeFetch(url, { method: 'POST', headers, body: body instanceof URLSearchParams ? body.toString() : JSON.stringify(body), signal: AbortSignal.timeout(+env.REQUEST_TIMEOUT_MS), redirect: 'manual' });
   if (!response.ok) {
     // Never store upstream response bodies: they may echo content or credentials.
     const error = new Error(`Provider returned HTTP ${response.status}`);
@@ -112,7 +113,7 @@ async function send(provider, env, mail, requestId) {
   if (typeof id !== 'string' || id.length > 512 || !id) throw new Error('Provider accepted request without a usable message identifier');
   return id;
 }
-export async function dispatch(env, mail, idempotencyKey) {
+export async function dispatch(env, mail, idempotencyKey, ownerSubject = null) {
   if (!/^[a-zA-Z0-9_:.\-]{8,128}$/.test(idempotencyKey || '')) throw new HttpError(422, 'Idempotency-Key must contain 8–128 letters, digits, dots, colons, underscores or hyphens.');
   const identity = await env.DB.prepare('SELECT email_address,display_name FROM sender_identities WHERE email_address=? AND is_active=1').bind(mail.from).first();
   if (!identity) throw new HttpError(422, 'Sender must be an active identity configured in the console.');

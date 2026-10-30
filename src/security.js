@@ -80,6 +80,20 @@ export async function audit(env, request, event, details = {}) {
   await env.DB.prepare('INSERT INTO security_audit_logs (id,event_type,ip_address,user_agent,details,unix_timestamp) VALUES (?,?,?,?,?,unixepoch())')
     .bind(crypto.randomUUID(), event, request.headers.get('cf-connecting-ip') || 'local', (request.headers.get('user-agent') || '').slice(0, 200), JSON.stringify(details)).run();
 }
+
+const ALLOWED_FETCH_HOSTS = new Set(['api.resend.com','api.brevo.com','api.mailgun.net','api.mailtrap.io','api.mailersend.com','cloudflare-dns.com']);
+export function assertAllowedFetch(url) {
+  const parsed = new URL(url);
+  if (parsed.protocol !== 'https:') throw new HttpError(403, 'Outbound requests must use HTTPS.');
+  const host = parsed.hostname;
+  if (ALLOWED_FETCH_HOSTS.has(host) || host.endsWith('.cloudflareaccess.com')) return;
+  throw new HttpError(403, 'Outbound host is not allowed.');
+}
+export async function safeFetch(url, init) {
+  assertAllowedFetch(url);
+  return fetch(url, init);
+}
+
 const jwksCache = new Map();
 export function accessConfigured(env) {
   const team = env.ACCESS_TEAM_DOMAIN, audience = env.ACCESS_AUD;
@@ -107,7 +121,7 @@ export async function access(request, env) {
       !Number.isFinite(claims.exp) || claims.exp <= now || !Number.isFinite(claims.iat) || claims.iat > now + 30 || (claims.nbf && claims.nbf > now + 30) || !claims.sub) throw Error();
     let cached = jwksCache.get(team);
     if (!cached || cached.expires < Date.now()) {
-      const res = await fetch(`https://${team}/cdn-cgi/access/certs`, { signal: AbortSignal.timeout(5000), redirect: 'manual' });
+      const res = await safeFetch(`https://${team}/cdn-cgi/access/certs`, { signal: AbortSignal.timeout(5000), redirect: 'manual' });
       if (!res.ok) throw Error(); cached = { keys: (await res.json()).keys, expires: Date.now() + 300000 }; jwksCache.set(team, cached);
     }
     const jwk = cached.keys.find(k => k.kid === head.kid && k.kty === 'RSA'); if (!jwk) throw Error();
