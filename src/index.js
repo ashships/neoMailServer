@@ -100,7 +100,7 @@ Idempotency-Key: unique-key
     return reply(html, 200, { 'Content-Type': 'text/html; charset=utf-8' });
   }
   if (path === '/health') { requireMethod(request, ['GET']); return reply({ status: 'ok', service: 'neomail' }); }
-  if (path === '/') { requireMethod(request, ['GET']); return redirect('/admin'); }
+  if (path === '/') { requireMethod(request, ['GET']); return redirect('/login'); }
 
   if (request.method === 'OPTIONS') return reply({ error: 'Browser cross-origin API calls are not supported.' }, 405);
   if (!env.DB) throw new HttpError(503, 'Database binding unavailable.');
