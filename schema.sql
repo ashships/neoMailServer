@@ -18,7 +18,8 @@ CREATE TABLE IF NOT EXISTS email_logs (
     attempt_history TEXT,     -- Serialized JSON array of execution telemetry
     retry_count INTEGER DEFAULT 0,
     unix_timestamp INTEGER NOT NULL,
-    updated_at INTEGER NOT NULL
+    updated_at INTEGER NOT NULL,
+    owner_subject TEXT
 );
 
 -- Fast Indexing for Audit Trails, Status Filtering, and Telemetry Lookups
@@ -37,7 +38,8 @@ CREATE TABLE IF NOT EXISTS sender_identities (
     display_name TEXT NOT NULL,
     is_default INTEGER DEFAULT 0,
     is_active INTEGER DEFAULT 1,
-    created_at INTEGER NOT NULL
+    created_at INTEGER NOT NULL,
+    owner_subject TEXT
 );
 
 
@@ -119,7 +121,8 @@ CREATE TABLE IF NOT EXISTS api_clients (
  sender_address TEXT,
  is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
  created_at INTEGER NOT NULL,
- last_used_at INTEGER
+ last_used_at INTEGER,
+ owner_subject TEXT
 );
 CREATE INDEX IF NOT EXISTS idx_api_clients_active ON api_clients(is_active);
 
@@ -149,5 +152,6 @@ CREATE TABLE IF NOT EXISTS managed_domains (
  is_verified INTEGER NOT NULL DEFAULT 0 CHECK(is_verified IN (0,1)),
  created_at INTEGER NOT NULL,
  created_by TEXT,
+ owner_subject TEXT,
  verification_token TEXT
 );
