@@ -42,11 +42,11 @@ CREATE TABLE IF NOT EXISTS sender_identities (
 
 -- Seed Initial Sender Identities for mail.neopathshala.com
 INSERT OR IGNORE INTO sender_identities (id, email_address, display_name, is_default, is_active, created_at) VALUES
-('id_noreply', 'no-reply@mail.neopathshala.com', 'neoMail No-Reply', 1, 1, unixepoch()),
-('id_support', 'support@mail.neopathshala.com', 'neoMail Support', 0, 1, unixepoch()),
-('id_billing', 'billing@mail.neopathshala.com', 'neoMail Billing', 0, 1, unixepoch()),
-('id_notifications', 'notifications@mail.neopathshala.com', 'neoMail Notifications', 0, 1, unixepoch()),
-('id_admissions', 'admissions@mail.neopathshala.com', 'neoMail Admissions', 0, 1, unixepoch());
+('id_noreply', 'no-reply@mail.neopathshala.com', 'neoPathshala No-Reply', 1, 1, unixepoch()),
+('id_support', 'support@mail.neopathshala.com', 'neoPathshala Support', 0, 1, unixepoch()),
+('id_billing', 'billing@mail.neopathshala.com', 'neoPathshala Billing', 0, 1, unixepoch()),
+('id_notifications', 'notifications@mail.neopathshala.com', 'neoPathshala Notifications', 0, 1, unixepoch()),
+('id_admissions', 'admissions@mail.neopathshala.com', 'neoPathshala Admissions', 0, 1, unixepoch());
 
 -- 3. Security Audit & Zero-Trust Event Log Table
 CREATE TABLE IF NOT EXISTS security_audit_logs (
