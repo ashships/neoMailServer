@@ -1,0 +1,108 @@
+-- Cloudflare D1 Database Schema for Enterprise Multi-Identity Email Infrastructure
+-- Apply explicitly using: npx wrangler d1 execute neomail-db --file=./schema.sql
+
+-- 1. Main Email Audit, Storage & Transmission Log Table
+CREATE TABLE IF NOT EXISTS email_logs (
+    id TEXT PRIMARY KEY,
+    direction TEXT NOT NULL DEFAULT 'outbound' CHECK(direction IN ('outbound', 'inbound')),
+    provider_used TEXT NOT NULL,
+    sender_address TEXT NOT NULL,
+    recipient_address TEXT NOT NULL,
+    subject TEXT NOT NULL,
+    html_body TEXT,           -- Preserved HTML content for visual sandboxed preview
+    text_body TEXT,           -- Plain text fallback content
+    html_hash TEXT NOT NULL,  -- Cryptographic SHA-256 integrity hash
+    transmission_status TEXT NOT NULL CHECK(transmission_status IN ('Queued', 'Sent', 'Delivered', 'Bounced', 'Failed')),
+    provider_message_id TEXT,
+    error_message TEXT,
+    attempt_history TEXT,     -- Serialized JSON array of execution telemetry
+    retry_count INTEGER DEFAULT 0,
+    unix_timestamp INTEGER NOT NULL,
+    updated_at INTEGER NOT NULL
+);
+
+-- Fast Indexing for Audit Trails, Status Filtering, and Telemetry Lookups
+CREATE INDEX IF NOT EXISTS idx_email_logs_direction ON email_logs(direction);
+CREATE INDEX IF NOT EXISTS idx_email_logs_status ON email_logs(transmission_status);
+CREATE INDEX IF NOT EXISTS idx_email_logs_provider ON email_logs(provider_used);
+CREATE INDEX IF NOT EXISTS idx_email_logs_timestamp ON email_logs(unix_timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_email_logs_provider_msg_id ON email_logs(provider_message_id);
+CREATE INDEX IF NOT EXISTS idx_email_logs_sender ON email_logs(sender_address);
+CREATE INDEX IF NOT EXISTS idx_email_logs_recipient ON email_logs(recipient_address);
+
+-- 2. Sender Identities & Dynamic Mailboxes Management Table
+CREATE TABLE IF NOT EXISTS sender_identities (
+    id TEXT PRIMARY KEY,
+    email_address TEXT NOT NULL UNIQUE,
+    display_name TEXT NOT NULL,
+    is_default INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    created_at INTEGER NOT NULL
+);
+
+-- Seed Initial Sender Identities for mail.neopathshala.com
+INSERT OR IGNORE INTO sender_identities (id, email_address, display_name, is_default, is_active, created_at) VALUES
+('id_noreply', 'no-reply@mail.neopathshala.com', 'Nepathshala No-Reply', 1, 1, unixepoch()),
+('id_support', 'support@mail.neopathshala.com', 'Nepathshala Support', 0, 1, unixepoch()),
+('id_billing', 'billing@mail.neopathshala.com', 'Nepathshala Billing', 0, 1, unixepoch()),
+('id_notifications', 'notifications@mail.neopathshala.com', 'Nepathshala Notifications', 0, 1, unixepoch()),
+('id_admissions', 'admissions@mail.neopathshala.com', 'Nepathshala Admissions', 0, 1, unixepoch());
+
+-- 3. Security Audit & Zero-Trust Event Log Table
+CREATE TABLE IF NOT EXISTS security_audit_logs (
+    id TEXT PRIMARY KEY,
+    event_type TEXT NOT NULL, -- 'AUTH_SUCCESS', 'AUTH_FAILURE', 'RATE_LIMIT_BLOCKED', 'WEBHOOK_INVALID_SIGNATURE', 'DISPATCH_FAILURE', 'IDENTITY_CREATED'
+    ip_address TEXT NOT NULL,
+    user_agent TEXT,
+    details TEXT,
+    unix_timestamp INTEGER NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_security_audit_timestamp ON security_audit_logs(unix_timestamp DESC);
+CREATE INDEX IF NOT EXISTS idx_security_audit_event ON security_audit_logs(event_type);
+
+-- 4. Provider Real-Time Health & Circuit Breaker Tracking
+CREATE TABLE IF NOT EXISTS provider_health (
+    provider_name TEXT PRIMARY KEY,
+    is_active INTEGER DEFAULT 1,
+    consecutive_failures INTEGER DEFAULT 0,
+    last_failure_reason TEXT,
+    last_used_timestamp INTEGER,
+    updated_at INTEGER NOT NULL
+);
+
+INSERT OR IGNORE INTO provider_health (provider_name, is_active, consecutive_failures, updated_at) VALUES 
+('resend', 1, 0, unixepoch()),
+('sendfox', 1, 0, unixepoch()),
+('brevo', 1, 0, unixepoch()),
+('mailgun', 1, 0, unixepoch()),
+('mailtrap', 1, 0, unixepoch()),
+('mailersend', 1, 0, unixepoch());
+
+-- Application settings: only allowlisted names are loaded; secrets use AES-256-GCM.
+CREATE TABLE IF NOT EXISTS app_settings (
+ name TEXT PRIMARY KEY, value TEXT NOT NULL, is_secret INTEGER NOT NULL DEFAULT 0 CHECK(is_secret IN (0,1)), updated_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS admin_sessions (
+ token_hash TEXT PRIMARY KEY, csrf_token TEXT NOT NULL, access_subject TEXT NOT NULL,
+ credential_version TEXT NOT NULL, expires_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_sessions_expiry ON admin_sessions(expires_at);
+CREATE TABLE IF NOT EXISTS rate_limits (
+ bucket_key TEXT PRIMARY KEY, count INTEGER NOT NULL, expires_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_limits_expiry ON rate_limits(expires_at);
+CREATE TABLE IF NOT EXISTS dispatch_requests (
+ request_key TEXT PRIMARY KEY, payload_hash TEXT NOT NULL, log_id TEXT NOT NULL,
+ response_json TEXT, created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_dispatch_created ON dispatch_requests(created_at);
+CREATE TABLE IF NOT EXISTS webhook_events (event_key TEXT PRIMARY KEY, created_at INTEGER NOT NULL);
+CREATE INDEX IF NOT EXISTS idx_webhooks_created ON webhook_events(created_at);
+CREATE TABLE IF NOT EXISTS admin_profiles (
+ access_subject TEXT PRIMARY KEY,
+ display_name TEXT NOT NULL,
+ avatar_data TEXT,
+ avatar_mime TEXT CHECK(avatar_mime IN ('image/png','image/jpeg','image/webp')),
+ updated_at INTEGER NOT NULL
+);

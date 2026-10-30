@@ -1,0 +1,11 @@
+# LOCAL ONLY: copy to .dev.vars; never commit real secrets.
+# Generate a random admin token and its SHA-256 verifier: npm run credentials
+ADMIN_TOKEN_HASH=""
+# Generate a separate 32-byte base64 key: npm run encryption-key
+CONFIG_ENCRYPTION_KEY=""
+# Development bypass is accepted ONLY on http://localhost or http://127.0.0.1.
+LOCAL_DEV="true"
+# Optional: configure through the panel instead.
+API_SECRET_KEY=""
+RESEND_API_KEY=""
+RESEND_WEBHOOK_SECRET=""

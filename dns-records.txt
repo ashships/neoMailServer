@@ -1,0 +1,39 @@
+NeoMail DNS setup instructions — not a production zone import
+
+Confirmed sender: no-reply@mail.neopathshala.com.
+Use mail.neopathshala.com consistently for sender verification.
+
+1. Worker custom domain
+   Bind your chosen hostname (for example mail.neopathshala.com) through Workers
+   custom domain configuration. The route in wrangler.toml is commented until
+   the operator confirms ownership and the spelling.
+
+2. Sender verification
+   Add the actual sender domain in each active provider dashboard. Copy its
+   exact DKIM, verification, SPF/return-path and tracking records. Do not invent
+   provider SPF includes or DKIM selectors. Provider regions and accounts vary.
+   Most mail authentication CNAME records must be DNS-only; follow the provider.
+
+3. SPF
+   Maintain one SPF record per hostname. Merge only validated provider includes.
+   Check the maximum ten DNS-triggering lookups; multiple broad includes can
+   exceed it. Do not copy the old combined SPF record from earlier versions.
+
+4. DMARC
+   Add a record at _dmarc.<ACTUAL-SENDER-DOMAIN>. Start with a monitored policy
+   and a real monitored report mailbox, then tighten after verifying legitimate
+   SPF/DKIM alignment. Example ONLY (replace domain and reporting mailbox):
+   v=DMARC1; p=none; rua=mailto:dmarc@YOUR-DOMAIN; adkim=r; aspf=r
+   Move toward quarantine/reject after validating legitimate senders.
+
+5. Optional inbound routing
+   Configure the actual subdomain in Cloudflare Email Routing and route approved
+   addresses to this Worker. Copy the exact MX/TXT records Cloudflare generates.
+   Do not hard-code sample MX hosts or replace existing mail hosting blindly.
+   Add the recipient to active Sender identities. Inbound raw messages above
+   128 KiB are rejected. MIME/attachment parsing is not implemented.
+
+6. Verification
+   Check public DNS resolution and provider verification status. Send controlled
+   tests and inspect Authentication-Results, SPF, DKIM, DMARC and delivery events.
+   Authentication improves trust; it cannot guarantee inbox placement.

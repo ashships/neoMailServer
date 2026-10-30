@@ -1,0 +1,43 @@
+{
+  "name": "neomail-server",
+  "version": "2.0.0",
+  "description": "Private transactional email console for Cloudflare Workers and D1",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "build": "wrangler deploy --dry-run --outdir /tmp/neomail-build",
+    "test": "node --test test/*.test.js",
+    "test:worker": "node --test test/worker.integration.js",
+    "db:init:local": "wrangler d1 execute neomail-db --local --file=./schema.sql",
+    "db:init:remote": "wrangler d1 execute neomail-db --remote --file=./schema.sql",
+    "db:migrate:local": "wrangler d1 migrations apply neomail-db --local",
+    "db:migrate:remote": "wrangler d1 migrations apply neomail-db --remote",
+    "credentials": "node scripts/credentials.js",
+    "api-key": "node scripts/credentials.js --api",
+    "encryption-key": "node scripts/credentials.js --encryption",
+    "setup:local": "node scripts/setup-local.js",
+    "predev": "node scripts/setup-local.js"
+  },
+  "keywords": [
+    "cloudflare-workers",
+    "cloudflare-d1",
+    "email-infrastructure",
+    "zero-trust",
+    "multi-provider",
+    "resend",
+    "brevo",
+    "mailgun",
+    "sendfox",
+    "mailtrap"
+  ],
+  "author": "NeoPathshala Cloud Architecture Team",
+  "license": "Apache-2.0",
+  "devDependencies": {
+    "wrangler": "^3.80.0"
+  },
+  "engines": {
+    "node": ">=22.13.0"
+  }
+}
