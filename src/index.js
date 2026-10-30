@@ -198,45 +198,50 @@ Idempotency-Key: unique-key
       if (step === 'request') {
         const emailAddr = email(data.get('email'));
         if (!emailAddr) throw new HttpError(422, 'Valid administrator email required.');
+        await rate(env, 'login:ip:' + ip, +cfg.MAX_LOGIN_ATTEMPTS, 900);
+        await rate(env, 'login:subject:' + emailAddr, +cfg.MAX_LOGIN_ATTEMPTS, 900);
         const allowed = await env.DB.prepare('SELECT 1 FROM admin_users WHERE subject=? AND is_active=1').bind(emailAddr).first();
         const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
-        if ((count?.n || 0) > 0 && !allowed) throw new HttpError(403, 'Administrator account is not authorized.');
-        await rate(env, 'login:subject:' + emailAddr, +cfg.MAX_LOGIN_ATTEMPTS, 900);
-        const code = String(Math.floor(100000 + Math.random() * 900000));
-        const expires = now() + 600;
-        await env.DB.prepare('INSERT INTO admin_otps (subject,code_hash,expires_at,attempts,created_at) VALUES (?,?,?,0,unixepoch()) ON CONFLICT(subject) DO UPDATE SET code_hash=excluded.code_hash,expires_at=excluded.expires_at,attempts=0').bind(emailAddr, await hash(code), expires).run();
-        try {
-          const masterCfg = {
-            SMTP_HOST: env.OTP_SMTP_HOST || env.SMTP_HOST || cfg.SMTP_HOST,
-            SMTP_PORT: env.OTP_SMTP_PORT || env.SMTP_PORT || cfg.SMTP_PORT || '465',
-            SMTP_USER: env.OTP_SMTP_USER || env.OTP_SMTP_USERNAME || env.SMTP_USER || env.SMTP_USERNAME || cfg.SMTP_USER || cfg.SMTP_USERNAME,
-            SMTP_PASS: env.OTP_SMTP_PASS || env.OTP_SMTP_PASSWORD || env.SMTP_PASS || env.SMTP_PASSWORD || cfg.SMTP_PASS || cfg.SMTP_PASSWORD,
-            SMTP_SECURE: env.OTP_SMTP_SECURE || env.SMTP_SECURE || cfg.SMTP_SECURE || 'true',
-            DEFAULT_SENDER: cfg.DEFAULT_SENDER,
-            DEFAULT_SENDER_NAME: cfg.DEFAULT_SENDER_NAME,
-          };
-          if (!masterCfg.SMTP_HOST || !masterCfg.SMTP_USER || !masterCfg.SMTP_PASS) throw new Error('master smtp not configured');
-          const mail = validateMail({ to: emailAddr, from_name: 'neoMail', subject: 'NeoMail login code', text: 'Your NeoMail login code is ' + code + '. It expires in 10 minutes.' }, masterCfg);
-          await sendSmtp(masterCfg, mail);
-        } catch (e) {
-          await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
-          console.error('OTP SMTP ERROR', e?.stack || e); throw new HttpError(503, 'Unable to send login code: ' + (e?.message || e));
+        const authorized = (count?.n || 0) === 0 || !!allowed;
+        const existing = await env.DB.prepare('SELECT created_at FROM admin_otps WHERE subject=?').bind(emailAddr).first();
+        const nowSec = now();
+        if (existing && nowSec - existing.created_at < 60) {
+          return reply(ui.otpVerify(emailAddr));
         }
-        await audit(env, request, 'OTP_SENT', { subject: emailAddr });
+        if (authorized) {
+          const code = String(crypto.randomInt(100000, 1000000));
+          const saltBytes = new Uint8Array(16); crypto.getRandomValues(saltBytes);
+          const salt = [...saltBytes].map(b => b.toString(16).padStart(2, '0')).join('');
+          const expires = nowSec + 300;
+          await env.DB.prepare('INSERT INTO admin_otps (subject,salt,code_hash,expires_at,attempts,created_at) VALUES (?,?,?,?,0,unixepoch()) ON CONFLICT(subject) DO UPDATE SET salt=excluded.salt,code_hash=excluded.code_hash,expires_at=excluded.expires_at,attempts=0,created_at=unixepoch()').bind(emailAddr, salt, await hash(salt + code), expires).run();
+          try {
+            const masterCfg = {
+              SMTP_HOST: env.OTP_SMTP_HOST || env.SMTP_HOST || cfg.SMTP_HOST,
+              SMTP_PORT: env.OTP_SMTP_PORT || env.SMTP_PORT || cfg.SMTP_PORT || '465',
+              SMTP_USER: env.OTP_SMTP_USER || env.OTP_SMTP_USERNAME || env.SMTP_USER || env.SMTP_USERNAME || cfg.SMTP_USER || cfg.SMTP_USERNAME,
+              SMTP_PASS: env.OTP_SMTP_PASS || env.OTP_SMTP_PASSWORD || env.SMTP_PASS || env.SMTP_PASSWORD || cfg.SMTP_PASS || cfg.SMTP_PASSWORD,
+              SMTP_SECURE: env.OTP_SMTP_SECURE || env.SMTP_SECURE || cfg.SMTP_SECURE || 'true',
+              DEFAULT_SENDER: cfg.DEFAULT_SENDER,
+              DEFAULT_SENDER_NAME: 'neoMail',
+            };
+            if (!masterCfg.SMTP_HOST || !masterCfg.SMTP_USER || !masterCfg.SMTP_PASS) throw new Error('master smtp not configured');
+            const mail = validateMail({ to: emailAddr, from_name: 'neoMail', subject: 'NeoMail login code', text: 'Your NeoMail login code is ' + code + '. It expires in 5 minutes.' }, masterCfg);
+            await sendSmtp(masterCfg, mail);
+          } catch (e) {
+            await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
+            throw new HttpError(503, 'Unable to send login code: ' + (e?.message || e));
+          }
+          await audit(env, request, 'OTP_SENT', { subject: emailAddr });
+        }
         return reply(ui.otpVerify(emailAddr));
       }
       if (step === 'verify') {
         const emailAddr = email(data.get('email'));
         const code = String(data.get('code') || '');
         if (!emailAddr || !/^[0-9]{6}$/.test(code)) throw new HttpError(422, 'Invalid code.');
-        const row = await env.DB.prepare('SELECT * FROM admin_otps WHERE subject=?').bind(emailAddr).first();
-        if (!row || row.expires_at <= now() || row.attempts >= 5) {
-          await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
-          throw new HttpError(403, 'Login code expired or invalid.');
-        }
-        await env.DB.prepare('UPDATE admin_otps SET attempts=attempts+1 WHERE subject=?').bind(emailAddr).run();
-        if (!await equal(await hash(code), row.code_hash)) throw new HttpError(403, 'Invalid login code.');
-        await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
+        const row = await env.DB.prepare('DELETE FROM admin_otps WHERE subject=? RETURNING *').bind(emailAddr).first();
+        if (!row || row.expires_at <= now()) throw new HttpError(403, 'Login code expired or invalid.');
+        if (!await equal(await hash(row.salt + code), row.code_hash)) throw new HttpError(403, 'Invalid login code.');
         const token = crypto.randomUUID(), csrfToken = crypto.randomUUID();
         const prior = cookie(request, '__Host-neomail');
         await env.DB.batch([
