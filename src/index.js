@@ -203,7 +203,7 @@ Idempotency-Key: unique-key
             DEFAULT_SENDER_NAME: cfg.DEFAULT_SENDER_NAME,
           };
           if (!masterCfg.SMTP_HOST || !masterCfg.SMTP_USER || !masterCfg.SMTP_PASS) throw new Error('master smtp not configured');
-          const mail = validateMail({ to: emailAddr, subject: 'NeoMail login code', text: 'Your NeoMail login code is ' + code + '. It expires in 10 minutes.' }, masterCfg);
+          const mail = validateMail({ to: emailAddr, from_name: 'neoMail', subject: 'NeoMail login code', text: 'Your NeoMail login code is ' + code + '. It expires in 10 minutes.' }, masterCfg);
           await sendSmtp(masterCfg, mail);
         } catch (e) {
           await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
