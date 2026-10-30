@@ -108,7 +108,14 @@ export function otpLoginConfigured(env) {
 export async function access(request, env) {
   if (local(request, env)) return env.LOCAL_DEV_SUBJECT || 'local-admin';
   if (new URL(request.url).protocol !== 'https:') throw new HttpError(403, 'HTTPS required.');
-  if (tokenLoginConfigured(env) || otpLoginConfigured(env)) return 'admin';
+  if (tokenLoginConfigured(env) || otpLoginConfigured(env)) {
+    const token = cookie(request, '__Host-neomail');
+    if (token && /^[a-f0-9-]{36}$/.test(token)) {
+      const row = await env.DB.prepare('SELECT access_subject FROM admin_sessions WHERE token_hash=? AND expires_at>unixepoch()').bind(await hash(token)).first();
+      if (row?.access_subject) return row.access_subject;
+    }
+    return null;
+  }
   if (!accessConfigured(env)) throw new HttpError(503, 'Cloudflare Access must be configured before admin access.');
   const team = env.ACCESS_TEAM_DOMAIN, audience = env.ACCESS_AUD;
   const token = request.headers.get('cf-access-jwt-assertion') || '';

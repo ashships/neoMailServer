@@ -180,7 +180,8 @@ Idempotency-Key: unique-key
   }
   if (path !== '/admin' && path !== '/dashboard' && !path.startsWith('/admin/')) throw new HttpError(404, 'Endpoint not found.');
   const subject = await access(request, env);
-  const role = await adminRole(env, subject);
+  if (!subject && path !== '/admin/login' && path !== '/login') return redirect('/login');
+  const role = subject ? await adminRole(env, subject) : null;
   const dashboardMode = path === '/dashboard';
   if (dashboardMode && role === 'superadmin') return redirect('/admin');
   if (!dashboardMode && path.startsWith('/admin') && role !== 'superadmin' && path !== '/admin/login') return redirect('/dashboard');
@@ -251,7 +252,7 @@ Idempotency-Key: unique-key
         const prior = cookie(request, '__Host-neomail');
         await env.DB.batch([
           env.DB.prepare('DELETE FROM admin_sessions WHERE token_hash=? OR expires_at<=unixepoch()').bind(await hash(prior)),
-          env.DB.prepare('INSERT INTO admin_sessions (token_hash,csrf_token,access_subject,credential_version,expires_at) VALUES (?,?,?,?,?)').bind(await hash(token), csrfToken, 'admin', await hash(await adminVerifier(request, env)), now() + 3600),
+          env.DB.prepare('INSERT INTO admin_sessions (token_hash,csrf_token,access_subject,credential_version,expires_at) VALUES (?,?,?,?,?)').bind(await hash(token), csrfToken, emailAddr, await hash(await adminVerifier(request, env)), now() + 3600),
         ]);
         await audit(env, request, 'AUTH_SUCCESS');
         return redirect(role === 'superadmin' ? '/admin' : '/dashboard', { 'Set-Cookie': sessionCookie(token) });
