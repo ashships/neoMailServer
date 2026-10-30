@@ -31,6 +31,6 @@ STORE_MESSAGE_BODIES = "false"
 # Set these before production admin access. No production bypass is provided.
 ACCESS_TEAM_DOMAIN = ""
 ACCESS_AUD = ""
-ALLOW_TOKEN_LOGIN = "true"
+ALLOW_TOKEN_LOGIN = "false"
 ADMIN_TOKEN_HASH = "b5ef6551b74b86c40a34a863e6f3111b0a9fc0e67180101939c5c10ffa2a018a"
-EMAIL_OTP_LOGIN = "true"
+EMAIL_OTP_LOGIN = "false"
