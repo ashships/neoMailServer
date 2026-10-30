@@ -415,6 +415,17 @@ Idempotency-Key: unique-key
       await env.DB.prepare("INSERT INTO app_settings (name,value,is_secret,updated_at) VALUES ('DOCS_CONTENT',?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,updated_at=unixepoch()").bind(content).run();
       await audit(env, request, 'DOCS_UPDATED', {}); return redirect('/admin?view=docs&notice=' + encodeURIComponent('Documentation saved.'));
     }
+    if (path === '/admin/users/update') {
+      if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
+      const oldSubject = text(data.get('old_subject'), 254);
+      const newSubject = text(data.get('new_subject'), 254);
+      const role = data.get('role');
+      if (!oldSubject || !newSubject || !['admin','client','staff'].includes(role) || oldSubject === subject) throw new HttpError(422, 'Invalid update.');
+      const row = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=?').bind(oldSubject).first();
+      if (!row || row.role === 'superadmin') throw new HttpError(404, 'User not found or protected.');
+      await env.DB.prepare('UPDATE admin_users SET subject=?, role=? WHERE subject=?').bind(newSubject, role, oldSubject).run();
+      await audit(env, request, 'ADMIN_USER_UPDATED', { from: oldSubject, to: newSubject, role }); return redirect('/admin?view=users&notice=' + encodeURIComponent('Administrator updated.'));
+    }
     if (path === '/admin/send-test') {
       await rate(env, 'admin:send:' + subject, 5, 60);
       const mode=data.get('delivery_mode') || 'normal';
