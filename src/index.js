@@ -1,6 +1,6 @@
 import { HttpError, reply, redirect, hash, equal, email, text, cookie, local, sameOrigin, form, json, readBody, rate, audit, access, session, csrf, sessionCookie, bytes64, headers } from './security.js';
 import { config, saveSettings, saveSecret, PROVIDERS } from './config.js';
-import { dispatch, validateMail, verifyWebhook, applyWebhook } from './providers.js';
+import { dispatch, validateMail, verifyWebhook, applyWebhook, sendSmtp } from './providers.js';
 import * as ui from './ui.js';
 import { getProfile, saveProfile, profileForm, profileImage } from './profile.js';
 
@@ -161,19 +161,17 @@ Idempotency-Key: unique-key
         await env.DB.prepare('INSERT INTO admin_otps (subject,code_hash,expires_at,attempts,created_at) VALUES (?,?,?,0,unixepoch()) ON CONFLICT(subject) DO UPDATE SET code_hash=excluded.code_hash,expires_at=excluded.expires_at,attempts=0').bind(emailAddr, await hash(code), expires).run();
         try {
           const masterCfg = {
-            ...cfg,
             SMTP_HOST: env.OTP_SMTP_HOST || env.SMTP_HOST || cfg.SMTP_HOST,
             SMTP_PORT: env.OTP_SMTP_PORT || env.SMTP_PORT || cfg.SMTP_PORT || '465',
             SMTP_USER: env.OTP_SMTP_USER || env.OTP_SMTP_USERNAME || env.SMTP_USER || env.SMTP_USERNAME || cfg.SMTP_USER || cfg.SMTP_USERNAME,
             SMTP_PASS: env.OTP_SMTP_PASS || env.OTP_SMTP_PASSWORD || env.SMTP_PASS || env.SMTP_PASSWORD || cfg.SMTP_PASS || cfg.SMTP_PASSWORD,
             SMTP_SECURE: env.OTP_SMTP_SECURE || env.SMTP_SECURE || cfg.SMTP_SECURE || 'true',
-            FALLBACK_ORDER: 'smtp',
-            OTP_ONLY: true,
+            DEFAULT_SENDER: cfg.DEFAULT_SENDER,
+            DEFAULT_SENDER_NAME: cfg.DEFAULT_SENDER_NAME,
           };
           if (!masterCfg.SMTP_HOST || !masterCfg.SMTP_USER || !masterCfg.SMTP_PASS) throw new Error('master smtp not configured');
           const mail = validateMail({ to: emailAddr, subject: 'NeoMail login code', text: 'Your NeoMail login code is ' + code + '. It expires in 10 minutes.' }, masterCfg);
-          const result = await dispatch(masterCfg, mail, 'otp-' + Date.now());
-          if (!result.success) throw new Error('send failed: ' + result.status + ' ' + result.provider);
+          await sendSmtp(masterCfg, mail);
         } catch (e) {
           await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
           throw new HttpError(503, 'Unable to send login code. Configure a provider first.');
