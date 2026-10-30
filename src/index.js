@@ -10,6 +10,16 @@ async function rows(env, sql, ...params) { return (await env.DB.prepare(sql).bin
 async function identities(env) { return rows(env, 'SELECT * FROM sender_identities ORDER BY is_default DESC,email_address'); }
 function requireMethod(request, methods) { if (!methods.includes(request.method)) throw new HttpError(405, 'Method not allowed.'); }
 async function activeIdentity(env, address) { return env.DB.prepare('SELECT * FROM sender_identities WHERE email_address=? AND is_active=1').bind(address).first(); }
+async function verifyDomainDns(domain, token) {
+  if (!domain || !token) return false;
+  try {
+    const res = await fetch('https://cloudflare-dns.com/dns-query?name=' + encodeURIComponent('_neomail-verification.' + domain) + '&type=TXT', { headers: { Accept: 'application/dns-json' } });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return (data.Answer || []).some(a => String(a.data || '').replace(/"/g, '').includes(token));
+  } catch { return false; }
+}
+
 async function adminRole(env, subject) {
   if (subject === 'local-admin' || subject === 'admin') return 'superadmin';
   if (!env.DB) return 'superadmin';
@@ -120,16 +130,32 @@ Idempotency-Key: unique-key
     if (!/^[a-z0-9.-]+$/.test(domain) || domain.length > 253) throw new HttpError(422, 'Invalid domain.');
     if (!name) throw new HttpError(422, 'Display name is required.');
     try {
-      await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by) VALUES (?,?,0,unixepoch(),?)').bind(domain, name, client.id).run();
+      const vtoken = crypto.randomUUID().replace(/-/g, '');
+      await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,verification_token) VALUES (?,?,0,unixepoch(),?,?)').bind(domain, name, client.id, vtoken).run();
     } catch {
       throw new HttpError(409, 'Domain already registered.');
     }
     await audit(env, request, 'DOMAIN_ADDED', { domain, client: client.id });
-    return reply({ domain, status: 'pending_dns', dns: [
+    return reply({ domain, status: 'pending_dns', verification_token: vtoken, dns_record: { type: 'TXT', name: '_neomail-verification.' + domain, value: vtoken }, dns: [
       { type: 'TXT', name: domain, value: 'v=spf1 include:_spf.' + domain + ' ~all (provider-specific; replace with your provider SPF)' },
       { type: 'TXT', name: '_dmarc.' + domain, value: 'v=DMARC1; p=quarantine; rua=mailto:postmaster@' + domain },
       { type: 'TXT', name: 'selector._domainkey.' + domain, value: 'Provider-specific DKIM record' },
     ] }, 201);
+  }
+  if (path === '/api/v1/domains/verify' || path === '/api/domains/verify') {
+    requireMethod(request, ['POST']);
+    const bearer = request.headers.get('authorization') || '';
+    const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : '';
+    const client = await apiClient(env, token);
+    if (!client) throw new HttpError(401, 'Invalid API credential.');
+    const data = await json(request);
+    const domain = (typeof data.domain === 'string' ? data.domain.trim().toLowerCase() : '');
+    if (!domain) throw new HttpError(422, 'Domain required.');
+    const row = await env.DB.prepare('SELECT verification_token FROM managed_domains WHERE domain=? AND created_by=?').bind(domain, client.id).first();
+    if (!row) throw new HttpError(404, 'Domain not found.');
+    const ok = await verifyDomainDns(domain, row.verification_token);
+    if (ok) await env.DB.prepare('UPDATE managed_domains SET is_verified=1 WHERE domain=?').bind(domain).run();
+    return reply({ domain, verified: ok });
   }
   if (path !== '/admin' && !path.startsWith('/admin/')) throw new HttpError(404, 'Endpoint not found.');
   const subject = await access(request, env);
@@ -333,7 +359,8 @@ Idempotency-Key: unique-key
       const domain = text(data.get('domain'), 253);
       const name = text(data.get('display_name'), 100);
       if (!domain || !/^[a-z0-9.-]+$/i.test(domain) || !name) throw new HttpError(422, 'Valid domain and name required.');
-      await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by) VALUES (?,?,0,unixepoch(),?)').bind(domain.toLowerCase(), name, subject).run();
+      const token = crypto.randomUUID().replace(/-/g, '');
+      await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,verification_token) VALUES (?,?,0,unixepoch(),?,?)').bind(domain.toLowerCase(), name, subject, token).run();
       await audit(env, request, 'DOMAIN_ADDED', { domain }); return redirect('/admin?view=domains&notice=' + encodeURIComponent('Domain added.'));
     }
     if (path === '/admin/users/role') {
@@ -346,6 +373,16 @@ Idempotency-Key: unique-key
       if (row.role === 'superadmin') throw new HttpError(409, 'Cannot change a superadmin role.');
       await env.DB.prepare('UPDATE admin_users SET role=? WHERE subject=?').bind(role, target).run();
       await audit(env, request, 'ADMIN_USER_ROLE_CHANGED', { subject: target, role }); return redirect('/admin?view=users&notice=' + encodeURIComponent('Role updated.'));
+    }
+    if (path === '/admin/domains/verify') {
+      const domain = text(data.get('domain'), 253);
+      if (!domain) throw new HttpError(422, 'Domain required.');
+      const row = await env.DB.prepare('SELECT verification_token FROM managed_domains WHERE domain=?').bind(domain).first();
+      if (!row) throw new HttpError(404, 'Domain not found.');
+      const ok = await verifyDomainDns(domain, row.verification_token);
+      if (ok) await env.DB.prepare('UPDATE managed_domains SET is_verified=1 WHERE domain=?').bind(domain).run();
+      await audit(env, request, 'DOMAIN_VERIFIED', { domain, ok });
+      return redirect('/admin?view=domains&notice=' + encodeURIComponent(ok ? 'Domain verified.' : 'DNS record not found yet.'));
     }
     if (path === '/admin/send-test') {
       await rate(env, 'admin:send:' + subject, 5, 60);
