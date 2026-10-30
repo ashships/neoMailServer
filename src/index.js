@@ -207,7 +207,7 @@ Idempotency-Key: unique-key
           await sendSmtp(masterCfg, mail);
         } catch (e) {
           await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
-          throw new HttpError(503, 'Unable to send login code. Configure a provider first.');
+          console.error('OTP SMTP ERROR', e?.stack || e); throw new HttpError(503, 'Unable to send login code. Configure a provider first.');
         }
         await audit(env, request, 'OTP_SENT', { subject: emailAddr });
         return reply(ui.otpVerify(emailAddr));
