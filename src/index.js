@@ -34,8 +34,9 @@ async function adminRole(env, subject) {
   if (!env.DB) return 'superadmin';
   if (tokenLoginConfigured(env)) return 'superadmin';
   try {
-    const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
-    if ((count?.n || 0) === 0) return 'superadmin';
+    const countRow = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first();
+    const count = countRow ? countRow.n : 0;
+    if (count === 0) return 'superadmin';
     const row = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=? AND is_active=1').bind(subject).first();
     return row?.role || null;
   } catch { return 'superadmin'; }
@@ -252,6 +253,7 @@ Idempotency-Key: unique-key
         if ((count?.n || 0) === 0) {
           await env.DB.prepare('INSERT OR IGNORE INTO admin_users (subject,role,is_active,created_at) VALUES (?,?,1,unixepoch())').bind(emailAddr, 'superadmin').run();
         }
+        const targetRole = await adminRole(env, emailAddr);
         const token = crypto.randomUUID(), csrfToken = crypto.randomUUID();
         const prior = cookie(request, '__Host-neomail');
         await env.DB.batch([
@@ -259,7 +261,7 @@ Idempotency-Key: unique-key
           env.DB.prepare('INSERT INTO admin_sessions (token_hash,csrf_token,access_subject,credential_version,expires_at) VALUES (?,?,?,?,?)').bind(await hash(token), csrfToken, emailAddr, await hash(await adminVerifier(request, env)), now() + 3600),
         ]);
         await audit(env, request, 'AUTH_SUCCESS');
-        return redirect(role === 'superadmin' ? '/admin' : '/dashboard', { 'Set-Cookie': sessionCookie(token) });
+        console.error('VERIFY REDIRECT', emailAddr, targetRole); return redirect(targetRole === 'superadmin' ? '/admin' : '/dashboard', { 'Set-Cookie': sessionCookie(token) });
       }
       throw new HttpError(422, 'Invalid login step.');
     }

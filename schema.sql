@@ -138,6 +138,7 @@ CREATE TABLE IF NOT EXISTS admin_users (
 -- 7. One-time codes for email-based administrator login.
 CREATE TABLE IF NOT EXISTS admin_otps (
  subject TEXT NOT NULL,
+ salt TEXT NOT NULL,
  code_hash TEXT NOT NULL,
  expires_at INTEGER NOT NULL,
  attempts INTEGER NOT NULL DEFAULT 0,

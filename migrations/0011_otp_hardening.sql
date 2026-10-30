@@ -1,0 +1,1 @@
+ALTER TABLE admin_otps ADD COLUMN salt TEXT;
