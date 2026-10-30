@@ -523,8 +523,8 @@ export default {
     try { return await handler(request, env); }
     catch (err) {
       const status = err instanceof HttpError ? err.status : 500, reference = crypto.randomUUID();
-      if (status === 500) console.error(JSON.stringify({event:'REQUEST_FAILURE',reference}));
-      const message = status === 500 ? 'Request could not complete. Reference: ' + reference : err.message;
+      if (status === 500) console.error(JSON.stringify({event:'REQUEST_FAILURE',reference,err: String(err?.stack || err)}));
+      const message = status === 500 ? 'Request could not complete. Reference: ' + reference + ' Error: ' + String(err?.message || err) : err.message;
       const extra = status===429 ? {'Retry-After':'60'} : {};
       return new URL(request.url).pathname.startsWith('/admin') ? reply(ui.errorPage(message,status),status,extra) : reply({error:message,reference},status,extra);
     }
