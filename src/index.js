@@ -248,6 +248,10 @@ Idempotency-Key: unique-key
         const row = await env.DB.prepare('DELETE FROM admin_otps WHERE subject=? RETURNING *').bind(emailAddr).first();
         if (!row || row.expires_at <= now()) throw new HttpError(403, 'Login code expired or invalid.');
         if (!await equal(await hash(row.salt + code), row.code_hash)) throw new HttpError(403, 'Invalid login code.');
+        const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
+        if ((count?.n || 0) === 0) {
+          await env.DB.prepare('INSERT OR IGNORE INTO admin_users (subject,role,is_active,created_at) VALUES (?,?,1,unixepoch())').bind(emailAddr, 'superadmin').run();
+        }
         const token = crypto.randomUUID(), csrfToken = crypto.randomUUID();
         const prior = cookie(request, '__Host-neomail');
         await env.DB.batch([
