@@ -135,6 +135,7 @@ export async function dispatch(env, mail, idempotencyKey) {
   for (const provider of env.FALLBACK_ORDER.split(',')) {
     if (!PROVIDERS.includes(provider)) continue;
     if (provider === 'smtp') {
+      if (env.OTP_ONLY !== true) continue;
       if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) continue;
     } else if (!env[provider.toUpperCase() + '_API_KEY'] || (provider === 'mailgun' && !env.MAILGUN_DOMAIN)) continue;
     const state = health.find(p => p.provider_name === provider);

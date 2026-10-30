@@ -168,6 +168,7 @@ Idempotency-Key: unique-key
             SMTP_PASS: env.OTP_SMTP_PASS || env.OTP_SMTP_PASSWORD || env.SMTP_PASS || env.SMTP_PASSWORD || cfg.SMTP_PASS || cfg.SMTP_PASSWORD,
             SMTP_SECURE: env.OTP_SMTP_SECURE || env.SMTP_SECURE || cfg.SMTP_SECURE || 'true',
             FALLBACK_ORDER: 'smtp',
+            OTP_ONLY: true,
           };
           if (!masterCfg.SMTP_HOST || !masterCfg.SMTP_USER || !masterCfg.SMTP_PASS) throw new Error('master smtp not configured');
           const mail = validateMail({ to: emailAddr, subject: 'NeoMail login code', text: 'Your NeoMail login code is ' + code + '. It expires in 10 minutes.' }, masterCfg);
