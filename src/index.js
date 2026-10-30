@@ -76,7 +76,8 @@ async function reauthenticate(request, env, data) {
   if (typeof token !== 'string' || !/^[A-Za-z0-9_-]{43,128}$/.test(token) || !verifier || !await equal(await hash(token), verifier)) throw new HttpError(401, 'Administrator token required for credential changes.');
 }
 async function handler(request, env) {
-  const url = new URL(request.url), path = url.pathname, ip = request.headers.get('cf-connecting-ip') || 'local';
+  const url = new URL(request.url); let path = url.pathname; const ip = request.headers.get('cf-connecting-ip') || 'local';
+  if (path === '/login') path = '/admin/login';
   // Public probes do not disclose configuration, secrets, or database details.
   if (path === '/docs' || path.startsWith('/docs/')) {
     requireMethod(request, ['GET']);
