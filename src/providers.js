@@ -1,5 +1,77 @@
 import { HttpError, hash, email, text, escape, hmac, base64, equal } from './security.js';
 import { PROVIDERS } from './config.js';
+
+async function sendSmtp(cfg, mail) {
+  let connect;
+  try {
+    ({ connect } = await import('cloudflare:sockets'));
+  } catch {
+    throw new Error('SMTP is not supported in this runtime.');
+  }
+  const host = cfg.SMTP_HOST;
+  const port = Number(cfg.SMTP_PORT || 465);
+  const secure = cfg.SMTP_SECURE !== 'false';
+  const socket = connect({ hostname: host, port }, { secureTransport: secure ? 'on' : 'off', allowHalfOpen: false });
+  const encoder = new TextEncoder();
+  const decoder = new TextDecoder();
+  const writer = socket.writable.getWriter();
+  const reader = socket.readable.getReader();
+  let buffer = '';
+  async function readResponse() {
+    while (true) {
+      const { value, done } = await reader.read();
+      if (value) buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\r\n');
+      const last = lines[lines.length - 2] || '';
+      if (/^\d{3} /.test(last)) break;
+      if (done) break;
+    }
+    const match = buffer.match(/^(\d{3})/);
+    const code = match ? Number(match[1]) : 0;
+    const data = buffer;
+    buffer = '';
+    return { code, data };
+  }
+  async function write(command) { await writer.write(encoder.encode(command + '\r\n')); }
+  const greet = await readResponse();
+  console.error('SMTP GREET', greet.code, JSON.stringify(greet.data.slice(0,80)));
+  await write('EHLO neomail');
+  const ehlo = await readResponse();
+  console.error('SMTP EHLO', ehlo.code);
+  if (ehlo.code !== 250) throw new Error('SMTP EHLO failed.');
+  await write('AUTH LOGIN');
+  const authStart = await readResponse();
+  if (authStart.code !== 334) throw new Error('SMTP auth not supported.');
+  await write(btoa(cfg.SMTP_USER));
+  const userResp = await readResponse();
+  if (userResp.code !== 334) throw new Error('SMTP username rejected.');
+  await write(btoa(cfg.SMTP_PASS));
+  const passResp = await readResponse();
+  if (passResp.code !== 235) throw new Error('SMTP authentication failed.');
+  await write('MAIL FROM:<' + mail.from + '>');
+  const mailFrom = await readResponse();
+  if (mailFrom.code !== 250) throw new Error('SMTP MAIL FROM rejected.');
+  await write('RCPT TO:<' + mail.to + '>');
+  const rcpt = await readResponse();
+  if (rcpt.code !== 250 && rcpt.code !== 251) throw new Error('SMTP RCPT TO rejected.');
+  await write('DATA');
+  const dataStart = await readResponse();
+  if (dataStart.code !== 354) throw new Error('SMTP DATA rejected.');
+  const message = 'From: ' + mail.fromName + ' <' + mail.from + '>\r\n' +
+    'To: ' + mail.to + '\r\n' +
+    'Subject: ' + mail.subject + '\r\n' +
+    'MIME-Version: 1.0\r\n' +
+    'Content-Type: text/html; charset=UTF-8\r\n' +
+    '\r\n' + (mail.html || '') + '\r\n.\r\n';
+  await writer.write(encoder.encode(message));
+  const dataResp = await readResponse();
+  if (dataResp.code !== 250) throw new Error('SMTP message rejected.');
+  await write('QUIT');
+  await socket.close();
+  const match = dataResp.data.match(/<([^>]+)>/);
+  return (match && match[1]) || crypto.randomUUID();
+}
+
 export function validateMail(body, settings) {
   const to = email(body.to), from = email(body.from || settings.DEFAULT_SENDER);
   if (!to || !from) throw new HttpError(422, 'Valid recipient and sender addresses are required.');
@@ -10,6 +82,7 @@ export function validateMail(body, settings) {
 }
 async function send(provider, env, mail, requestId) {
   const { from, to, fromName, subject, html, text } = mail;
+  if (provider === 'smtp') return sendSmtp(env, mail);
   const formattedSender = `"${fromName.replace(/["\\]/g, '\\$&')}" <${from}>`;
   const credential = env[provider.toUpperCase() + '_API_KEY'];
   let url, body, headers = { 'Content-Type': 'application/json', Authorization: `Bearer ${credential}` };
@@ -60,7 +133,10 @@ export async function dispatch(env, mail, idempotencyKey) {
   const attempts = []; let status = 'Failed', providerUsed = null, messageId = null, uncertain = false;
   const health = (await env.DB.prepare('SELECT * FROM provider_health').all()).results || [];
   for (const provider of env.FALLBACK_ORDER.split(',')) {
-    if (!PROVIDERS.includes(provider) || !env[provider.toUpperCase() + '_API_KEY'] || (provider === 'mailgun' && !env.MAILGUN_DOMAIN)) continue;
+    if (!PROVIDERS.includes(provider)) continue;
+    if (provider === 'smtp') {
+      if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) continue;
+    } else if (!env[provider.toUpperCase() + '_API_KEY'] || (provider === 'mailgun' && !env.MAILGUN_DOMAIN)) continue;
     const state = health.find(p => p.provider_name === provider);
     if (state && (!state.is_active || (state.consecutive_failures >= 5 && state.updated_at > Date.now() / 1000 - 300))) continue;
     const started = Date.now();

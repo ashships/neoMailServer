@@ -51,7 +51,7 @@ Cloudflare Access policy mistakes, runtime compromise, credential theft, or mali
 ## Remaining risks and launch requirements
 
 - Configure real Cloudflare Access policies and MFA; this source change does not create them. Keep workers.dev/preview URLs disabled or covered by equivalent enforcement.
-- A single API token authorizes all configured senders. It has no per-service scopes or recipient restrictions. Rotate if leaked; enforce business authorization and rate limits in the calling Nepathshala backend.
+- A single API token authorizes all configured senders. It has no per-service scopes or recipient restrictions. Rotate if leaked; enforce business authorization and rate limits in the calling neopathshala backend.
 - D1 counters are strict per fixed-window key but are not protection against all volumetric attacks, distributed IP traffic, D1 query-cost exhaustion, or provider quota abuse. Add Cloudflare edge WAF/rate controls and account spending alerts, appropriate to your plan.
 - Rate-limited response Retry-After is a conservative 60-second hint, not the exact remaining login lockout interval. Login windows can last up to fifteen minutes. Do not lower production protections just to resolve lockout.
 - Idempotency protects against repeats under the same key, not an attacker using a new key each time. Caller outbox design and operation identifiers matter. Records are retained indefinitely and need capacity monitoring.

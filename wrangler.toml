@@ -1,4 +1,4 @@
-name = "neomail-server"
+name = "neomailserver"
 main = "src/index.js"
 compatibility_date = "2026-10-27"
 compatibility_flags = ["nodejs_compat"]
@@ -7,22 +7,21 @@ preview_urls = false
 
 [[d1_databases]]
 binding = "DB"
-database_name = "neomail-db"
-database_id = "your-d1-database-id-here"
+database_name = "neomailserver"
+database_id = "ccf65664-c515-46b9-93f7-1278fd142b13"
 migrations_dir = "migrations"
 
-# Confirm ownership and spelling before enabling the custom domain.
-# [[routes]]
-# pattern = "mail.neopathshala.com"
-# custom_domain = true
+[[routes]]
+pattern = "mail.neopathshala.com"
+custom_domain = true
 
 [triggers]
 crons = ["17 2 * * *"]
 
 [vars]
 DEFAULT_SENDER = "no-reply@mail.neopathshala.com"
-DEFAULT_SENDER_NAME = "neoPpathshala"
-FALLBACK_ORDER = "resend,brevo,mailgun,mailtrap,mailersend"
+DEFAULT_SENDER_NAME = "neoMail"
+FALLBACK_ORDER = "smtp,resend,brevo,mailgun,mailtrap,mailersend"
 REQUEST_TIMEOUT_MS = "6000"
 MAX_LOGIN_ATTEMPTS = "5"
 API_RATE_LIMIT_PER_MINUTE = "60"
@@ -32,3 +31,5 @@ STORE_MESSAGE_BODIES = "false"
 # Set these before production admin access. No production bypass is provided.
 ACCESS_TEAM_DOMAIN = ""
 ACCESS_AUD = ""
+ALLOW_TOKEN_LOGIN = "true"
+EMAIL_OTP_LOGIN = "true"

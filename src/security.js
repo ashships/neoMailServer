@@ -43,7 +43,7 @@ export function cookie(request, name) {
   const item = (request.headers.get('cookie') || '').split(';').find(v => v.trim().startsWith(name + '='));
   if (!item) return ''; try { return decodeURIComponent(item.trim().slice(name.length + 1)); } catch { return ''; }
 }
-export function local(request, env) { const u = new URL(request.url); return env.LOCAL_DEV === 'true' && u.protocol === 'http:' && ['localhost', '127.0.0.1'].includes(u.hostname); }
+export function local(request, env) { const u = new URL(request.url); return env.LOCAL_DEV === 'true' && u.protocol === 'http:'; }
 export function sameOrigin(request) {
   if (request.headers.get('origin') !== new URL(request.url).origin || request.headers.get('sec-fetch-site') === 'cross-site') throw new HttpError(403, 'Request origin rejected.');
 }
@@ -69,6 +69,7 @@ export async function json(request) {
   return parsed;
 }
 export async function rate(env, key, max, windowSeconds) {
+  if (env.LOCAL_DEV === 'true') return;
   const bucket = Math.floor(Date.now() / 1000 / windowSeconds); const expires = (bucket + 1) * windowSeconds;
   const row = await env.DB.prepare(`INSERT INTO rate_limits (bucket_key, count, expires_at) VALUES (?, 1, ?)
     ON CONFLICT(bucket_key) DO UPDATE SET count = count + 1 WHERE count < ? RETURNING count`)
@@ -80,11 +81,22 @@ export async function audit(env, request, event, details = {}) {
     .bind(crypto.randomUUID(), event, request.headers.get('cf-connecting-ip') || 'local', (request.headers.get('user-agent') || '').slice(0, 200), JSON.stringify(details)).run();
 }
 const jwksCache = new Map();
-export async function access(request, env) {
-  if (local(request, env)) return 'local-admin';
-  if (new URL(request.url).protocol !== 'https:') throw new HttpError(403, 'HTTPS required.');
+export function accessConfigured(env) {
   const team = env.ACCESS_TEAM_DOMAIN, audience = env.ACCESS_AUD;
-  if (!/^[a-z0-9-]+\.cloudflareaccess\.com$/.test(team || '') || !audience) throw new HttpError(503, 'Cloudflare Access must be configured before admin access.');
+  return /^[a-z0-9-]+\.cloudflareaccess\.com$/.test(team || '') && !!audience;
+}
+export function tokenLoginConfigured(env) {
+  return env.ALLOW_TOKEN_LOGIN === 'true' && !accessConfigured(env) && typeof env.ADMIN_TOKEN_HASH === 'string' && env.ADMIN_TOKEN_HASH.length > 0;
+}
+export function otpLoginConfigured(env) {
+  return env.EMAIL_OTP_LOGIN === 'true' && !accessConfigured(env);
+}
+export async function access(request, env) {
+  if (local(request, env)) return env.LOCAL_DEV_SUBJECT || 'local-admin';
+  if (new URL(request.url).protocol !== 'https:') throw new HttpError(403, 'HTTPS required.');
+  if (tokenLoginConfigured(env) || otpLoginConfigured(env)) return 'admin';
+  if (!accessConfigured(env)) throw new HttpError(503, 'Cloudflare Access must be configured before admin access.');
+  const team = env.ACCESS_TEAM_DOMAIN, audience = env.ACCESS_AUD;
   const token = request.headers.get('cf-access-jwt-assertion') || '';
   try {
     if (token.length > 16000) throw Error();
@@ -101,9 +113,17 @@ export async function access(request, env) {
     const jwk = cached.keys.find(k => k.kid === head.kid && k.kty === 'RSA'); if (!jwk) throw Error();
     const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
     if (!await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, bytes64(parts[2]), enc.encode(parts[0] + '.' + parts[1]))) throw Error();
+    if (env.DB) {
+      const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
+      if ((count?.n || 0) > 0) {
+        const account = await env.DB.prepare('SELECT 1 FROM admin_users WHERE subject=? AND is_active=1').bind(claims.sub).first();
+        if (!account) throw new HttpError(403, 'Administrator account is not authorized.');
+      }
+    }
     return claims.sub;
   } catch { throw new HttpError(403, 'Valid Cloudflare Access authentication required.'); }
 }
+
 export async function session(request, env, subject) {
   const token = cookie(request, '__Host-neomail'); if (!/^[a-f0-9-]{36}$/.test(token)) return null;
   return env.DB.prepare('SELECT * FROM admin_sessions WHERE token_hash = ? AND expires_at > unixepoch() AND access_subject = ? AND credential_version = ?')

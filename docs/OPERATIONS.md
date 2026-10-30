@@ -1,4 +1,4 @@
-# NeoMail deployment and Nepathshala integration
+# NeoMail deployment and neopathshala integration
 
 > **Authentication update:** Production now uses Cloudflare Access with email OTP and a passkey-capable identity provider, without the shared admin token. Local HTTP retains its development token. See [current administrator sign-in instructions](ADMIN-SIGN-IN.md); these supersede older token/MFA/credential-reauthentication instructions below. Account configuration and live OTP/passkey verification remain pending.
 
@@ -17,7 +17,7 @@ Prepared: 27 October 2026. Target: Cloudflare Workers (ES modules) and D1.
 | Random admin token + SHA-256 verifier | Additional administrator proof | Token in password manager; `ADMIN_TOKEN_HASH` Worker secret |
 | Independent 32-byte encryption key | Encrypt panel-managed credentials | `CONFIG_ENCRYPTION_KEY` Worker secret |
 | Provider account, verified sender domain, restricted API key | Outbound delivery | Provider dashboard, then panel Settings |
-| Separate random integration token | Backend-only send authorization | Panel `API_SECRET_KEY` and Nepathshala server environment |
+| Separate random integration token | Backend-only send authorization | Panel `API_SECRET_KEY` and neopathshala server environment |
 | Webhook signing key (optional) | Authenticated delivery updates | Provider dashboard and panel |
 | Node.js 22.13+, npm and current Wrangler | Build, test, deploy, recover | Development machine / CI |
 | Monitoring and recovery owner | Respond to failures and compromise | Your operational process |
@@ -61,7 +61,7 @@ npm test
 npm run build
 npm run test:worker
 npx wrangler login
-npx wrangler d1 create neomail-db
+npx wrangler d1 create neomailserver
 ```
 
 Insert the returned D1 `database_id` into `wrangler.toml`. Choose a new database for initial production rather than accidentally reusing development data. Select the actual mail domain, sender defaults, and Access vars. `workers_dev=false` and `preview_urls=false` prevent alternate public Worker URLs by default.
@@ -126,7 +126,7 @@ Panel settings take precedence over Worker vars; values are read afresh on subse
 | Key | Default | Allowed range / behavior |
 | --- | --- | --- |
 | DEFAULT_SENDER | no-reply@mail.neopathshala.com | Must match an active sender identity |
-| DEFAULT_SENDER_NAME | Nepathshala | 1–100 safe text characters |
+| DEFAULT_SENDER_NAME | neopathshala | 1–100 safe text characters |
 | FALLBACK_ORDER | resend,brevo,mailgun,mailtrap,mailersend | Unique supported provider names |
 | REQUEST_TIMEOUT_MS | 6000 | 1000–15000 |
 | API_RATE_LIMIT_PER_MINUTE | 60 | 1–1000, global per integration credential scope |
@@ -142,7 +142,7 @@ Credentials entered through the panel are encrypted with AES-256-GCM, a random 9
 
 Both Settings and Sender identities → Set default update the sender used by API dispatch and the visible default identity marker.
 
-## 6. Nepathshala backend integration
+## 6. neopathshala backend integration
 
 Configure in the **server environment only**:
 
@@ -165,7 +165,7 @@ export async function sendWelcome(user) {
     body: JSON.stringify({
       from: 'no-reply@mail.neopathshala.com',
       to: user.email,
-      subject: 'Welcome to Nepathshala',
+      subject: 'Welcome to neopathshala',
       text: 'Your account is ready.',
     }),
     signal: AbortSignal.timeout(90000),
@@ -182,7 +182,7 @@ export async function sendWelcome(user) {
 
 Use a stable operation-specific idempotency key. The same key must carry the same normalized message. Never generate a new key for a retry of the same business operation. If an upstream timeout interrupts your request, retry the identical payload with the same key and backoff; a 409 means in-progress or different content and must be inspected. Global fallback can take up to five provider timeouts, so use a backend job/outbox to keep registration page latency low. Do not wait for all providers inside a user-facing request if low latency matters.
 
-User-provided text embedded in HTML must be escaped by the caller. Authorization, recipient eligibility, OTP generation/expiry/attempt limits, password reset token hashing, and account enumeration prevention remain the responsibility of the Nepathshala backend. NeoMail does not issue authentication tokens or decide whether a user may request a password reset.
+User-provided text embedded in HTML must be escaped by the caller. Authorization, recipient eligibility, OTP generation/expiry/attempt limits, password reset token hashing, and account enumeration prevention remain the responsibility of the neopathshala backend. NeoMail does not issue authentication tokens or decide whether a user may request a password reset.
 
 ### Request contract
 
@@ -238,11 +238,11 @@ For inbound capture, enable Cloudflare Email Routing for the required subdomain 
 
 ## 10. Rotation, backup and recovery
 
-- **API token:** generate with `npm run api-key`, update panel `API_SECRET_KEY`, then update the Nepathshala backend immediately. There is no overlapping dual-key rotation window. Use a controlled maintenance change and never reuse the admin token.
+- **API token:** generate with `npm run api-key`, update panel `API_SECRET_KEY`, then update the neopathshala backend immediately. There is no overlapping dual-key rotation window. Use a controlled maintenance change and never reuse the admin token.
 - **Provider key:** replace in Settings and send a controlled test. Revoke the old key in the provider dashboard after validating replacement. Restrict to required sending scopes and domains where supported.
 - **Admin token:** generate a new token/verifier with `npm run credentials`, then replace `ADMIN_TOKEN_HASH` using Wrangler. Every session is bound to a hash of the current verifier and becomes invalid on rotation. Console “Sign out all sessions” also removes sessions immediately.
 - **Encryption key:** do not simply replace the Worker secret. Existing stored panel credentials become unreadable. There is no automatic re-encryption tool. Take a backup, securely retain the old key, stage a decrypt-and-re-encrypt migration, verify all credentials, and only then revoke the old key. For small installations, remove/re-enter encrypted setting rows in a controlled maintenance window with backups; avoid changing unrelated settings.
-- **D1 backup:** inspect `npx wrangler d1 time-travel info neomail-db` and note the current bookmark before migrations. Recovery windows depend on Cloudflare plan. Protect logical exports with encryption and strict access; they contain mail metadata and possibly bodies. Store the encryption key separately; a D1 backup alone is insufficient to restore encrypted settings.
+- **D1 backup:** inspect `npx wrangler d1 time-travel info neomailserver` and note the current bookmark before migrations. Recovery windows depend on Cloudflare plan. Protect logical exports with encryption and strict access; they contain mail metadata and possibly bodies. Store the encryption key separately; a D1 backup alone is insufficient to restore encrypted settings.
 - **Restore:** restore only in an incident-controlled maintenance window; it overwrites data. Prefer rehearsal against isolated staging data first. After restoring, revoke sessions, rotate integration/provider credentials if exposure is possible, and inspect for resurrected idempotency records or records lost after the restore point. A restored database can no longer know about later successful sends.
 - **Rollback:** retain a known-good Worker version and database bookmark. Do not roll back to the original insecure webhook/authentication paths. The database upgrade is additive; avoid destructive migrations during routine rollback.
 

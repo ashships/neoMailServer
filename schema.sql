@@ -1,5 +1,5 @@
 -- Cloudflare D1 Database Schema for Enterprise Multi-Identity Email Infrastructure
--- Apply explicitly using: npx wrangler d1 execute neomail-db --file=./schema.sql
+-- Apply explicitly using: npx wrangler d1 execute neomailserver --file=./schema.sql
 
 -- 1. Main Email Audit, Storage & Transmission Log Table
 CREATE TABLE IF NOT EXISTS email_logs (
@@ -42,11 +42,11 @@ CREATE TABLE IF NOT EXISTS sender_identities (
 
 -- Seed Initial Sender Identities for mail.neopathshala.com
 INSERT OR IGNORE INTO sender_identities (id, email_address, display_name, is_default, is_active, created_at) VALUES
-('id_noreply', 'no-reply@mail.neopathshala.com', 'Nepathshala No-Reply', 1, 1, unixepoch()),
-('id_support', 'support@mail.neopathshala.com', 'Nepathshala Support', 0, 1, unixepoch()),
-('id_billing', 'billing@mail.neopathshala.com', 'Nepathshala Billing', 0, 1, unixepoch()),
-('id_notifications', 'notifications@mail.neopathshala.com', 'Nepathshala Notifications', 0, 1, unixepoch()),
-('id_admissions', 'admissions@mail.neopathshala.com', 'Nepathshala Admissions', 0, 1, unixepoch());
+('id_noreply', 'no-reply@mail.neopathshala.com', 'neoMail No-Reply', 1, 1, unixepoch()),
+('id_support', 'support@mail.neopathshala.com', 'neoMail Support', 0, 1, unixepoch()),
+('id_billing', 'billing@mail.neopathshala.com', 'neoMail Billing', 0, 1, unixepoch()),
+('id_notifications', 'notifications@mail.neopathshala.com', 'neoMail Notifications', 0, 1, unixepoch()),
+('id_admissions', 'admissions@mail.neopathshala.com', 'neoMail Admissions', 0, 1, unixepoch());
 
 -- 3. Security Audit & Zero-Trust Event Log Table
 CREATE TABLE IF NOT EXISTS security_audit_logs (
@@ -77,7 +77,8 @@ INSERT OR IGNORE INTO provider_health (provider_name, is_active, consecutive_fai
 ('brevo', 1, 0, unixepoch()),
 ('mailgun', 1, 0, unixepoch()),
 ('mailtrap', 1, 0, unixepoch()),
-('mailersend', 1, 0, unixepoch());
+('mailersend', 1, 0, unixepoch()),
+('smtp', 1, 0, unixepoch());
 
 -- Application settings: only allowlisted names are loaded; secrets use AES-256-GCM.
 CREATE TABLE IF NOT EXISTS app_settings (
@@ -105,4 +106,44 @@ CREATE TABLE IF NOT EXISTS admin_profiles (
  avatar_data TEXT,
  avatar_mime TEXT CHECK(avatar_mime IN ('image/png','image/jpeg','image/webp')),
  updated_at INTEGER NOT NULL
+);
+
+-- 5. API clients / integration keys for central multi-application use.
+CREATE TABLE IF NOT EXISTS api_clients (
+ id TEXT PRIMARY KEY,
+ name TEXT NOT NULL,
+ key_hash TEXT NOT NULL UNIQUE,
+ sender_address TEXT,
+ is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
+ created_at INTEGER NOT NULL,
+ last_used_at INTEGER
+);
+CREATE INDEX IF NOT EXISTS idx_api_clients_active ON api_clients(is_active);
+
+-- 6. Application-level administrator accounts authorized through Cloudflare Access identities.
+CREATE TABLE IF NOT EXISTS admin_users (
+ subject TEXT PRIMARY KEY,
+ role TEXT NOT NULL CHECK(role IN ('superadmin','admin','client','staff')),
+ is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
+ created_at INTEGER NOT NULL,
+ created_by TEXT
+);
+
+-- 7. One-time codes for email-based administrator login.
+CREATE TABLE IF NOT EXISTS admin_otps (
+ subject TEXT NOT NULL,
+ code_hash TEXT NOT NULL,
+ expires_at INTEGER NOT NULL,
+ attempts INTEGER NOT NULL DEFAULT 0,
+ created_at INTEGER NOT NULL,
+ PRIMARY KEY (subject)
+);
+
+-- 8. Client domains tracked for sender onboarding.
+CREATE TABLE IF NOT EXISTS managed_domains (
+ domain TEXT PRIMARY KEY,
+ display_name TEXT NOT NULL,
+ is_verified INTEGER NOT NULL DEFAULT 0 CHECK(is_verified IN (0,1)),
+ created_at INTEGER NOT NULL,
+ created_by TEXT
 );

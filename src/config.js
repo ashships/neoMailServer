@@ -1,11 +1,11 @@
 import { HttpError, email, text, encrypt, decrypt, bytes64 } from './security.js';
-export const PROVIDERS = ['resend', 'brevo', 'mailgun', 'mailtrap', 'mailersend'];
+export const PROVIDERS = ['resend', 'brevo', 'mailgun', 'mailtrap', 'mailersend', 'smtp'];
 export const SETTINGS = {
   BIMI_LOGO_URL: ['Public BIMI SVG logo URL', 'https-url', ''],
   BIMI_CERTIFICATE_URL: ['Public VMC / CMC certificate URL', 'https-url', ''],
   DEFAULT_SENDER: ['Default sender', 'email', 'no-reply@mail.neopathshala.com'],
-  DEFAULT_SENDER_NAME: ['Sender name', 'text', 'Nepathshala'],
-  FALLBACK_ORDER: ['Provider order (comma separated)', 'providers', 'resend,brevo,mailgun,mailtrap,mailersend'],
+  DEFAULT_SENDER_NAME: ['Sender name', 'text', 'neoMail'],
+  FALLBACK_ORDER: ['Provider order (comma separated)', 'providers', 'smtp,resend,brevo,mailgun,mailtrap,mailersend'],
   REQUEST_TIMEOUT_MS: ['Provider timeout (milliseconds)', 'number', '6000', 1000, 15000],
   API_RATE_LIMIT_PER_MINUTE: ['API requests per minute', 'number', '60', 1, 1000],
   WEBHOOK_RATE_LIMIT_PER_MINUTE: ['Webhook requests per minute / IP', 'number', '120', 1, 1000],
@@ -13,9 +13,13 @@ export const SETTINGS = {
   RETENTION_DAYS: ['Message retention (days)', 'number', '30', 1, 365],
   STORE_MESSAGE_BODIES: ['Store message bodies (false recommended for OTPs)', 'boolean', 'false'],
   MAILGUN_DOMAIN: ['Mailgun production domain (verified custom domain)', 'optional-domain', ''],
+  SMTP_HOST: ['SMTP host (e.g. smtp.gmail.com)', 'text', ''],
+  SMTP_PORT: ['SMTP port', 'number', '465', 1, 65535],
+  SMTP_USER: ['SMTP username', 'text', ''],
+  SMTP_SECURE: ['SMTP implicit TLS (port 465)', 'boolean', 'true'],
   MAILGUN_SANDBOX_DOMAIN: ['Mailgun sandbox domain (testing only)', 'sandbox-domain', ''],
 };
-export const SECRETS = ['API_SECRET_KEY', ...PROVIDERS.map(p => p.toUpperCase() + '_API_KEY'), 'RESEND_WEBHOOK_SECRET', 'MAILGUN_WEBHOOK_SIGNING_KEY'];
+export const SECRETS = ['API_SECRET_KEY', ...PROVIDERS.map(p => p.toUpperCase() + '_API_KEY'), 'RESEND_WEBHOOK_SECRET', 'MAILGUN_WEBHOOK_SIGNING_KEY', 'SMTP_PASS'];
 export function validateSetting(name, value) {
   const spec = SETTINGS[name]; if (!spec) throw new HttpError(422, 'Unknown setting.');
   if (typeof value !== 'string' || value.length > 255) throw new HttpError(422, 'Invalid setting.');

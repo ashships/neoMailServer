@@ -10,12 +10,44 @@ async function rows(env, sql, ...params) { return (await env.DB.prepare(sql).bin
 async function identities(env) { return rows(env, 'SELECT * FROM sender_identities ORDER BY is_default DESC,email_address'); }
 function requireMethod(request, methods) { if (!methods.includes(request.method)) throw new HttpError(405, 'Method not allowed.'); }
 async function activeIdentity(env, address) { return env.DB.prepare('SELECT * FROM sender_identities WHERE email_address=? AND is_active=1').bind(address).first(); }
+async function adminRole(env, subject) {
+  if (subject === 'local-admin' || subject === 'admin') return 'superadmin';
+  if (!env.DB) return 'superadmin';
+  if (tokenLoginConfigured(env)) return 'superadmin';
+  const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
+  if ((count?.n || 0) === 0) return 'superadmin';
+  const row = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=? AND is_active=1').bind(subject).first();
+  return row?.role || null;
+}
+async function apiClient(env, token) {
+  if (typeof token !== 'string' || !token) return null;
+  const digest = await hash(token);
+  const row = await env.DB.prepare('SELECT * FROM api_clients WHERE key_hash=? AND is_active=1').bind(digest).first();
+  if (row) {
+    await env.DB.prepare('UPDATE api_clients SET last_used_at=unixepoch() WHERE id=?').bind(row.id).run();
+    return row;
+  }
+  const { values: cfg } = await config(env);
+  if (cfg.API_SECRET_KEY && await equal(token, cfg.API_SECRET_KEY)) return { id: 'legacy', name: 'Legacy API key', sender_address: null };
+  return null;
+}
+function accessConfigured(env) {
+  const team = env.ACCESS_TEAM_DOMAIN, audience = env.ACCESS_AUD;
+  return /^[a-z0-9-]+\.cloudflareaccess\.com$/.test(team || '') && !!audience;
+}
+function tokenLoginConfigured(env) {
+  return env.ALLOW_TOKEN_LOGIN === 'true' && !accessConfigured(env) && typeof env.ADMIN_TOKEN_HASH === 'string' && env.ADMIN_TOKEN_HASH.length > 0;
+}
+function otpLoginConfigured(env) {
+  return env.EMAIL_OTP_LOGIN === 'true' && !accessConfigured(env);
+}
 async function adminVerifier(request, env) {
-  if (!local(request, env)) return 'access-v2:' + env.ACCESS_TEAM_DOMAIN + ':' + env.ACCESS_AUD;
-  return env.LOCAL_ADMIN_TOKEN ? hash(env.LOCAL_ADMIN_TOKEN) : env.ADMIN_TOKEN_HASH;
+  if (local(request, env)) return env.LOCAL_ADMIN_TOKEN ? hash(env.LOCAL_ADMIN_TOKEN) : env.ADMIN_TOKEN_HASH;
+  if (accessConfigured(env)) return 'access-v2:' + env.ACCESS_TEAM_DOMAIN + ':' + env.ACCESS_AUD;
+  return env.ADMIN_TOKEN_HASH;
 }
 async function reauthenticate(request, env, data) {
-  if (!local(request, env)) {
+  if (!local(request, env) && accessConfigured(env)) {
     // access() has already verified this exact JWT's signature and claims.
     const claims = JSON.parse(new TextDecoder().decode(bytes64(request.headers.get('cf-access-jwt-assertion').split('.')[1])));
     if (now() - claims.iat > 300) throw new HttpError(403, 'Sign out of Cloudflare Access and sign in again before changing credentials (five-minute freshness required).');
@@ -36,12 +68,18 @@ async function handler(request, env) {
   if (path === '/api/v1/send' || path === '/api/send') {
     requireMethod(request, ['POST']);
     await rate(env, 'api-auth:' + ip, 120, 60);
-    const { values: cfg } = await config(env);
     const bearer = request.headers.get('authorization') || '';
-    if (!cfg.API_SECRET_KEY || cfg.API_SECRET_KEY.length < 43) throw new HttpError(503, 'API credential is not configured.');
-    if (!bearer.startsWith('Bearer ') || !await equal(bearer.slice(7), cfg.API_SECRET_KEY)) throw new HttpError(401, 'Invalid API credential.');
-    await rate(env, 'api:dispatch', +cfg.API_RATE_LIMIT_PER_MINUTE, 60);
-    const data = await json(request); const mail = validateMail(data, cfg);
+    const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : '';
+    const client = await apiClient(env, token);
+    if (!client) throw new HttpError(401, 'Invalid API credential.');
+    const { values: cfg } = await config(env);
+    await rate(env, 'api:client:' + client.id, +cfg.API_RATE_LIMIT_PER_MINUTE, 60);
+    const data = await json(request);
+    if (client.sender_address) {
+      if (data.from && email(data.from) !== client.sender_address) throw new HttpError(403, 'This API client is restricted to its assigned sender.');
+      if (!data.from) data.from = client.sender_address;
+    }
+    const mail = validateMail(data, cfg);
     const result = await dispatch(cfg, mail, request.headers.get('idempotency-key'));
     return reply(result, result.success ? 200 : result.uncertain ? 202 : 502);
   }
@@ -54,18 +92,101 @@ async function handler(request, env) {
     const event = await verifyWebhook(provider, request, await readBody(request), cfg);
     await applyWebhook(env, provider, event); return reply({ received: true });
   }
+  if (path === '/api/v1/domains' || path === '/api/domains') {
+    requireMethod(request, ['GET', 'POST']);
+    await rate(env, 'api-auth:' + ip, 120, 60);
+    const bearer = request.headers.get('authorization') || '';
+    const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : '';
+    const client = await apiClient(env, token);
+    if (!client) throw new HttpError(401, 'Invalid API credential.');
+    if (request.method === 'GET') {
+      const rows = await rows(env, 'SELECT domain,display_name,is_verified,created_at FROM managed_domains WHERE created_by=? ORDER BY created_at DESC', client.id);
+      return reply({ domains: rows });
+    }
+    await rate(env, 'api:client:' + client.id, + (await config(env)).values.API_RATE_LIMIT_PER_MINUTE, 60);
+    const data = await json(request);
+    const domain = (typeof data.domain === 'string' ? data.domain.trim().toLowerCase() : '');
+    const name = (typeof data.display_name === 'string' ? data.display_name.trim().slice(0, 100) : domain);
+    if (!/^[a-z0-9.-]+$/.test(domain) || domain.length > 253) throw new HttpError(422, 'Invalid domain.');
+    if (!name) throw new HttpError(422, 'Display name is required.');
+    try {
+      await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by) VALUES (?,?,0,unixepoch(),?)').bind(domain, name, client.id).run();
+    } catch {
+      throw new HttpError(409, 'Domain already registered.');
+    }
+    await audit(env, request, 'DOMAIN_ADDED', { domain, client: client.id });
+    return reply({ domain, status: 'pending_dns', dns: [
+      { type: 'TXT', name: domain, value: 'v=spf1 include:_spf.' + domain + ' ~all (provider-specific; replace with your provider SPF)' },
+      { type: 'TXT', name: '_dmarc.' + domain, value: 'v=DMARC1; p=quarantine; rua=mailto:postmaster@' + domain },
+      { type: 'TXT', name: 'selector._domainkey.' + domain, value: 'Provider-specific DKIM record' },
+    ] }, 201);
+  }
   if (path !== '/admin' && !path.startsWith('/admin/')) throw new HttpError(404, 'Endpoint not found.');
   const subject = await access(request, env);
   if (path === '/admin/login') {
     requireMethod(request, ['GET', 'POST']);
-    if (request.method === 'GET') return reply(local(request, env) ? ui.login() : ui.accessLogin());
+    if (request.method === 'GET') {
+      if (otpLoginConfigured(env) && url.searchParams.get('mode') !== 'token') {
+        const email = (url.searchParams.get('email') || '').slice(0, 254);
+        const pending = email ? await env.DB.prepare('SELECT 1 FROM admin_otps WHERE subject=? AND expires_at>unixepoch()').bind(email).first() : null;
+        return reply(pending ? ui.otpVerify(email) : ui.otpRequest());
+      }
+      return reply((local(request, env) || tokenLoginConfigured(env)) ? ui.login() : ui.accessLogin());
+    }
     sameOrigin(request);
     const { values: cfg } = await config(env);
     await rate(env, 'login:ip:' + ip, +cfg.MAX_LOGIN_ATTEMPTS, 900);
-    await rate(env, 'login:subject:' + subject, +cfg.MAX_LOGIN_ATTEMPTS, 900);
     const data = await form(request);
-    try { await reauthenticate(request, env, data); } catch (e) {
-      await audit(env, request, 'AUTH_FAILURE'); return reply(ui.login('Sign-in failed. Check your administrator token.'), e.status || 401);
+    if (otpLoginConfigured(env) && data.get('step')) {
+      const step = data.get('step');
+      if (step === 'request') {
+        const emailAddr = email(data.get('email'));
+        if (!emailAddr) throw new HttpError(422, 'Valid administrator email required.');
+        const allowed = await env.DB.prepare('SELECT 1 FROM admin_users WHERE subject=? AND is_active=1').bind(emailAddr).first();
+        const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
+        if ((count?.n || 0) > 0 && !allowed) throw new HttpError(403, 'Administrator account is not authorized.');
+        await rate(env, 'login:subject:' + emailAddr, +cfg.MAX_LOGIN_ATTEMPTS, 900);
+        const code = String(Math.floor(100000 + Math.random() * 900000));
+        const expires = now() + 600;
+        await env.DB.prepare('INSERT INTO admin_otps (subject,code_hash,expires_at,attempts,created_at) VALUES (?,?,?,0,unixepoch()) ON CONFLICT(subject) DO UPDATE SET code_hash=excluded.code_hash,expires_at=excluded.expires_at,attempts=0').bind(emailAddr, await hash(code), expires).run();
+        try {
+          const mail = validateMail({ to: emailAddr, subject: 'NeoMail login code', text: 'Your NeoMail login code is ' + code + '. It expires in 10 minutes.' }, cfg);
+          const result = await dispatch(cfg, mail, 'otp-' + Date.now());
+          if (!result.success) throw new Error('send failed: ' + result.status + ' ' + result.provider);
+        } catch (e) {
+          await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
+          throw new HttpError(503, 'Unable to send login code. Configure a provider first.');
+        }
+        await audit(env, request, 'OTP_SENT', { subject: emailAddr });
+        return reply(ui.otpVerify(emailAddr));
+      }
+      if (step === 'verify') {
+        const emailAddr = email(data.get('email'));
+        const code = String(data.get('code') || '');
+        if (!emailAddr || !/^[0-9]{6}$/.test(code)) throw new HttpError(422, 'Invalid code.');
+        const row = await env.DB.prepare('SELECT * FROM admin_otps WHERE subject=?').bind(emailAddr).first();
+        if (!row || row.expires_at <= now() || row.attempts >= 5) {
+          await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
+          throw new HttpError(403, 'Login code expired or invalid.');
+        }
+        await env.DB.prepare('UPDATE admin_otps SET attempts=attempts+1 WHERE subject=?').bind(emailAddr).run();
+        if (!await equal(await hash(code), row.code_hash)) throw new HttpError(403, 'Invalid login code.');
+        await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
+        const token = crypto.randomUUID(), csrfToken = crypto.randomUUID();
+        const prior = cookie(request, '__Host-neomail');
+        await env.DB.batch([
+          env.DB.prepare('DELETE FROM admin_sessions WHERE token_hash=? OR expires_at<=unixepoch()').bind(await hash(prior)),
+          env.DB.prepare('INSERT INTO admin_sessions (token_hash,csrf_token,access_subject,credential_version,expires_at) VALUES (?,?,?,?,?)').bind(await hash(token), csrfToken, 'admin', await hash(await adminVerifier(request, env)), now() + 3600),
+        ]);
+        await audit(env, request, 'AUTH_SUCCESS');
+        return redirect('/admin', { 'Set-Cookie': sessionCookie(token) });
+      }
+      throw new HttpError(422, 'Invalid login step.');
+    }
+    await rate(env, 'login:subject:' + subject, +cfg.MAX_LOGIN_ATTEMPTS, 900);
+    const data2 = data;
+    try { await reauthenticate(request, env, data2); } catch (e) {
+      await audit(env, request, 'AUTH_FAILURE'); return reply((local(request, env) || tokenLoginConfigured(env)) ? ui.login('Sign-in failed. Check your administrator token.') : ui.accessLogin(), e.status || 401);
     }
     const token = crypto.randomUUID(), csrfToken = crypto.randomUUID();
     const prior = cookie(request, '__Host-neomail');
@@ -149,6 +270,53 @@ async function handler(request, env) {
       }
       await audit(env, request, 'IDENTITY_UPDATED', { address, action }); return redirect('/admin?view=identities&notice=Identity+updated');
     }
+    if (path === '/admin/api-clients/create') {
+      const name = text(data.get('name'), 80);
+      if (!name) throw new HttpError(422, 'Client name is required.');
+      const senderRaw = data.get('sender_address');
+      const sender = senderRaw ? email(senderRaw) : null;
+      if (senderRaw && !sender) throw new HttpError(422, 'Invalid sender address.');
+      if (sender && !await env.DB.prepare('SELECT 1 FROM sender_identities WHERE email_address=? AND is_active=1').bind(sender).first()) throw new HttpError(422, 'Sender must be an active identity.');
+      const bytes = new Uint8Array(32); crypto.getRandomValues(bytes);
+      const key = btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+      await env.DB.prepare('INSERT INTO api_clients (id,name,key_hash,sender_address,is_active,created_at) VALUES (?,?,?,?,1,unixepoch())').bind(crypto.randomUUID(), name, await hash(key), sender).run();
+      await audit(env, request, 'API_CLIENT_CREATED', { name, sender });
+      return redirect('/admin?view=clients&created_key=' + encodeURIComponent(key) + '&notice=' + encodeURIComponent('API client created. Copy the key now; it will not be shown again.'));
+    }
+    if (path === '/admin/api-clients/revoke') {
+      const id = data.get('id');
+      if (typeof id !== 'string' || !id || id.length > 100) throw new HttpError(422, 'Invalid client.');
+      await env.DB.prepare('UPDATE api_clients SET is_active=0 WHERE id=?').bind(id).run();
+      await audit(env, request, 'API_CLIENT_REVOKED', { id });
+      return redirect('/admin?view=clients&notice=' + encodeURIComponent('API client revoked.'));
+    }
+    if (path === '/admin/users/add') {
+      if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
+      const newSubject = text(data.get('subject'), 254);
+      if (!newSubject) throw new HttpError(422, 'Subject is required.');
+      const requestedRole = data.get('role');
+      const role = ['admin','client','staff'].includes(requestedRole) ? requestedRole : null;
+      if (!role) throw new HttpError(422, 'Invalid role.');
+      await env.DB.prepare('INSERT INTO admin_users (subject,role,is_active,created_at,created_by) VALUES (?,?,1,unixepoch(),?) ON CONFLICT(subject) DO UPDATE SET role=excluded.role,is_active=1').bind(newSubject, role, subject).run();
+      await audit(env, request, 'ADMIN_USER_ADDED', { subject: newSubject, role }); return redirect('/admin?view=users&notice=' + encodeURIComponent('Administrator added.'));
+    }
+    if (path === '/admin/users/revoke') {
+      if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
+      const target = text(data.get('subject'), 254);
+      if (!target || target === subject) throw new HttpError(422, 'Invalid target.');
+      const row = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=?').bind(target).first();
+      if (!row) throw new HttpError(404, 'User not found.');
+      if (row.role === 'superadmin') throw new HttpError(409, 'Cannot revoke a superadmin.');
+      await env.DB.prepare('UPDATE admin_users SET is_active=0 WHERE subject=?').bind(target).run();
+      await audit(env, request, 'ADMIN_USER_REVOKED', { subject: target }); return redirect('/admin?view=users&notice=' + encodeURIComponent('Administrator revoked.'));
+    }
+    if (path === '/admin/domains/create') {
+      const domain = text(data.get('domain'), 253);
+      const name = text(data.get('display_name'), 100);
+      if (!domain || !/^[a-z0-9.-]+$/i.test(domain) || !name) throw new HttpError(422, 'Valid domain and name required.');
+      await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by) VALUES (?,?,0,unixepoch(),?)').bind(domain.toLowerCase(), name, subject).run();
+      await audit(env, request, 'DOMAIN_ADDED', { domain }); return redirect('/admin?view=domains&notice=' + encodeURIComponent('Domain added.'));
+    }
     if (path === '/admin/send-test') {
       await rate(env, 'admin:send:' + subject, 5, 60);
       const mode=data.get('delivery_mode') || 'normal';
@@ -196,6 +364,19 @@ async function handler(request, env) {
     content=ui.security(await rows(env,'SELECT * FROM security_audit_logs ORDER BY unix_timestamp DESC LIMIT 100'),{...env,csrf:sess.csrf_token});
   } else if (view === 'setup') {
     title='Integration guide'; subtitle='Prepare your Worker and connect the Nepathshala backend.'; content=ui.setup(url.origin,cfg);
+  } else if (view === 'clients') {
+    title='API clients'; subtitle='Issue and revoke integration keys for applications.';
+    const clients = await rows(env, 'SELECT id,name,sender_address,is_active,created_at,last_used_at FROM api_clients ORDER BY created_at DESC');
+    content = ui.apiClients(clients, sess, (url.searchParams.get('created_key') || '').slice(0, 128));
+  } else if (view === 'users') {
+    title='Admin users'; subtitle='Manage administrator identities authorized through Cloudflare Access.';
+    const role = await adminRole(env, sess.access_subject || subject);
+    const users = await rows(env, 'SELECT subject,role,is_active,created_at FROM admin_users ORDER BY created_at');
+    content = ui.users(users, sess, role === 'superadmin');
+  } else if (view === 'domains') {
+    title='Domains'; subtitle='Track client sending domains and DNS onboarding.';
+    const domains = await rows(env, 'SELECT domain,display_name,is_verified,created_at FROM managed_domains ORDER BY created_at DESC');
+    content = ui.domains(domains, sess);
   } else if (view === 'mail') {
     title='Mail activity'; subtitle='Trace every message from request to provider.';
     const page = Math.min(10000, Math.max(1, Number(url.searchParams.get('page')) || 1));
