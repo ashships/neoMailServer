@@ -261,7 +261,7 @@ Idempotency-Key: unique-key
     await rate(env, 'login:subject:' + subject, +cfg.MAX_LOGIN_ATTEMPTS, 60);
     const data2 = data;
     try { await reauthenticate(request, env, data2); } catch (e) {
-      await audit(env, request, 'AUTH_FAILURE'); return reply((local(request, env) || tokenLoginConfigured(env)) ? ui.login('Sign-in failed. Check your administrator token.') : ui.accessLogin(), e.status || 401);
+      await audit(env, request, 'AUTH_FAILURE'); return reply((local(request, env) || tokenLoginConfigured(env) || otpLoginConfigured(env)) ? ui.login('Sign-in failed. Check your administrator token.') : ui.accessLogin(), e.status || 401);
     }
     const token = crypto.randomUUID(), csrfToken = crypto.randomUUID();
     const prior = cookie(request, '__Host-neomail');
@@ -289,11 +289,11 @@ Idempotency-Key: unique-key
     }
     if (path === '/admin/logout') {
       await env.DB.prepare('DELETE FROM admin_sessions WHERE token_hash=?').bind(sess.token_hash).run();
-      await audit(env, request, 'LOGOUT'); return redirect(local(request, env) ? '/admin/login' : '/cdn-cgi/access/logout', { 'Set-Cookie': sessionCookie('', 0) });
+      await audit(env, request, 'LOGOUT'); return redirect((local(request, env) || !accessConfigured(env)) ? '/login' : '/cdn-cgi/access/logout', { 'Set-Cookie': sessionCookie('', 0) });
     }
     if (path === '/admin/sessions/revoke') {
       await env.DB.prepare('DELETE FROM admin_sessions').run();
-      await audit(env, request, 'SESSIONS_REVOKED'); return redirect(local(request, env) ? '/admin/login' : '/cdn-cgi/access/logout', { 'Set-Cookie': sessionCookie('', 0) });
+      await audit(env, request, 'SESSIONS_REVOKED'); return redirect((local(request, env) || !accessConfigured(env)) ? '/login' : '/cdn-cgi/access/logout', { 'Set-Cookie': sessionCookie('', 0) });
     }
     if (path === '/admin/settings') {
       const sender = email(data.get('DEFAULT_SENDER'));
