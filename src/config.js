@@ -3,7 +3,7 @@ export const PROVIDERS = ['resend', 'brevo', 'mailgun', 'mailtrap', 'mailersend'
 export const SETTINGS = {
   BIMI_LOGO_URL: ['Public BIMI SVG logo URL', 'https-url', ''],
   BIMI_CERTIFICATE_URL: ['Public VMC / CMC certificate URL', 'https-url', ''],
-  DEFAULT_SENDER: ['Default sender', 'email', 'no-reply@mail.neopathshala.com'],
+  DEFAULT_SENDER: ['Default sender', 'email', ''],
   DEFAULT_SENDER_NAME: ['Sender name', 'text', 'neoPathshala'],
   FALLBACK_ORDER: ['Provider order (comma separated)', 'providers', 'smtp,resend,brevo,mailgun,mailtrap,mailersend'],
   REQUEST_TIMEOUT_MS: ['Provider timeout (milliseconds)', 'number', '6000', 1000, 15000],
