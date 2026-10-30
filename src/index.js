@@ -80,6 +80,13 @@ Idempotency-Key: unique-key
 {"from":"no-reply@example.com","to":"user@example.com","subject":"Hello","text":"Hi"}</pre><h2>Domains</h2><p>Clients can register domains via <code>POST /api/v1/domains</code>. DNS records are provider-specific.</p><h2>Support</h2><p>See repository docs for full operations, security, and validation guides.</p></body></html>`;
     return reply(html, 200, { 'Content-Type': 'text/html; charset=utf-8' });
   }
+  if (path === '/docs') {
+    requireMethod(request, ['GET']);
+    const row = await env.DB.prepare("SELECT value FROM app_settings WHERE name='DOCS_CONTENT'").first();
+    const content = row?.value || 'NeoMail documentation. Configure your deployment and providers in the admin panel.';
+    const html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NeoMail Docs</title><style>body{font-family:Inter,system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;line-height:1.6;color:#172820;white-space:pre-wrap}h1{color:#087d54}</style></head><body><h1>NeoMail Documentation</h1><p>' + content.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</p></body></html>';
+    return reply(html, 200, { 'Content-Type': 'text/html; charset=utf-8' });
+  }
   if (path === '/health') { requireMethod(request, ['GET']); return reply({ status: 'ok', service: 'neomail' }); }
   if (path === '/') { requireMethod(request, ['GET']); return redirect('/admin'); }
   if (request.method === 'OPTIONS') return reply({ error: 'Browser cross-origin API calls are not supported.' }, 405);
@@ -384,6 +391,12 @@ Idempotency-Key: unique-key
       await audit(env, request, 'DOMAIN_VERIFIED', { domain, ok });
       return redirect('/admin?view=domains&notice=' + encodeURIComponent(ok ? 'Domain verified.' : 'DNS record not found yet.'));
     }
+    if (path === '/admin/docs/save') {
+      if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
+      const content = (data.get('content') || '').toString().slice(0, 20000);
+      await env.DB.prepare("INSERT INTO app_settings (name,value,is_secret,updated_at) VALUES ('DOCS_CONTENT',?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,updated_at=unixepoch()").bind(content).run();
+      await audit(env, request, 'DOCS_UPDATED', {}); return redirect('/admin?view=docs&notice=' + encodeURIComponent('Documentation saved.'));
+    }
     if (path === '/admin/send-test') {
       await rate(env, 'admin:send:' + subject, 5, 60);
       const mode=data.get('delivery_mode') || 'normal';
@@ -444,6 +457,11 @@ Idempotency-Key: unique-key
     title='Domains'; subtitle='Track client sending domains and DNS onboarding.';
     const domains = await rows(env, 'SELECT domain,display_name,is_verified,created_at FROM managed_domains ORDER BY created_at DESC');
     content = ui.domains(domains, sess);
+  } else if (view === 'docs') {
+    if (await adminRole(env, sess.access_subject || subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
+    title='Documentation'; subtitle='Edit the public /docs page.';
+    const row = await env.DB.prepare("SELECT value FROM app_settings WHERE name='DOCS_CONTENT'").first();
+    content = ui.docsEditor(row?.value || '', sess);
   } else if (view === 'mail') {
     title='Mail activity'; subtitle='Trace every message from request to provider.';
     const page = Math.min(10000, Math.max(1, Number(url.searchParams.get('page')) || 1));
