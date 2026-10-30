@@ -97,7 +97,7 @@ Idempotency-Key: unique-key
   }
   if (path === '/health') { requireMethod(request, ['GET']); return reply({ status: 'ok', service: 'neomail' }); }
   if (path === '/') { requireMethod(request, ['GET']); return redirect('/admin'); }
-  if (path === '/dashboard') { requireMethod(request, ['GET']); return redirect('/admin'); }
+
   if (request.method === 'OPTIONS') return reply({ error: 'Browser cross-origin API calls are not supported.' }, 405);
   if (!env.DB) throw new HttpError(503, 'Database binding unavailable.');
   if (!local(request, env) && url.protocol !== 'https:') throw new HttpError(403, 'HTTPS required.');
@@ -173,9 +173,12 @@ Idempotency-Key: unique-key
     if (ok) await env.DB.prepare('UPDATE managed_domains SET is_verified=1 WHERE domain=?').bind(domain).run();
     return reply({ domain, verified: ok });
   }
-  if (path !== '/admin' && !path.startsWith('/admin/')) throw new HttpError(404, 'Endpoint not found.');
+  if (path !== '/admin' && path !== '/dashboard' && !path.startsWith('/admin/')) throw new HttpError(404, 'Endpoint not found.');
   const subject = await access(request, env);
   const role = await adminRole(env, subject);
+  const dashboardMode = path === '/dashboard';
+  if (dashboardMode && role === 'superadmin') return redirect('/admin');
+  if (!dashboardMode && path.startsWith('/admin') && role !== 'superadmin' && path !== '/admin/login') return redirect('/dashboard');
   if (path === '/admin/login') {
     requireMethod(request, ['GET', 'POST']);
     if (request.method === 'GET') {
@@ -241,7 +244,7 @@ Idempotency-Key: unique-key
           env.DB.prepare('INSERT INTO admin_sessions (token_hash,csrf_token,access_subject,credential_version,expires_at) VALUES (?,?,?,?,?)').bind(await hash(token), csrfToken, 'admin', await hash(await adminVerifier(request, env)), now() + 3600),
         ]);
         await audit(env, request, 'AUTH_SUCCESS');
-        return redirect('/admin', { 'Set-Cookie': sessionCookie(token) });
+        return redirect(role === 'superadmin' ? '/admin' : '/dashboard', { 'Set-Cookie': sessionCookie(token) });
       }
       throw new HttpError(422, 'Invalid login step.');
     }
@@ -257,7 +260,7 @@ Idempotency-Key: unique-key
       env.DB.prepare('INSERT INTO admin_sessions (token_hash,csrf_token,access_subject,credential_version,expires_at) VALUES (?,?,?,?,?)').bind(await hash(token), csrfToken, subject, await hash(await adminVerifier(request, env)), now() + 3600),
     ]);
     await audit(env, request, 'AUTH_SUCCESS');
-    return redirect('/admin', { 'Set-Cookie': sessionCookie(token) });
+    return redirect(role === 'superadmin' ? '/admin' : '/dashboard', { 'Set-Cookie': sessionCookie(token) });
   }
   const sess = await session(request, { ...env, ADMIN_TOKEN_HASH: await adminVerifier(request, env) }, subject);
   if (!sess) return redirect('/admin/login');
@@ -436,7 +439,7 @@ Idempotency-Key: unique-key
     });
     return reply(ui.page('mail','Message details','Inspect delivery metadata and isolated message content.',ui.inspector(mail),sess));
   }
-  if (!['/admin','/admin/dashboard'].includes(path)) throw new HttpError(404, 'Endpoint not found.');
+  if (!['/admin','/admin/dashboard','/dashboard'].includes(path)) throw new HttpError(404, 'Endpoint not found.');
   const view = url.searchParams.get('view') || 'overview', notice = (url.searchParams.get('notice') || '').slice(0, 500);
   if (['settings','providers','users','domains','docs'].includes(view) && role !== 'superadmin') throw new HttpError(403, 'Superadmin access required.');
   let title, subtitle, content;
