@@ -5,7 +5,7 @@ export const SETTINGS = {
   BIMI_CERTIFICATE_URL: ['Public VMC / CMC certificate URL', 'https-url', ''],
   DEFAULT_SENDER: ['Default sender', 'email', ''],
   DEFAULT_SENDER_NAME: ['Sender name', 'text', 'neoPathshala'],
-  FALLBACK_ORDER: ['Provider order (comma separated)', 'providers', 'smtp,resend,brevo,mailgun,mailtrap,mailersend'],
+  FALLBACK_ORDER: ['Provider order (comma separated)', 'providers', 'resend,brevo,mailgun,mailtrap,mailersend'],
   REQUEST_TIMEOUT_MS: ['Provider timeout (milliseconds)', 'number', '6000', 1000, 15000],
   API_RATE_LIMIT_PER_MINUTE: ['API requests per minute', 'number', '60', 1, 1000],
   WEBHOOK_RATE_LIMIT_PER_MINUTE: ['Webhook requests per minute / IP', 'number', '120', 1, 1000],
