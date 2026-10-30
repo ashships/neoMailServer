@@ -196,15 +196,15 @@ Idempotency-Key: unique-key
     }
     sameOrigin(request);
     const { values: cfg } = await config(env);
-    await rate(env, 'login:ip:' + ip, +cfg.MAX_LOGIN_ATTEMPTS, 900);
+    await rate(env, 'login:ip:' + ip, +cfg.MAX_LOGIN_ATTEMPTS, 60);
     const data = await form(request);
     if (otpLoginConfigured(env) && data.get('step')) {
       const step = data.get('step');
       if (step === 'request') {
         const emailAddr = email(data.get('email'));
         if (!emailAddr) throw new HttpError(422, 'Valid administrator email required.');
-        await rate(env, 'login:ip:' + ip, +cfg.MAX_LOGIN_ATTEMPTS, 900);
-        await rate(env, 'login:subject:' + emailAddr, +cfg.MAX_LOGIN_ATTEMPTS, 900);
+        await rate(env, 'login:ip:' + ip, +cfg.MAX_LOGIN_ATTEMPTS, 60);
+        await rate(env, 'login:subject:' + emailAddr, +cfg.MAX_LOGIN_ATTEMPTS, 60);
         const allowed = await env.DB.prepare('SELECT 1 FROM admin_users WHERE subject=? AND is_active=1').bind(emailAddr).first();
         const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
         const authorized = (count?.n || 0) === 0 || !!allowed;
@@ -258,7 +258,7 @@ Idempotency-Key: unique-key
       }
       throw new HttpError(422, 'Invalid login step.');
     }
-    await rate(env, 'login:subject:' + subject, +cfg.MAX_LOGIN_ATTEMPTS, 900);
+    await rate(env, 'login:subject:' + subject, +cfg.MAX_LOGIN_ATTEMPTS, 60);
     const data2 = data;
     try { await reauthenticate(request, env, data2); } catch (e) {
       await audit(env, request, 'AUTH_FAILURE'); return reply((local(request, env) || tokenLoginConfigured(env)) ? ui.login('Sign-in failed. Check your administrator token.') : ui.accessLogin(), e.status || 401);
