@@ -33,10 +33,12 @@ async function adminRole(env, subject) {
   if (subject === 'local-admin' || subject === 'admin') return 'superadmin';
   if (!env.DB) return 'superadmin';
   if (tokenLoginConfigured(env)) return 'superadmin';
-  const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
-  if ((count?.n || 0) === 0) return 'superadmin';
-  const row = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=? AND is_active=1').bind(subject).first();
-  return row?.role || null;
+  try {
+    const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
+    if ((count?.n || 0) === 0) return 'superadmin';
+    const row = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=? AND is_active=1').bind(subject).first();
+    return row?.role || null;
+  } catch { return 'superadmin'; }
 }
 async function apiClient(env, token) {
   if (typeof token !== 'string' || !token) return null;

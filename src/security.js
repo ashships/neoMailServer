@@ -128,12 +128,14 @@ export async function access(request, env) {
     const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
     if (!await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, bytes64(parts[2]), enc.encode(parts[0] + '.' + parts[1]))) throw Error();
     if (env.DB) {
+    try {
       const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
       if ((count?.n || 0) > 0) {
         const account = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=? AND is_active=1').bind(claims.sub).first();
         if (!account) throw new HttpError(403, 'Administrator account is not authorized.');
       }
-    }
+    } catch { /* table may not exist yet */ }
+  }
     return claims.sub;
   } catch { throw new HttpError(403, 'Valid Cloudflare Access authentication required.'); }
 }
