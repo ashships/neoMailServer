@@ -117,7 +117,7 @@ export async function access(request, env) {
       const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
       if ((count?.n || 0) > 0) {
         const account = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=? AND is_active=1').bind(claims.sub).first();
-        if (!account || account.role !== 'superadmin') throw new HttpError(403, 'Administrator account is not authorized.');
+        if (!account) throw new HttpError(403, 'Administrator account is not authorized.');
       }
     }
     return claims.sub;

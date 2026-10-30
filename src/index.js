@@ -7,7 +7,10 @@ import { getProfile, saveProfile, profileForm, profileImage } from './profile.js
 const now = () => Math.floor(Date.now() / 1000);
 const flash = message => redirect('/admin?notice=' + encodeURIComponent(message));
 async function rows(env, sql, ...params) { return (await env.DB.prepare(sql).bind(...params).all()).results || []; }
-async function identities(env) { return rows(env, 'SELECT * FROM sender_identities ORDER BY is_default DESC,email_address'); }
+async function identities(env, subject = null) {
+  const superadmin = subject ? await adminRole(env, subject) === 'superadmin' : true;
+  return rows(env, superadmin ? 'SELECT * FROM sender_identities ORDER BY is_default DESC,email_address' : 'SELECT * FROM sender_identities WHERE owner_subject=? ORDER BY is_default DESC,email_address', ...(superadmin?[]:[subject]));
+}
 function requireMethod(request, methods) { if (!methods.includes(request.method)) throw new HttpError(405, 'Method not allowed.'); }
 async function activeIdentity(env, address) { return env.DB.prepare('SELECT * FROM sender_identities WHERE email_address=? AND is_active=1').bind(address).first(); }
 async function verifyDomainDns(domain, token) {
@@ -20,6 +23,11 @@ async function verifyDomainDns(domain, token) {
   } catch { return false; }
 }
 
+async function isSuperadmin(env, subject) {
+  if (subject === 'local-admin' || subject === 'admin') return true;
+  const role = await adminRole(env, subject);
+  return role === 'superadmin';
+}
 async function adminRole(env, subject) {
   if (subject === 'local-admin' || subject === 'admin') return 'superadmin';
   if (!env.DB) return 'superadmin';
@@ -89,6 +97,7 @@ Idempotency-Key: unique-key
   }
   if (path === '/health') { requireMethod(request, ['GET']); return reply({ status: 'ok', service: 'neomail' }); }
   if (path === '/') { requireMethod(request, ['GET']); return redirect('/admin'); }
+  if (path === '/dashboard') { requireMethod(request, ['GET']); return redirect('/admin'); }
   if (request.method === 'OPTIONS') return reply({ error: 'Browser cross-origin API calls are not supported.' }, 405);
   if (!env.DB) throw new HttpError(503, 'Database binding unavailable.');
   if (!local(request, env) && url.protocol !== 'https:') throw new HttpError(403, 'HTTPS required.');
@@ -107,7 +116,7 @@ Idempotency-Key: unique-key
       if (!data.from) data.from = client.sender_address;
     }
     const mail = validateMail(data, cfg);
-    const result = await dispatch(cfg, mail, request.headers.get('idempotency-key'));
+    const result = await dispatch(cfg, mail, request.headers.get('idempotency-key'), client.owner_subject || null);
     return reply(result, result.success ? 200 : result.uncertain ? 202 : 502);
   }
   if (path.startsWith('/webhooks/')) {
@@ -138,7 +147,7 @@ Idempotency-Key: unique-key
     if (!name) throw new HttpError(422, 'Display name is required.');
     try {
       const vtoken = crypto.randomUUID().replace(/-/g, '');
-      await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,verification_token) VALUES (?,?,0,unixepoch(),?,?)').bind(domain, name, client.id, vtoken).run();
+      await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,owner_subject,verification_token) VALUES (?,?,0,unixepoch(),?,?,?)').bind(domain, name, client.id, client.owner_subject || client.id, vtoken).run();
     } catch {
       throw new HttpError(409, 'Domain already registered.');
     }
@@ -166,6 +175,7 @@ Idempotency-Key: unique-key
   }
   if (path !== '/admin' && !path.startsWith('/admin/')) throw new HttpError(404, 'Endpoint not found.');
   const subject = await access(request, env);
+  const role = await adminRole(env, subject);
   if (path === '/admin/login') {
     requireMethod(request, ['GET', 'POST']);
     if (request.method === 'GET') {
@@ -296,7 +306,7 @@ Idempotency-Key: unique-key
     if (path === '/admin/identities/create') {
       const address = email(data.get('email_address')), displayName = text(data.get('display_name'), 100);
       if (!address) throw new HttpError(422, 'Invalid sender address.');
-      const result = await env.DB.prepare('INSERT INTO sender_identities (id,email_address,display_name,is_default,is_active,created_at) VALUES (?,?,?,0,1,unixepoch()) ON CONFLICT(email_address) DO NOTHING RETURNING id').bind(crypto.randomUUID(), address, displayName).first();
+      const result = await env.DB.prepare('INSERT INTO sender_identities (id,email_address,display_name,is_default,is_active,created_at,owner_subject) VALUES (?,?,?,0,1,unixepoch(),?) ON CONFLICT(email_address) DO NOTHING RETURNING id').bind(crypto.randomUUID(), address, displayName, subject).first();
       if (!result) throw new HttpError(409, 'Sender identity already exists.');
       await audit(env, request, 'IDENTITY_CREATED', { address }); return redirect('/admin?view=identities&notice=Identity+created');
     }
@@ -331,7 +341,7 @@ Idempotency-Key: unique-key
       if (sender && !await env.DB.prepare('SELECT 1 FROM sender_identities WHERE email_address=? AND is_active=1').bind(sender).first()) throw new HttpError(422, 'Sender must be an active identity.');
       const bytes = new Uint8Array(32); crypto.getRandomValues(bytes);
       const key = btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-      await env.DB.prepare('INSERT INTO api_clients (id,name,key_hash,sender_address,is_active,created_at) VALUES (?,?,?,?,1,unixepoch())').bind(crypto.randomUUID(), name, await hash(key), sender).run();
+      await env.DB.prepare('INSERT INTO api_clients (id,name,key_hash,sender_address,is_active,created_at,owner_subject) VALUES (?,?,?,?,1,unixepoch(),?)').bind(crypto.randomUUID(), name, await hash(key), sender, subject).run();
       await audit(env, request, 'API_CLIENT_CREATED', { name, sender });
       return redirect('/admin?view=clients&created_key=' + encodeURIComponent(key) + '&notice=' + encodeURIComponent('API client created. Copy the key now; it will not be shown again.'));
     }
@@ -367,7 +377,7 @@ Idempotency-Key: unique-key
       const name = text(data.get('display_name'), 100);
       if (!domain || !/^[a-z0-9.-]+$/i.test(domain) || !name) throw new HttpError(422, 'Valid domain and name required.');
       const token = crypto.randomUUID().replace(/-/g, '');
-      await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,verification_token) VALUES (?,?,0,unixepoch(),?,?)').bind(domain.toLowerCase(), name, subject, token).run();
+      await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,owner_subject,verification_token) VALUES (?,?,0,unixepoch(),?,?,?)').bind(domain.toLowerCase(), name, subject, subject, token).run();
       await audit(env, request, 'DOMAIN_ADDED', { domain }); return redirect('/admin?view=domains&notice=' + encodeURIComponent('Domain added.'));
     }
     if (path === '/admin/users/role') {
@@ -428,12 +438,13 @@ Idempotency-Key: unique-key
   }
   if (!['/admin','/admin/dashboard'].includes(path)) throw new HttpError(404, 'Endpoint not found.');
   const view = url.searchParams.get('view') || 'overview', notice = (url.searchParams.get('notice') || '').slice(0, 500);
+  if (['settings','providers','users','domains','docs'].includes(view) && role !== 'superadmin') throw new HttpError(403, 'Superadmin access required.');
   let title, subtitle, content;
   if (view === 'settings') {
     sess.script_nonce=crypto.randomUUID();
     title='Settings'; subtitle='Configure your workspace without redeploying.'; content=ui.settings(cfg,sess);
   } else if (view === 'identities' || view === 'compose') {
-    const senders = await identities(env);
+    const senders = await identities(env, subject);
     title=view==='compose'?'Send a test':'Sender identities'; subtitle=view==='compose'?'Verify your email delivery setup.':'Manage approved addresses for outbound mail.';
     content=view==='compose'?ui.compose(senders,sess):ui.identities(senders,sess);
   } else if (view === 'providers') {
@@ -446,7 +457,7 @@ Idempotency-Key: unique-key
     title='Integration guide'; subtitle='Prepare your Worker and connect the Nepathshala backend.'; content=ui.setup(url.origin,cfg);
   } else if (view === 'clients') {
     title='API clients'; subtitle='Issue and revoke integration keys for applications.';
-    const clients = await rows(env, 'SELECT id,name,sender_address,is_active,created_at,last_used_at FROM api_clients ORDER BY created_at DESC');
+    const clients = await rows(env, await isSuperadmin(env, subject) ? 'SELECT id,name,sender_address,is_active,created_at,last_used_at FROM api_clients ORDER BY created_at DESC' : 'SELECT id,name,sender_address,is_active,created_at,last_used_at FROM api_clients WHERE owner_subject=? ORDER BY created_at DESC', ...(await isSuperadmin(env, subject)?[]:[subject]));
     content = ui.apiClients(clients, sess, (url.searchParams.get('created_key') || '').slice(0, 128));
   } else if (view === 'users') {
     title='Admin users'; subtitle='Manage administrator identities authorized through Cloudflare Access.';
@@ -455,7 +466,7 @@ Idempotency-Key: unique-key
     content = ui.users(users, sess, role === 'superadmin');
   } else if (view === 'domains') {
     title='Domains'; subtitle='Track client sending domains and DNS onboarding.';
-    const domains = await rows(env, 'SELECT domain,display_name,is_verified,created_at FROM managed_domains ORDER BY created_at DESC');
+    const domains = await rows(env, await isSuperadmin(env, subject) ? 'SELECT domain,display_name,is_verified,created_at,verification_token FROM managed_domains ORDER BY created_at DESC' : 'SELECT domain,display_name,is_verified,created_at,verification_token FROM managed_domains WHERE owner_subject=? ORDER BY created_at DESC', ...(await isSuperadmin(env, subject)?[]:[subject]));
     content = ui.domains(domains, sess);
   } else if (view === 'docs') {
     if (await adminRole(env, sess.access_subject || subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
@@ -471,12 +482,13 @@ Idempotency-Key: unique-key
     if (filters.direction) { if (!['inbound','outbound'].includes(filters.direction)) throw new HttpError(422,'Invalid direction.'); clauses.push('direction=?'); params.push(filters.direction); }
     if (filters.status) { if (!['Queued','Sent','Delivered','Bounced','Failed'].includes(filters.status)) throw new HttpError(422,'Invalid status.'); clauses.push('transmission_status=?'); params.push(filters.status); }
     if (filters.search) { clauses.push('(subject LIKE ? OR recipient_address LIKE ?)'); const term='%'+filters.search.replace(/[\\%_]/g,'\\$&')+'%'; clauses[clauses.length-1]="(subject LIKE ? ESCAPE '\\' OR recipient_address LIKE ? ESCAPE '\\')"; params.push(term,term); }
+    if (!await isSuperadmin(env, subject)) { clauses.push('owner_subject=?'); params.push(subject); }
     const logs=await rows(env,`SELECT id,direction,subject,recipient_address,transmission_status,provider_used,unix_timestamp FROM email_logs ${clauses.length?'WHERE '+clauses.join(' AND '):''} ORDER BY unix_timestamp DESC,id LIMIT 26 OFFSET ?`,...params,(page-1)*25);
     content=ui.mailView(logs.slice(0,25),filters,page,logs.length>25);
   } else if (view === 'overview') {
     title='Overview'; subtitle='A clear view of your email infrastructure.';
-    const stats=await env.DB.prepare("SELECT COUNT(*) AS total, SUM(transmission_status IN ('Sent','Delivered')) AS accepted, SUM(transmission_status IN ('Failed','Bounced')) AS issues, SUM(transmission_status='Queued') AS pending FROM email_logs").first();
-    const [logs,health]=await Promise.all([rows(env,'SELECT id,direction,subject,recipient_address,transmission_status,provider_used,unix_timestamp FROM email_logs ORDER BY unix_timestamp DESC LIMIT 7'),rows(env,'SELECT * FROM provider_health')]);
+    const stats=await env.DB.prepare(await isSuperadmin(env, subject) ? "SELECT COUNT(*) AS total, SUM(transmission_status IN ('Sent','Delivered')) AS accepted, SUM(transmission_status IN ('Failed','Bounced')) AS issues, SUM(transmission_status='Queued') AS pending FROM email_logs" : "SELECT COUNT(*) AS total, SUM(transmission_status IN ('Sent','Delivered')) AS accepted, SUM(transmission_status IN ('Failed','Bounced')) AS issues, SUM(transmission_status='Queued') AS pending FROM email_logs WHERE owner_subject=?").bind(...(await isSuperadmin(env, subject)?[]:[subject])).first();
+    const [logs,health]=await Promise.all([rows(env,await isSuperadmin(env, subject)?'SELECT id,direction,subject,recipient_address,transmission_status,provider_used,unix_timestamp FROM email_logs ORDER BY unix_timestamp DESC LIMIT 7':'SELECT id,direction,subject,recipient_address,transmission_status,provider_used,unix_timestamp FROM email_logs WHERE owner_subject=? ORDER BY unix_timestamp DESC LIMIT 7',...(await isSuperadmin(env, subject)?[]:[subject])),rows(env,'SELECT * FROM provider_health')]);
     content=ui.overview(stats,logs,health,cfg);
   } else throw new HttpError(404,'View not found.');
   return reply(ui.page(view,title,subtitle,content,sess,notice),200,sess.script_nonce?{'Content-Security-Policy':headers['Content-Security-Policy'].replace("script-src 'none'",`script-src 'nonce-${sess.script_nonce}'`)}:{});
