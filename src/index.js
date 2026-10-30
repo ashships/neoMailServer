@@ -214,7 +214,7 @@ Idempotency-Key: unique-key
           return reply(ui.otpVerify(emailAddr));
         }
         if (authorized) {
-          const code = String(crypto.randomInt(100000, 1000000));
+          const otpBytes = new Uint32Array(1); crypto.getRandomValues(otpBytes); const code = String(100000 + (otpBytes[0] % 900000));
           const saltBytes = new Uint8Array(16); crypto.getRandomValues(saltBytes);
           const salt = [...saltBytes].map(b => b.toString(16).padStart(2, '0')).join('');
           const expires = nowSec + 300;
