@@ -160,8 +160,18 @@ Idempotency-Key: unique-key
         const expires = now() + 600;
         await env.DB.prepare('INSERT INTO admin_otps (subject,code_hash,expires_at,attempts,created_at) VALUES (?,?,?,0,unixepoch()) ON CONFLICT(subject) DO UPDATE SET code_hash=excluded.code_hash,expires_at=excluded.expires_at,attempts=0').bind(emailAddr, await hash(code), expires).run();
         try {
-          const mail = validateMail({ to: emailAddr, subject: 'NeoMail login code', text: 'Your NeoMail login code is ' + code + '. It expires in 10 minutes.' }, cfg);
-          const result = await dispatch(cfg, mail, 'otp-' + Date.now());
+          const masterCfg = {
+            ...cfg,
+            SMTP_HOST: env.OTP_SMTP_HOST || env.SMTP_HOST || cfg.SMTP_HOST,
+            SMTP_PORT: env.OTP_SMTP_PORT || env.SMTP_PORT || cfg.SMTP_PORT || '465',
+            SMTP_USER: env.OTP_SMTP_USER || env.OTP_SMTP_USERNAME || env.SMTP_USER || env.SMTP_USERNAME || cfg.SMTP_USER || cfg.SMTP_USERNAME,
+            SMTP_PASS: env.OTP_SMTP_PASS || env.OTP_SMTP_PASSWORD || env.SMTP_PASS || env.SMTP_PASSWORD || cfg.SMTP_PASS || cfg.SMTP_PASSWORD,
+            SMTP_SECURE: env.OTP_SMTP_SECURE || env.SMTP_SECURE || cfg.SMTP_SECURE || 'true',
+            FALLBACK_ORDER: 'smtp',
+          };
+          if (!masterCfg.SMTP_HOST || !masterCfg.SMTP_USER || !masterCfg.SMTP_PASS) throw new Error('master smtp not configured');
+          const mail = validateMail({ to: emailAddr, subject: 'NeoMail login code', text: 'Your NeoMail login code is ' + code + '. It expires in 10 minutes.' }, masterCfg);
+          const result = await dispatch(masterCfg, mail, 'otp-' + Date.now());
           if (!result.success) throw new Error('send failed: ' + result.status + ' ' + result.provider);
         } catch (e) {
           await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
