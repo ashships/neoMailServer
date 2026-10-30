@@ -60,6 +60,16 @@ async function reauthenticate(request, env, data) {
 async function handler(request, env) {
   const url = new URL(request.url), path = url.pathname, ip = request.headers.get('cf-connecting-ip') || 'local';
   // Public probes do not disclose configuration, secrets, or database details.
+  if (path === '/docs' || path.startsWith('/docs/')) {
+    requireMethod(request, ['GET']);
+    const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NeoMail Docs</title><style>body{font-family:Inter,system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;line-height:1.6;color:#172820}h1,h2{color:#087d54}code,pre{background:#f1f4f2;padding:2px 6px;border-radius:4px}pre{padding:12px;overflow:auto}a{color:#087d54}</style></head><body><h1>NeoMail Documentation</h1><p>Private transactional email for Cloudflare Workers and D1.</p><h2>Quick start</h2><ol><li>Create D1 and run schema/migrations.</li><li>Set secrets and vars in wrangler.toml / dashboard.</li><li>Deploy with <code>npx wrangler deploy</code>.</li><li>Open <code>/admin</code> and sign in.</li></ol><h2>Provider setup</h2><p>Configure credentials in Settings. Supported providers: SMTP, Resend, Brevo, Mailgun, Mailtrap, MailerSend. Add provider DNS records (SPF, DKIM, DMARC) from each provider dashboard.</p><h2>API</h2><pre>POST /api/v1/send
+Authorization: Bearer &lt;api-key&gt;
+Content-Type: application/json
+Idempotency-Key: unique-key
+
+{"from":"no-reply@example.com","to":"user@example.com","subject":"Hello","text":"Hi"}</pre><h2>Domains</h2><p>Clients can register domains via <code>POST /api/v1/domains</code>. DNS records are provider-specific.</p><h2>Support</h2><p>See repository docs for full operations, security, and validation guides.</p></body></html>`;
+    return reply(html, 200, { 'Content-Type': 'text/html; charset=utf-8' });
+  }
   if (path === '/health') { requireMethod(request, ['GET']); return reply({ status: 'ok', service: 'neomail' }); }
   if (path === '/') { requireMethod(request, ['GET']); return redirect('/admin'); }
   if (request.method === 'OPTIONS') return reply({ error: 'Browser cross-origin API calls are not supported.' }, 405);
@@ -316,6 +326,17 @@ async function handler(request, env) {
       if (!domain || !/^[a-z0-9.-]+$/i.test(domain) || !name) throw new HttpError(422, 'Valid domain and name required.');
       await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by) VALUES (?,?,0,unixepoch(),?)').bind(domain.toLowerCase(), name, subject).run();
       await audit(env, request, 'DOMAIN_ADDED', { domain }); return redirect('/admin?view=domains&notice=' + encodeURIComponent('Domain added.'));
+    }
+    if (path === '/admin/users/role') {
+      if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
+      const target = text(data.get('subject'), 254);
+      const role = data.get('role');
+      if (!target || !['admin','client','staff'].includes(role) || target === subject) throw new HttpError(422, 'Invalid role change.');
+      const row = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=?').bind(target).first();
+      if (!row) throw new HttpError(404, 'User not found.');
+      if (row.role === 'superadmin') throw new HttpError(409, 'Cannot change a superadmin role.');
+      await env.DB.prepare('UPDATE admin_users SET role=? WHERE subject=?').bind(role, target).run();
+      await audit(env, request, 'ADMIN_USER_ROLE_CHANGED', { subject: target, role }); return redirect('/admin?view=users&notice=' + encodeURIComponent('Role updated.'));
     }
     if (path === '/admin/send-test') {
       await rate(env, 'admin:send:' + subject, 5, 60);
