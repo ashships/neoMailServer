@@ -14,7 +14,7 @@ const sha=value=>createHash('sha256').update(value).digest('hex');
 
 test('Worker request flow with SQLite: sessions, CSRF, settings, dispatch and webhook isolation',async(t)=>{
  const db=database(await readFile('schema.sql','utf8'));
- const env={DB:db,LOCAL_DEV:'true',ADMIN_TOKEN_HASH:sha(token),CONFIG_ENCRYPTION_KEY:randomBytes(32).toString('base64'),API_SECRET_KEY:'a'.repeat(43),RESEND_API_KEY:'provider-key-placeholder',DEFAULT_SENDER:'no-reply@mail.neopathshala.com'};
+ const env={DB:db,LOCAL_DEV:'true',ADMIN_TOKEN_HASH:sha(token),CONFIG_ENCRYPTION_KEY:randomBytes(32).toString('base64'),API_SECRET_KEY:'a'.repeat(43),RESEND_API_KEY:'provider-key-placeholder',DEFAULT_SENDER:'no-reply@example.com'};
  let upstreamCalls=0, upstreamStatus=200;
  const originalFetch=globalThis.fetch;
  globalThis.fetch=async (url,opts)=>{upstreamCalls++; assert.ok(['api.resend.com','api.mailgun.net'].includes(new URL(url).hostname)); if(upstreamStatus===500)return new Response('{}',{status:500}); return Response.json({id:'msg-'+upstreamCalls});};
@@ -42,7 +42,7 @@ test('Worker request flow with SQLite: sessions, CSRF, settings, dispatch and we
  assert.equal((await post('/admin/identities/create',{email_address:'support@example.com',display_name:'Support'})).status,303);
  assert.equal((await post('/admin/identities/update',{email_address:'support@example.com',action:'rename',display_name:'New Support Name'})).status,303);
  assert.equal(await db.prepare('SELECT display_name FROM sender_identities WHERE email_address=?').bind('support@example.com').first('display_name'),'New Support Name');
- assert.equal((await post('/admin/settings',{DEFAULT_SENDER:'no-reply@mail.neopathshala.com',RETENTION_DAYS:'7',REQUEST_TIMEOUT_MS:'0'})).status,422);
+ assert.equal((await post('/admin/settings',{DEFAULT_SENDER:'no-reply@example.com',RETENTION_DAYS:'7',REQUEST_TIMEOUT_MS:'0'})).status,422);
  assert.equal(await db.prepare("SELECT value FROM app_settings WHERE name='RETENTION_DAYS'").first(),null,'invalid save must be atomic');
  assert.equal((await post('/admin/credentials',{name:'BREVO_API_KEY',value:'secret-provider-key-placeholder',admin_token:token})).status,303);
  const stored=await db.prepare("SELECT value FROM app_settings WHERE name='BREVO_API_KEY'").first(); assert.ok(!stored.value.includes('secret-provider'));

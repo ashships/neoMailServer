@@ -12,7 +12,7 @@ test('tenant isolation: admin workspaces are fully separated and sandbox capabil
   const db = database(await readFile('schema.sql','utf8'));
   const baseEnv = {
     DB: db, LOCAL_DEV: 'true', LOCAL_ADMIN_TOKEN: token, CONFIG_ENCRYPTION_KEY: randomBytes(32).toString('base64'),
-    RESEND_API_KEY: 'provider-key-placeholder', DEFAULT_SENDER: 'no-reply@mail.neopathshala.com',
+    RESEND_API_KEY: 'provider-key-placeholder', DEFAULT_SENDER: 'no-reply@example.com',
   };
   let upstreamCalls = 0;
   const originalFetch = globalThis.fetch;

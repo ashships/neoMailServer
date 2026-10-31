@@ -14,7 +14,7 @@ test('Worker + real local D1: access, sessions, CSRF, settings, dispatch and web
  await build({entryPoints:['src/index.js'],bundle:true,format:'esm',platform:'browser',outfile:join(dir,'worker.mjs')});
  let upstreamCalls=0; let upstreamStatus=200;
  const mf=new Miniflare({modules:true,script:await readFile(join(dir,'worker.mjs'),'utf8'),compatibilityDate:'2025-07-18',d1Databases:['DB'],
-  bindings:{LOCAL_DEV:'true',ADMIN_TOKEN_HASH:sha(token),CONFIG_ENCRYPTION_KEY:randomBytes(32).toString('base64'),API_SECRET_KEY:'a'.repeat(43),RESEND_API_KEY:'provider-key-placeholder',DEFAULT_SENDER:'no-reply@mail.neopathshala.com'},
+  bindings:{LOCAL_DEV:'true',ADMIN_TOKEN_HASH:sha(token),CONFIG_ENCRYPTION_KEY:randomBytes(32).toString('base64'),API_SECRET_KEY:'a'.repeat(43),RESEND_API_KEY:'provider-key-placeholder',DEFAULT_SENDER:'no-reply@example.com'},
   outboundService:async request=>{upstreamCalls++; assert.equal(new URL(request.url).hostname,'api.resend.com'); if(upstreamStatus===500)return new Response('{}',{status:500}); return Response.json({id:'msg-'+upstreamCalls});},
  });
  try {
@@ -42,11 +42,11 @@ test('Worker + real local D1: access, sessions, CSRF, settings, dispatch and web
  assert.equal((await post('/admin/domains/create',{domain:'example.com',display_name:'Example'})).status,303);
  await db.prepare('UPDATE managed_domains SET is_verified=1 WHERE domain=?').bind('example.com').run();
  assert.equal((await post('/admin/identities/create',{email_address:'support@example.com',display_name:'Support'})).status,303);
- assert.equal((await post('/admin/settings',{DEFAULT_SENDER:'no-reply@mail.neopathshala.com',RETENTION_DAYS:'7',REQUEST_TIMEOUT_MS:'0'})).status,422);
+ assert.equal((await post('/admin/settings',{DEFAULT_SENDER:'no-reply@example.com',RETENTION_DAYS:'7',REQUEST_TIMEOUT_MS:'0'})).status,422);
  assert.equal(await db.prepare("SELECT value FROM app_settings WHERE name='RETENTION_DAYS'").first(),null,'invalid save must be atomic');
  assert.equal((await post('/admin/credentials',{name:'BREVO_API_KEY',value:'secret-provider-key-placeholder',admin_token:token})).status,303);
  const stored=await db.prepare("SELECT value FROM app_settings WHERE name='BREVO_API_KEY'").first(); assert.ok(!stored.value.includes('secret-provider'));
- assert.equal((await post('/admin/settings',{DEFAULT_SENDER:'no-reply@mail.neopathshala.com',FALLBACK_ORDER:'resend',STORE_MESSAGE_BODIES:'true'})).status,303);
+ assert.equal((await post('/admin/settings',{DEFAULT_SENDER:'no-reply@example.com',FALLBACK_ORDER:'resend',STORE_MESSAGE_BODIES:'true'})).status,303);
  const payload={to:'student@example.com',subject:'Welcome',text:'Hello student'};
  const send=(key,body=payload,auth='a'.repeat(43))=>req('/api/v1/send',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+auth,'idempotency-key':key},body:JSON.stringify(body)});
  assert.equal((await send('test-mail-1',payload,token)).status,401,'admin credential must never authorize API');
