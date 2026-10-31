@@ -115,11 +115,21 @@ async function send(provider, env, mail, requestId) {
 }
 export async function dispatch(env, mail, idempotencyKey, ownerSubject = null) {
   if (!/^[a-zA-Z0-9_:.\-]{8,128}$/.test(idempotencyKey || '')) throw new HttpError(422, 'Idempotency-Key must contain 8–128 letters, digits, dots, colons, underscores or hyphens.');
-  const identity = await env.DB.prepare('SELECT email_address,display_name FROM sender_identities WHERE email_address=? AND is_active=1').bind(mail.from).first();
+  const identity = await env.DB.prepare('SELECT email_address,display_name,owner_subject FROM sender_identities WHERE email_address=? AND is_active=1').bind(mail.from).first();
   if (!identity) throw new HttpError(422, 'Sender must be an active identity configured in the console.');
+  // Tenant isolation: a workspace may only send from identities it owns.
+  if (ownerSubject && identity.owner_subject && identity.owner_subject !== ownerSubject) throw new HttpError(403, 'Sender identity belongs to another workspace.');
+  // Verified domains only: the sender domain must exist and be verified, except the
+  // deployment's own Mailgun sandbox used for console testing.
+  const senderDomain = (mail.from || '').split('@')[1];
+  if (senderDomain && !(senderDomain === env.MAILGUN_SANDBOX_DOMAIN && senderDomain.endsWith('.mailgun.org'))) {
+    const domainRow = await env.DB.prepare('SELECT is_verified FROM managed_domains WHERE domain=?').bind(senderDomain).first();
+    if (!domainRow || !domainRow.is_verified) throw new HttpError(422, 'Sender domain is not verified. Add and verify the domain before sending.');
+  }
   if (mail.useIdentityName) mail = { ...mail, fromName: identity.display_name };
   delete mail.useIdentityName;
-  const key = await hash(idempotencyKey), payloadHash = await hash(JSON.stringify(mail)), logId = crypto.randomUUID();
+  // Idempotency keys are namespaced per tenant so one workspace can never observe another's operations.
+  const key = await hash((ownerSubject || 'local-admin') + '\u0000' + idempotencyKey), payloadHash = await hash(JSON.stringify(mail)), logId = crypto.randomUUID();
   const reservation = await env.DB.prepare('INSERT INTO dispatch_requests (request_key,payload_hash,log_id,created_at) VALUES (?,?,?,unixepoch()) ON CONFLICT(request_key) DO NOTHING RETURNING request_key').bind(key, payloadHash, logId).first();
   if (!reservation) {
     const prior = await env.DB.prepare('SELECT payload_hash,response_json FROM dispatch_requests WHERE request_key=?').bind(key).first();
@@ -128,14 +138,10 @@ export async function dispatch(env, mail, idempotencyKey, ownerSubject = null) {
     return { ...JSON.parse(prior.response_json), replayed: true };
   }
   const keep = env.STORE_MESSAGE_BODIES === 'true';
-  await env.DB.prepare(`INSERT INTO email_logs (id,direction,provider_used,sender_address,recipient_address,subject,html_body,text_body,html_hash,transmission_status,attempt_history,unix_timestamp,updated_at)
-    VALUES (?,'outbound','unassigned',?,?,?,?,?,?,'Queued','[]',unixepoch(),unixepoch())`)
-    .bind(logId, mail.from, mail.to, mail.subject, keep ? mail.html : null, keep ? mail.text : null, await hash(mail.html)).run();
-  const senderDomain = (mail.from || '').split('@')[1];
-  if (senderDomain) {
-    const domainRow = await env.DB.prepare('SELECT is_verified FROM managed_domains WHERE domain=?').bind(senderDomain).first();
-    if (domainRow && !domainRow.is_verified) throw new HttpError(422, 'Sender domain is not verified.');
-  }
+  const ownerText = ownerSubject || 'local-admin';
+  await env.DB.prepare(`INSERT INTO email_logs (id,direction,provider_used,sender_address,recipient_address,subject,html_body,text_body,html_hash,transmission_status,attempt_history,unix_timestamp,updated_at,owner_subject)
+    VALUES (?,'outbound','unassigned',?,?,?,?,?,?,'Queued','[]',unixepoch(),unixepoch(),?)`)
+    .bind(logId, mail.from, mail.to, mail.subject, keep ? mail.html : null, keep ? mail.text : null, await hash(mail.html), ownerText).run();
   const attempts = []; let status = 'Failed', providerUsed = null, messageId = null, uncertain = false;
   const health = (await env.DB.prepare('SELECT * FROM provider_health').all()).results || [];
   for (const provider of env.FALLBACK_ORDER.split(',')) {

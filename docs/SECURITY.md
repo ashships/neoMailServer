@@ -75,3 +75,25 @@ Cloudflare Access policy mistakes, runtime compromise, credential theft, or mali
 7. Re-test auth, sender restrictions, callbacks and integration before reopening traffic.
 
 Report suspected vulnerabilities privately to the project owner; no public vulnerability inbox or automated bounty process is configured by this change.
+
+## Multi-tenant isolation and verified-domain sending (31 October 2026)
+
+Workspaces are isolated per `admin_users` subject. Only two roles exist:
+`superadmin` (deployment owner) and `admin` (a fully isolated tenant workspace).
+Superadmin creates admins from the panel; admins can never grant themselves
+superadmin powers, change global settings, provider credentials or routing,
+view other workspaces' mail or events, or send from other workspaces' domains.
+
+| Area | Control |
+| --- | --- |
+| Sending domains | Every outbound send requires a **verified domain** (`managed_domains.is_verified=1`). Unregistered or unverified sender domains are rejected by `dispatch()` for both API and console sends (the deployment's own Mailgun sandbox domain is the only exception). |
+| Identity creation | Console identities can only be created on the workspace's own verified domains. |
+| Verified-domain enforcement | A domain owner claim: tenants may only use domains whose `owner_subject` matches their subject; superadmin owns the seeded infrastructure (`mail.neopathshala.com`, pre-verified, marked `bootstrap-verified`). |
+| Propagation refresh | The Domains view offers a **Re-check** for verified domains; `/api/v1/domains/verify` and the console verify endpoint now confirm on DNS pass and **revoke** on DNS fail. The daily cron re-validates a bounded batch of verified domains; when the TXT record is removed, `is_verified` flips to 0, an audit event records the lapse, and the dispatch gate immediately stops all sending from that domain. |
+| Ownership stamping | Outbound (`dispatch`) and inbound (email worker) `email_logs` rows are stamped with `owner_subject`; the mail activity views, message inspector and HTML preview are owner-scoped. Cross-tenant message reads 404. |
+| API clients | Keys inherit their creator's tenant; restricted senders must be identities owned by the same tenant. Dispatch enforces identity ownership and tenants namespace their idempotency keys. |
+| Rate limits | Per-IP login/API limits, per-client API limit, admin console actions (30/min), test sends (5/min), and per-IP domain verification checks (10/min) bound abuse even with valid credentials. |
+| Access JWT role | Fails closed on lookup errors and bare subjects; role always comes from `admin_users`. |
+
+Legacy environment `API_SECRET_KEY` behaves as the deployment owner
+(`local-admin`) and is subject to the same verified-domain gate.

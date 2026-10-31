@@ -39,6 +39,8 @@ test('Worker + real local D1: access, sessions, CSRF, settings, dispatch and web
  assert.equal((await post('/admin/identities/create',{email_address:'bad\r\n@example.com',display_name:'Bad'})).status,422);
  assert.equal((await post('/admin/identities/create',{email_address:'support@example.com',display_name:'Support'},{origin:'https://evil.example'})).status,403);
  assert.equal((await post('/admin/identities/create',{csrf:'wrong',email_address:'support@example.com',display_name:'Support'})).status,403);
+ assert.equal((await post('/admin/domains/create',{domain:'example.com',display_name:'Example'})).status,303);
+ await db.prepare('UPDATE managed_domains SET is_verified=1 WHERE domain=?').bind('example.com').run();
  assert.equal((await post('/admin/identities/create',{email_address:'support@example.com',display_name:'Support'})).status,303);
  assert.equal((await post('/admin/settings',{DEFAULT_SENDER:'no-reply@mail.neopathshala.com',RETENTION_DAYS:'7',REQUEST_TIMEOUT_MS:'0'})).status,422);
  assert.equal(await db.prepare("SELECT value FROM app_settings WHERE name='RETENTION_DAYS'").first(),null,'invalid save must be atomic');

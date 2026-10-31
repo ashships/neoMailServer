@@ -63,10 +63,17 @@ export async function saveSettings(env, data) {
     const value = validateSetting(name, data.get(name));
     statements.push(env.DB.prepare('INSERT INTO app_settings (name,value,is_secret,updated_at) VALUES (?,?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,is_secret=0,updated_at=unixepoch()').bind(name, value)); changed.push(name);
   }
-  if (data.has('DEFAULT_SENDER')) statements.push(env.DB.prepare('UPDATE sender_identities SET is_default=CASE WHEN email_address=? THEN 1 ELSE 0 END').bind(data.get('DEFAULT_SENDER').trim()));
-  if (data.has('DEFAULT_SENDER') && data.has('DEFAULT_SENDER_NAME')) statements.push(env.DB.prepare('UPDATE sender_identities SET display_name=? WHERE email_address=?').bind(data.get('DEFAULT_SENDER_NAME').trim(), data.get('DEFAULT_SENDER').trim()));
+  if (data.has('DEFAULT_SENDER')) {
+    // Only reset the is_default flag among identities owned by the default sender's workspace.
+    const ownerRow = await env.DB.prepare('SELECT owner_subject FROM sender_identities WHERE email_address=?').bind(data.get('DEFAULT_SENDER').trim()).first();
+    const owner = ownerRow?.owner_subject || 'local-admin';
+    statements.push(env.DB.prepare('UPDATE sender_identities SET is_default=CASE WHEN email_address=? THEN 1 ELSE 0 END WHERE owner_subject=?').bind(data.get('DEFAULT_SENDER').trim(), owner));
+  }
+  if (data.has('DEFAULT_SENDER') && data.has('DEFAULT_SENDER_NAME')) {
+    statements.push(env.DB.prepare("UPDATE sender_identities SET display_name=? WHERE email_address=? AND owner_subject='local-admin'").bind(data.get('DEFAULT_SENDER_NAME').trim(), data.get('DEFAULT_SENDER').trim()));
+  }
   const sandbox=data.get('MAILGUN_SANDBOX_DOMAIN');
-  if (sandbox?.trim()) statements.push(env.DB.prepare('INSERT INTO sender_identities(id,email_address,display_name,is_default,is_active,created_at) VALUES (?,?,?,0,1,unixepoch()) ON CONFLICT(email_address) DO NOTHING').bind(crypto.randomUUID(),'postmaster@'+sandbox.trim(),'NeoMail Mailgun Sandbox'));
+  if (sandbox?.trim()) statements.push(env.DB.prepare("INSERT INTO sender_identities(id,email_address,display_name,is_default,is_active,created_at,owner_subject) VALUES (?,?,?,0,1,unixepoch(),'local-admin') ON CONFLICT(email_address) DO NOTHING").bind(crypto.randomUUID(),'postmaster@'+sandbox.trim(),'NeoMail Mailgun Sandbox'));
   if (statements.length) await env.DB.batch(statements);
   return changed;
 }

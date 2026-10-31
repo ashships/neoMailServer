@@ -30,6 +30,8 @@ test('Worker request flow with SQLite: sessions, CSRF, settings, dispatch and we
  assert.ok(panel.includes('Workspace settings')); assert.ok(!panel.includes('a'.repeat(43)));
  const csrf=panel.match(/name="csrf" value="([^"]+)"/)[1];
  const post=(path,data,extra={})=>req(path,{method:'POST',headers:{cookie,origin:'http://localhost','content-type':'application/x-www-form-urlencoded',...extra},body:new URLSearchParams({csrf,...data})});
+ assert.equal((await post('/admin/domains/create',{domain:'example.com',display_name:'Example'})).status,303);
+ await db.prepare('UPDATE managed_domains SET is_verified=1 WHERE domain=?').bind('example.com').run();
  for(const view of ['overview','mail','providers','identities','security','setup','compose']) {
   const page=await req('/admin?view='+view,{headers:{cookie}}); assert.equal(page.status,200,view); assert.match(page.headers.get('content-security-policy'),/script-src 'none'/);
  }

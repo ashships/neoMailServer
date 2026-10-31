@@ -32,13 +32,17 @@ REQUIRES_CLOUDFLARE_PROXY = "true"
 SMTP_HOST = "smtp.gmail.com"
 SMTP_PORT = "465"
 SMTP_USER = "user@example.com"
-SMTP_PASS = "REDACTED_SMTP_PASS"
 SMTP_SECURE = "true"
+# Secrets are deployment secrets, never vars. Rotate any credential that was ever committed:
+#   npx wrangler secret put SMTP_PASS        # Gmail app password (rotate it in your Google account first)
+#   npx wrangler secret put ADMIN_TOKEN_HASH # SHA-256 verifier from: npm run credentials
+#   npx wrangler secret put CONFIG_ENCRYPTION_KEY
+
 # Set these before production admin access. No production bypass is provided.
 ACCESS_TEAM_DOMAIN = ""
 ACCESS_AUD = ""
 ALLOW_TOKEN_LOGIN = "false"
-ADMIN_TOKEN_HASH = "b5ef6551b74b86c40a34a863e6f3111b0a9fc0e67180101939c5c10ffa2a018a"
+# ADMIN_TOKEN_HASH moved to a Worker secret: npx wrangler secret put ADMIN_TOKEN_HASH
 EMAIL_OTP_LOGIN = "true"
 
 [[upload.rules]]

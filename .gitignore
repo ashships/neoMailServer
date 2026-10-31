@@ -10,3 +10,4 @@ coverage/
 artifacts/
 *.log
 .DS_Store
+.kilo/
