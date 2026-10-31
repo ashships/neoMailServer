@@ -131,6 +131,11 @@ export async function dispatch(env, mail, idempotencyKey, ownerSubject = null) {
   await env.DB.prepare(`INSERT INTO email_logs (id,direction,provider_used,sender_address,recipient_address,subject,html_body,text_body,html_hash,transmission_status,attempt_history,unix_timestamp,updated_at)
     VALUES (?,'outbound','unassigned',?,?,?,?,?,?,'Queued','[]',unixepoch(),unixepoch())`)
     .bind(logId, mail.from, mail.to, mail.subject, keep ? mail.html : null, keep ? mail.text : null, await hash(mail.html)).run();
+  const senderDomain = (mail.from || '').split('@')[1];
+  if (senderDomain) {
+    const domainRow = await env.DB.prepare('SELECT is_verified FROM managed_domains WHERE domain=?').bind(senderDomain).first();
+    if (domainRow && !domainRow.is_verified) throw new HttpError(422, 'Sender domain is not verified.');
+  }
   const attempts = []; let status = 'Failed', providerUsed = null, messageId = null, uncertain = false;
   const health = (await env.DB.prepare('SELECT * FROM provider_health').all()).results || [];
   for (const provider of env.FALLBACK_ORDER.split(',')) {
