@@ -261,7 +261,7 @@ Idempotency-Key: unique-key
           env.DB.prepare('INSERT INTO admin_sessions (token_hash,csrf_token,access_subject,credential_version,expires_at) VALUES (?,?,?,?,?)').bind(await hash(token), csrfToken, emailAddr, await hash(await adminVerifier(request, env)), now() + 3600),
         ]);
         await audit(env, request, 'AUTH_SUCCESS');
-        console.error('VERIFY REDIRECT', emailAddr, targetRole); return redirect(targetRole === 'superadmin' ? '/admin' : '/dashboard', { 'Set-Cookie': sessionCookie(token) });
+        return redirect(targetRole === 'superadmin' ? '/admin' : '/dashboard', { 'Set-Cookie': sessionCookie(token) });
       }
       throw new HttpError(422, 'Invalid login step.');
     }
@@ -522,7 +522,7 @@ Idempotency-Key: unique-key
     const [logs,health]=await Promise.all([rows(env,await isSuperadmin(env, subject)?'SELECT id,direction,subject,recipient_address,transmission_status,provider_used,unix_timestamp FROM email_logs ORDER BY unix_timestamp DESC LIMIT 7':'SELECT id,direction,subject,recipient_address,transmission_status,provider_used,unix_timestamp FROM email_logs WHERE owner_subject=? ORDER BY unix_timestamp DESC LIMIT 7',...(await isSuperadmin(env, subject)?[]:[subject])),rows(env,'SELECT * FROM provider_health')]);
     content=ui.overview(stats,logs,health,cfg);
   } else throw new HttpError(404,'View not found.');
-  return reply(ui.page(view,title,subtitle,content,sess,notice),200,sess.script_nonce?{'Content-Security-Policy':headers['Content-Security-Policy'].replace("script-src 'none'",`script-src 'nonce-${sess.script_nonce}'`)}:{});
+  sess.role=role; return reply(ui.page(view,title,subtitle,content,sess,notice),200,sess.script_nonce?{'Content-Security-Policy':headers['Content-Security-Policy'].replace("script-src 'none'",`script-src 'nonce-${sess.script_nonce}'`)}:{});
 }
 
 export default {
@@ -530,8 +530,8 @@ export default {
     try { return await handler(request, env); }
     catch (err) {
       const status = err instanceof HttpError ? err.status : 500, reference = crypto.randomUUID();
-      if (status === 500) console.error(JSON.stringify({event:'REQUEST_FAILURE',reference,err: String(err?.stack || err)}));
-      const message = status === 500 ? 'Request could not complete. Reference: ' + reference + ' Error: ' + String(err?.message || err) : err.message;
+      if (status === 500) console.error(JSON.stringify({event:'REQUEST_FAILURE',reference}));
+      const message = status === 500 ? 'Request could not complete. Reference: ' + reference : err.message;
       const extra = status===429 ? {'Retry-After':'60'} : {};
       return new URL(request.url).pathname.startsWith('/admin') ? reply(ui.errorPage(message,status),status,extra) : reply({error:message,reference},status,extra);
     }
