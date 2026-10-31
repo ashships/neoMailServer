@@ -47,6 +47,17 @@ function icon(name) {
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
 }
 
+function lucideSvgUri(iconName, stroke = '#64748b', strokeWidth = 2) {
+  const data = lucide[iconMap[iconName] || iconName];
+  if (!Array.isArray(data)) return '';
+  const inner = data.map(([tag, attrs]) => `<${tag} ${Object.entries(attrs).map(([k,v]) => `${k}='${v}'`).join(' ')}/>`).join('');
+  const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${stroke}' stroke-width='${strokeWidth}' stroke-linecap='round' stroke-linejoin='round'>${inner}</svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+}
+
+const chevronDownUri = lucideSvgUri('chevron', '#64748b', 2);
+const checkUri = lucideSvgUri('check', '#087d54', 2.5);
+
 const css = `
 :root {
   color-scheme: light;
@@ -108,11 +119,11 @@ select {
   appearance: none;
   -webkit-appearance: none;
   background-color: var(--surface);
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-image: ${chevronDownUri};
   background-repeat: no-repeat;
   background-position: right 12px center;
   background-size: 14px 14px;
-  padding-right: 36px;
+  padding: 9px 36px 9px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   color: var(--text);
@@ -136,24 +147,56 @@ select:focus-visible {
   box-shadow: 0 0 0 3px rgba(8, 125, 84, 0.15);
 }
 
-select::picker(select) {
+@supports (appearance: base-select) {
+  select.custom-select {
+    background-image: none;
+  }
+}
+
+select::picker-icon {
+  content: ${chevronDownUri};
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  vertical-align: middle;
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  color: transparent;
+}
+
+select:open::picker-icon {
+  transform: rotate(180deg);
+}
+
+/* Force dropdown picker to ALWAYS open BELOW the input */
+select::picker(select),
+select.custom-select::picker(select) {
+  position-area: bottom span-all;
+  top: anchor(bottom);
+  bottom: auto;
+  left: anchor(left);
+  right: auto;
+  min-width: anchor-size(width);
+  margin-top: 6px;
+  margin-bottom: 0;
+  position-try-fallbacks: flip-block;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   padding: 6px;
-  margin-top: 6px;
-}
-
-select::picker-icon {
-  color: var(--muted);
+  z-index: 999;
 }
 
 select option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   padding: 8px 12px;
   border-radius: var(--radius-xs);
   color: var(--text);
   font-size: 13px;
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
 }
 
 select option:hover,
@@ -163,7 +206,12 @@ select option:focus {
 }
 
 select option::checkmark {
-  color: var(--accent);
+  content: ${checkUri};
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  margin-right: 6px;
+  vertical-align: middle;
 }
 
 /* Floating custom dropdown menu */
@@ -2215,7 +2263,7 @@ export function otpVerify(email, error = '') {
 }
 
 export function domains(rows, sess) {
-  const copyScript = sess.script_nonce ? `<script nonce="${e(sess.script_nonce)}">const copyIcon='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>';document.addEventListener('click',async ev=>{const b=ev.target.closest('button[data-copy]');if(!b||b.disabled)return;ev.preventDefault();const value=b.getAttribute('data-copy');try{await navigator.clipboard.writeText(value);}catch{const ta=document.createElement('textarea');ta.value=value;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}finally{ta.remove();}}const check='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="15" height="15" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>';b.classList.add('copied');b.innerHTML=check;b.disabled=true;setTimeout(()=>{b.classList.remove('copied');b.innerHTML=copyIcon;b.disabled=false;},1600);});</script>` : '';
+  const copyScript = sess.script_nonce ? `<script nonce="${e(sess.script_nonce)}">const copyIcon=${JSON.stringify(icon('copy'))};const check=${JSON.stringify(icon('check'))};document.addEventListener('click',async ev=>{const b=ev.target.closest('button[data-copy]');if(!b||b.disabled)return;ev.preventDefault();const value=b.getAttribute('data-copy');try{await navigator.clipboard.writeText(value);}catch{const ta=document.createElement('textarea');ta.value=value;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}finally{ta.remove();}}b.classList.add('copied');b.innerHTML=check;b.disabled=true;setTimeout(()=>{b.classList.remove('copied');b.innerHTML=copyIcon;b.disabled=false;},1600);});</script>` : '';
   const dnsField = (label, value, title) => `<div class="dnsfield"><span class="dnstype">${label}</span><code title="${e(title)}">${e(value)}</code><button type="button" class="button secondary small iconb" data-copy="${e(value)}" aria-label="Copy ${label}" title="Copy">${icon('copy')}</button></div>`;
   const record = r => r.verification_token ? `${dnsField('Name', '_neomail-verification.' + r.domain, 'TXT record host — paste this into the Host/Name field of your DNS provider')}${dnsField('Value', r.verification_token, 'TXT record content — paste this into the Value/Content field of your DNS provider')}` : '<p class="sub">Verification token missing — remove and re-add the domain.</p>';
   return `<div class="notice">Add a <strong>TXT record</strong> at your DNS provider (Cloudflare, GoDaddy, Namecheap…), then come back and click <strong>Verify</strong>. Copy the Name and Value below — each fits its own field in your DNS panel. Sending is only possible from verified domains, and the record is re-checked daily: if you delete it, sending stops automatically.</div><div class="notice warn">In your DNS panel: choose <code>TXT</code> as the record type, paste <strong>Name</strong> in the host/name box and <strong>Value</strong> in the content box, save, wait a few minutes for propagation, then verify below.</div><section class="panel"><div class="panelhead"><h2>Client domains</h2><p>Track domains clients will send from. Add the verification TXT record, then verify.</p></div><div class="tablewrap"><table><thead><tr><th>Domain</th><th>Status</th><th>Verification TXT record</th><th>Action</th></tr></thead><tbody>${rows.map(r => `<tr><td><div class="subject">${e(r.domain)}</div><span class="muted">${e(r.display_name)}</span></td><td>${badge(r.is_verified ? 'Verified' : 'Pending DNS')}</td><td>${record(r)}</td><td><form method="post" action="/admin/domains/verify">${hidden(sess.csrf_token)}<input type="hidden" name="domain" value="${e(r.domain)}"><button class="button secondary small">${r.is_verified ? 'Re-check' : 'Verify'}</button></form></td></tr>`).join('') || '<tr><td colspan="4">No domains yet.</td></tr>'}</tbody></table></div></section><section class="panel"><div class="panelhead"><h2>Add domain</h2></div><div class="panelbody"><form method="post" action="/admin/domains/create">${hidden(sess.csrf_token)}<div class="settingsgrid"><label class="field">Domain<input name="domain" required maxlength="253" pattern="[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?" title="Letters, digits, dots and hyphens only (e.g. client.example.com)" autocomplete="off" spellcheck="false" placeholder="client.example.com"></label><label class="field">Display name<input name="display_name" required maxlength="100" placeholder="Client name"></label></div><button class="button">Add domain</button></form></div></section>${copyScript}`;
