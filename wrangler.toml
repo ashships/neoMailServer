@@ -28,6 +28,9 @@ API_RATE_LIMIT_PER_MINUTE = "60"
 WEBHOOK_RATE_LIMIT_PER_MINUTE = "120"
 RETENTION_DAYS = "30"
 STORE_MESSAGE_BODIES = "false"
+LOCAL_DEV = "true"
+LOCAL_ADMIN_TOKEN = "REDACTED_LOCAL_ADMIN_TOKEN"
+CONFIG_ENCRYPTION_KEY = "REDACTED_CONFIG_ENCRYPTION_KEY"
 # SMTP removed from vars; configure via admin panel / secrets only if needed
 #   npx wrangler secret put ADMIN_TOKEN_HASH # SHA-256 verifier from: npm run credentials
 #   npx wrangler secret put CONFIG_ENCRYPTION_KEY
