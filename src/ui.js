@@ -1,7 +1,89 @@
 import { PROFILE_SCRIPT } from './profile-client.js';
 import { escape as e } from './security.js';
 import { SETTINGS, SECRETS, PROVIDERS } from './config.js';
-import * as lucide from 'lucide';
+import {
+  LayoutDashboard,
+  Mail,
+  Server,
+  Users,
+  ShieldCheck,
+  Settings,
+  BookOpen,
+  ArrowRight,
+  Key,
+  UserPlus,
+  Globe,
+  FileText,
+  Copy,
+  Trash2,
+  Pencil,
+  Menu,
+  X,
+  ChevronDown,
+  Filter,
+  Search,
+  Check,
+  ExternalLink,
+  RotateCw,
+  Plus,
+  Pause,
+  Play,
+  Star,
+  User,
+  Sun,
+  Moon,
+  ArrowUp,
+  ArrowDown,
+  Bold,
+  Italic,
+  List,
+  Code,
+  Link,
+  Eye,
+  Zap,
+} from 'lucide';
+
+const icons = {
+  LayoutDashboard,
+  Mail,
+  Server,
+  Users,
+  ShieldCheck,
+  Settings,
+  BookOpen,
+  ArrowRight,
+  Key,
+  UserPlus,
+  Globe,
+  FileText,
+  Copy,
+  Trash2,
+  Pencil,
+  Menu,
+  X,
+  ChevronDown,
+  Filter,
+  Search,
+  Check,
+  ExternalLink,
+  RotateCw,
+  Plus,
+  Pause,
+  Play,
+  Star,
+  User,
+  Sun,
+  Moon,
+  ArrowUp,
+  ArrowDown,
+  Bold,
+  Italic,
+  List,
+  Code,
+  Link,
+  Eye,
+  Zap,
+};
 
 const iconMap = {
   overview: 'LayoutDashboard',
@@ -52,14 +134,16 @@ function initial(name) {
 }
 
 function icon(name) {
-  const data = lucide[iconMap[name] || 'Mail'];
+  const iconSymbol = iconMap[name] || name;
+  const data = icons[iconSymbol] || icons.Mail;
   if (!Array.isArray(data)) return '';
   const inner = data.map(([tag, attrs]) => `<${tag} ${Object.entries(attrs).map(([k,v]) => `${k}="${String(v).replace(/"/g,'&quot;')}"`).join(' ')}/>`).join('');
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
 }
 
 function lucideSvgUri(iconName, stroke = '#64748b', strokeWidth = 2) {
-  const data = lucide[iconMap[iconName] || iconName];
+  const iconSymbol = iconMap[iconName] || iconName;
+  const data = icons[iconSymbol] || icons[iconName];
   if (!Array.isArray(data)) return '';
   const inner = data.map(([tag, attrs]) => `<${tag} ${Object.entries(attrs).map(([k,v]) => `${k}='${v}'`).join(' ')}/>`).join('');
   const svg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='${stroke}' stroke-width='${strokeWidth}' stroke-linecap='round' stroke-linejoin='round'>${inner}</svg>`;
@@ -713,36 +797,43 @@ nav {
 .compose-quickbtn {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border-radius: var(--radius-full);
-  border: 1px solid var(--line);
-  background: var(--surface);
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  gap: 8px;
+  padding: 8px 18px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+  background: var(--tint);
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--accent);
+  box-shadow: 0 1px 3px rgba(8, 125, 84, 0.15);
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
+  line-height: 1.3;
 }
 
 .compose-quickbtn:hover {
-  background: var(--tint);
-  border-color: rgba(8, 125, 84, 0.35);
-  color: var(--accent);
-  box-shadow: 0 2px 6px rgba(8, 125, 84, 0.15);
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(8, 125, 84, 0.28);
   transform: translateY(-1px);
+}
+
+.compose-quickbtn:hover svg {
+  color: #ffffff;
 }
 
 .compose-quickbtn:active {
   transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(8, 125, 84, 0.15);
 }
 
 .compose-quickbtn svg {
-  width: 14px;
-  height: 14px;
+  width: 17px;
+  height: 17px;
   stroke-width: 2.2;
   color: var(--accent);
+  transition: color 0.15s ease;
 }
 
 .profilelink {
@@ -2071,6 +2162,9 @@ input[type=checkbox] {
 :root[data-theme="dark"] .routing-card:hover, :root:has(#theme-toggle:checked) .routing-card:hover { background: #131d33; }
 :root[data-theme="dark"] .order-btn, :root:has(#theme-toggle:checked) .order-btn { background: #1e293b; color: #cbd5e1; border-color: #334155; }
 :root[data-theme="dark"] .docs-view-body, :root:has(#theme-toggle:checked) .docs-view-body { background: #0f172a; }
+:root[data-theme="dark"] .compose-quickbtn, :root:has(#theme-toggle:checked) .compose-quickbtn { background: rgba(16, 185, 129, 0.16); border-color: rgba(16, 185, 129, 0.4); color: #34d399; }
+:root[data-theme="dark"] .compose-quickbtn:hover, :root:has(#theme-toggle:checked) .compose-quickbtn:hover { background: #10b981; color: #0f172a; border-color: #10b981; }
+:root[data-theme="dark"] .compose-quickbtn:hover svg, :root:has(#theme-toggle:checked) .compose-quickbtn:hover svg { color: #0f172a; }
 
 /* Rich Text Editor */
 .rich-editor-container {
@@ -2463,7 +2557,7 @@ export function page(view, title, subtitle, content, sess, notice = '') {
             <div class="crumb">Workspace &nbsp; / &nbsp; <strong>${e(title)}</strong></div>
           </div>
           <div class="topright">
-            <a class="button small secondary compose-quickbtn" href="${base}?view=compose">${icon('plus')}<span>Send test</span></a>
+            <a class="compose-quickbtn" href="${base}?view=compose">${icon('mail')}<span>Send test</span></a>
             <label for="theme-toggle" class="theme-toggle-btn" title="Toggle dark / light theme" aria-label="Toggle dark mode">
               <span class="icon-sun">${icon('sun')}</span>
               <span class="icon-moon">${icon('moon')}</span>

@@ -54,14 +54,19 @@ export function redactConfig(values = {}) {
   for (const name of SECRETS) if (out[name]) out[name] = '[configured]';
   return out;
 }
-export async function config(env) {
+export async function config(env, decryptSecrets = true) {
   const result = { ...env }; const configured = new Set();
   for (const [name, spec] of Object.entries(SETTINGS)) result[name] = env[name] ?? spec[2];
   const rows = await env.DB.prepare('SELECT name,value,is_secret FROM app_settings').all();
   for (const row of rows.results || []) {
     if (row.is_secret && SECRETS.includes(row.name)) {
-      if (!env.CONFIG_ENCRYPTION_KEY) throw new HttpError(503, 'Configuration encryption key unavailable.');
-      result[row.name] = await decrypt(env.CONFIG_ENCRYPTION_KEY, row.value, row.name); configured.add(row.name);
+      if (decryptSecrets) {
+        if (!env.CONFIG_ENCRYPTION_KEY) throw new HttpError(503, 'Configuration encryption key unavailable.');
+        result[row.name] = await decrypt(env.CONFIG_ENCRYPTION_KEY, row.value, row.name);
+      } else {
+        result[row.name] = '[configured]';
+      }
+      configured.add(row.name);
     } else if (SETTINGS[row.name]) result[row.name] = validateSetting(row.name, row.value);
   }
   return { values: result, configured };

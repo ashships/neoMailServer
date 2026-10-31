@@ -136,7 +136,7 @@ async function handler(request, env) {
     const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : '';
     const client = await apiClient(env, token);
     if (!client) throw new HttpError(401, 'Invalid API credential.');
-    const { values: cfg } = await config(env);
+    const { values: cfg } = await config(env, request.method === 'POST');
     await rate(env, 'api:client:' + client.id, +cfg.API_RATE_LIMIT_PER_MINUTE, 60);
     const data = await json(request);
     if (client.sender_address) {
@@ -151,7 +151,7 @@ async function handler(request, env) {
     requireMethod(request, ['POST']);
     const provider = path.slice('/webhooks/'.length);
     if (!['resend', 'mailgun'].includes(provider)) throw new HttpError(404, 'Webhook provider not supported.');
-    const { values: cfg } = await config(env);
+    const { values: cfg } = await config(env, request.method === 'POST');
     await rate(env, 'webhook:' + provider + ':' + ip, +cfg.WEBHOOK_RATE_LIMIT_PER_MINUTE, 60);
     const event = await verifyWebhook(provider, request, await readBody(request), cfg);
     await applyWebhook(env, provider, event); return reply({ received: true });
@@ -228,7 +228,7 @@ async function handler(request, env) {
       return reply((local(request, env) || tokenLoginConfigured(env)) ? ui.login() : ui.accessLogin());
     }
     sameOrigin(request);
-    const { values: cfg } = await config(env);
+    const { values: cfg } = await config(env, request.method === 'POST');
     await rate(env, 'login:ip:' + ip, +cfg.MAX_LOGIN_ATTEMPTS, 60);
     const data = await form(request);
     if (otpLoginConfigured(env) && data.get('step')) {
@@ -400,7 +400,7 @@ async function handler(request, env) {
   sess.local_dev = local(request, env);
   sess.profile = await getProfile(env, subject);
   if (path === '/admin/profile-image') { requireMethod(request, ['GET']); return profileImage(env, subject); }
-  const { values: cfg } = await config(env);
+  const { values: cfg } = await config(env, request.method === 'POST');
   if (request.method === 'POST') {
     const data = path === '/admin/profile' ? await profileForm(request) : await form(request); await csrf(request, data, sess);
     // Controls all console mutations, including test email dispatch.

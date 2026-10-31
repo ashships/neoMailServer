@@ -55,6 +55,8 @@ test('superadmin provider order, adding, credentials, circuit breaker reset and 
   assert.ok(providersHtml.includes('neoPathshala'));
   assert.ok(providersHtml.includes('theme-toggle'));
   assert.ok(providersHtml.includes('image/svg+xml'));
+  assert.ok(providersHtml.includes('compose-quickbtn'));
+  assert.match(providersHtml, /class="compose-quickbtn"[^>]*><svg/);
   assert.ok(providersHtml.includes('Active Routing Priority Order'));
 
   // 2. Superadmin provider reordering: Move down
