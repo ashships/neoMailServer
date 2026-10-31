@@ -28,7 +28,17 @@ const iconMap = {
   external: 'ExternalLink',
   refresh: 'RotateCw',
   plus: 'Plus',
+  pause: 'Pause',
+  play: 'Play',
+  star: 'Star',
+  user: 'User',
 };
+
+function initial(name) {
+  if (!name || typeof name !== 'string') return 'S';
+  const trimmed = name.trim();
+  return trimmed ? Array.from(trimmed)[0].toUpperCase() : 'S';
+}
 
 function icon(name) {
   const data = lucide[iconMap[name] || 'Mail'];
@@ -482,25 +492,69 @@ nav {
 
 .compose-quickbtn {
   display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+
+.compose-quickbtn:hover {
+  background: var(--tint);
+  border-color: rgba(8, 125, 84, 0.35);
+  color: var(--accent);
+  box-shadow: 0 2px 6px rgba(8, 125, 84, 0.15);
+  transform: translateY(-1px);
+}
+
+.compose-quickbtn:active {
+  transform: translateY(0);
+}
+
+.compose-quickbtn svg {
+  width: 14px;
+  height: 14px;
+  stroke-width: 2.2;
+  color: var(--accent);
 }
 
 .profilelink {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  transition: background-color 0.12s ease;
+  gap: 9px;
+  padding: 4px 12px 4px 5px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  user-select: none;
 }
 
 .profilelink:hover {
   background: var(--surface-hover);
+  border-color: var(--line-strong);
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08);
+}
+
+.custom-dropdown[open] .profilelink {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(8, 125, 84, 0.12);
+  background: var(--surface);
 }
 
 .profilemeta {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: flex-start;
   gap: 2px;
 }
 
@@ -512,6 +566,7 @@ nav {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  line-height: 1.2;
 }
 
 .roletag {
@@ -524,17 +579,18 @@ nav {
   border: 1px solid var(--line);
   color: var(--muted);
   background: var(--surface-hover);
+  line-height: 1.3;
 }
 
 .roletag.superadmin {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #fff;
+  background: var(--tint);
+  border-color: var(--tint-strong);
+  color: var(--tint-text);
 }
 
 .avatar {
-  width: 32px;
-  height: 32px;
+  width: 30px;
+  height: 30px;
   display: grid;
   place-items: center;
   background: var(--tint);
@@ -554,10 +610,11 @@ nav {
 }
 
 main {
-  max-width: 1440px;
   width: 100%;
-  margin: 0 auto;
-  padding: 32px;
+  max-width: 1600px;
+  margin: 0;
+  padding: 24px 32px 48px;
+  box-sizing: border-box;
 }
 
 .pagehead {
@@ -612,51 +669,82 @@ p {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  background: var(--accent);
-  border: 1px solid var(--accent);
+  background: linear-gradient(180deg, #0a8f60 0%, #087d54 100%);
+  border: 1px solid #066d48;
   border-radius: var(--radius-sm);
-  color: white;
-  padding: 8px 14px;
+  color: #ffffff;
+  padding: 8px 15px;
   font-size: 12px;
   font-weight: 600;
-  transition: all 0.15s ease;
-  box-shadow: var(--shadow-xs);
+  line-height: 1.25;
+  cursor: pointer;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(8, 125, 84, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  text-decoration: none;
 }
 
 .button:hover {
-  background: var(--accent-hover);
-  border-color: var(--accent-hover);
+  background: linear-gradient(180deg, #0b9e6a 0%, #07744d 100%);
+  border-color: #055e3e;
+  box-shadow: 0 3px 8px rgba(8, 125, 84, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
 }
 
 .button:active {
-  transform: translateY(1px);
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(8, 125, 84, 0.2);
 }
 
 .button.secondary {
   color: var(--text);
   background: var(--surface);
-  border-color: var(--line);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-xs);
 }
 
 .button.secondary:hover {
   background: var(--surface-hover);
   border-color: var(--line-strong);
+  color: var(--text);
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.06);
+  transform: translateY(-1px);
+}
+
+.button.secondary:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-xs);
 }
 
 .button.danger {
-  background: var(--danger);
-  border-color: var(--danger);
-  color: white;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.05);
 }
 
 .button.danger:hover {
-  background: #b91c1c;
-  border-color: #b91c1c;
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.12);
+  transform: translateY(-1px);
+}
+
+.button.danger:active {
+  transform: translateY(0);
+  background: #fecaca;
 }
 
 .button.small {
   padding: 5px 10px;
   font-size: 11px;
+  border-radius: var(--radius-xs);
+}
+
+.button svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
 }
 
 /* Stats Cards */
@@ -1323,12 +1411,6 @@ input[type=checkbox] {
   max-height: 250px;
 }
 
-.profilelink {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .dnsfield {
   display: flex;
   align-items: center;
@@ -1391,16 +1473,207 @@ input[type=checkbox] {
   font-size: 20px;
 }
 
-.rename {
-  border: 0;
-  padding: 5px 0;
-  white-space: normal;
-  min-width: 180px;
+/* Sender identities specific styling */
+.identity-name-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.rename summary {
-  font-size: 11px;
+.identity-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  background: var(--tint);
+  border: 1px solid var(--tint-strong);
   color: var(--accent);
+  font-weight: 700;
+  font-size: 13px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+}
+
+.identity-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.identity-title {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+}
+
+.rename-popover {
+  position: relative;
+  display: inline-block;
+  border: 0;
+  padding: 0;
+}
+
+.rename-popover summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 550;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  border: 1px solid transparent;
+  transition: all 0.12s ease;
+}
+
+.rename-popover summary::-webkit-details-marker {
+  display: none;
+}
+
+.rename-popover summary:hover {
+  color: var(--accent);
+  background: var(--tint);
+  border-color: var(--tint-strong);
+}
+
+.rename-popover summary svg {
+  width: 12px;
+  height: 12px;
+}
+
+.popover-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  padding: 12px;
+  min-width: 250px;
+  z-index: 50;
+  animation: dropMenuIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.popover-dropdown .field {
+  margin-bottom: 10px;
+}
+
+.popover-dropdown .field span {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+
+.popover-dropdown input {
+  margin-top: 0;
+  padding: 6px 9px;
+  font-size: 12px;
+}
+
+.email-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  background: #f1f5f9;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.status-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tag.Active::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #16a34a;
+  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
+}
+
+.tag.Paused::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #d97706;
+}
+
+.identity-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.identityform-grid .form-row-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1.2fr auto;
+  gap: 16px;
+  align-items: start;
+}
+
+.identityform-grid .field {
+  margin: 0;
+}
+
+.field-title {
+  display: block;
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  margin-bottom: 2px;
+}
+
+.input-suffix-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.input-suffix-wrap input {
+  padding-right: 28px;
+}
+
+.input-suffix-wrap .suffix-at {
+  position: absolute;
+  right: 10px;
+  color: var(--muted);
+  font-weight: 600;
+  font-size: 13px;
+  pointer-events: none;
+}
+
+.form-btn-col {
+  padding-top: 20px;
+}
+
+@media (max-width: 900px) {
+  .identityform-grid .form-row-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+  .form-btn-col {
+    padding-top: 0;
+  }
+  .form-btn-col .button {
+    width: 100%;
+  }
 }
 
 /* Mobile responsive drawer navigation */
@@ -1464,7 +1737,7 @@ input[type=checkbox] {
 
 /* Responsive Media Queries */
 @media (min-width: 1600px) {
-  main { max-width: 1600px; padding: 40px; }
+  main { max-width: 1720px; padding: 28px 36px 56px; margin: 0; }
 }
 
 @media (max-width: 1100px) {
@@ -1473,7 +1746,7 @@ input[type=checkbox] {
   .stat:nth-child(2) { border-right: 0; }
   .stat:nth-child(-n+2) { border-bottom: 1px solid var(--line); }
   .app { grid-template-columns: 220px minmax(0, 1fr); }
-  main { padding: 24px; }
+  main { padding: 22px 24px; margin: 0; }
   .topbar { padding: 0 24px; }
 }
 
@@ -1508,7 +1781,7 @@ input[type=checkbox] {
     height: 60px;
     padding: 0 16px;
   }
-  main { padding: 20px 16px; }
+  main { padding: 20px 16px; margin: 0; }
 }
 
 @media (max-width: 640px) {
@@ -1782,7 +2055,122 @@ export function settings(cfg, sess, canEditGlobal = true, accountKeys = []) {
 }
 
 export function identities(rows, sess, domains = []) {
-  return `<div class="notice warn">Creating an identity here does not verify its domain. Verify every sending domain with each active provider before sending.</div><section class="panel"><div class="panelhead"><h2>Sender identities</h2></div><div class="tablewrap"><table><thead><tr><th>Sender</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows.map(r => `<tr><td>${e(r.display_name)}<details class="rename"><summary>${icon('edit')}</summary><form method="post" action="/admin/identities/update">${hidden(sess.csrf_token)}<input type="hidden" name="email_address" value="${e(r.email_address)}"><input type="hidden" name="action" value="rename"><label class="field">Sender display name<input name="display_name" value="${e(r.display_name)}" required maxlength="100"></label><button class="button secondary small">Save name</button></form></details></td><td>${e(r.email_address)}</td><td>${badge(r.is_active ? 'Active' : 'Paused')} ${r.is_default ? '<span class="tag default">★ Default</span>' : ''}</td><td><form method="post" action="/admin/identities/update" class="actions">${hidden(sess.csrf_token)}<input type="hidden" name="email_address" value="${e(r.email_address)}"><button class="button secondary small" name="action" value="toggle">${r.is_active ? 'Pause' : 'Enable'}</button>${r.is_active && !r.is_default ? '<button class="button secondary small" name="action" value="default">Set default</button>' : ''}<button class="button danger small" name="action" value="delete">${icon('trash')}</button></form></td></tr>`).join('')}</tbody></table></div></section><section class="panel"><div class="panelhead"><h2>Add sender identity</h2></div><div class="panelbody"><form class="identityform" method="post" action="/admin/identities/create">${hidden(sess.csrf_token)}<label class="field">Display name<input name="display_name" maxlength="100" required placeholder="neoPathshala Support"></label><label class="field">Local part<input name="local_part" maxlength="64" required autocomplete="off" spellcheck="false" placeholder="support"></label><label class="field">Verified domain<select name="domain" required class="custom-select">${domains.map(d => `<option value="${e(d)}">${e(d)}</option>`).join('') || '<option value="" disabled>No verified domains</option>'}</select></label><button class="button">Add identity</button></form></div></section>`;
+  const countBadge = rows.length ? `<span class="tag good">${rows.length} ${rows.length === 1 ? 'identity' : 'identities'}</span>` : '';
+  const rowsHtml = rows.map(r => `<tr>
+    <td>
+      <div class="identity-name-cell">
+        <span class="identity-avatar">${e(initial(r.display_name))}</span>
+        <div class="identity-info">
+          <span class="identity-title">${e(r.display_name)}</span>
+          <details class="rename-popover">
+            <summary class="rename-trigger" title="Rename display name">${icon('edit')}<span>Rename</span></summary>
+            <div class="popover-dropdown">
+              <form method="post" action="/admin/identities/update">
+                ${hidden(sess.csrf_token)}
+                <input type="hidden" name="email_address" value="${e(r.email_address)}">
+                <input type="hidden" name="action" value="rename">
+                <label class="field">
+                  <span>Sender display name</span>
+                  <input name="display_name" value="${e(r.display_name)}" required maxlength="100" autocomplete="off">
+                </label>
+                <button class="button small">Save name</button>
+              </form>
+            </div>
+          </details>
+        </div>
+      </div>
+    </td>
+    <td>
+      <div class="email-cell">
+        <code class="email-pill">${e(r.email_address)}</code>
+      </div>
+    </td>
+    <td>
+      <div class="status-cell">
+        ${badge(r.is_active ? 'Active' : 'Paused')}
+        ${r.is_default ? '<span class="tag default">★ Default</span>' : ''}
+      </div>
+    </td>
+    <td>
+      <form method="post" action="/admin/identities/update" class="identity-actions">
+        ${hidden(sess.csrf_token)}
+        <input type="hidden" name="email_address" value="${e(r.email_address)}">
+        <button class="button secondary small" name="action" value="toggle" title="${r.is_active ? 'Pause identity' : 'Enable identity'}">
+          ${icon(r.is_active ? 'pause' : 'play')}
+          <span>${r.is_active ? 'Pause' : 'Enable'}</span>
+        </button>
+        ${r.is_active && !r.is_default ? `<button class="button secondary small" name="action" value="default" title="Set as default sender">${icon('star')}<span>Set default</span></button>` : ''}
+        <button class="button danger small iconb" name="action" value="delete" title="Delete sender identity" aria-label="Delete sender identity">
+          ${icon('trash')}
+        </button>
+      </form>
+    </td>
+  </tr>`).join('');
+
+  return `<div class="notice warn">Creating an identity here does not verify its domain. Verify every sending domain with each active provider before sending.</div>
+<section class="panel">
+  <div class="panelhead">
+    <div>
+      <h2>Sender identities</h2>
+      <p>Outbound 'From' addresses authorized to send transactional email.</p>
+    </div>
+    ${countBadge}
+  </div>
+  ${!rows.length ? empty('No sender identities configured', 'Add a sender identity below matching one of your verified domains.') : `
+  <div class="tablewrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Sender</th>
+          <th>Address</th>
+          <th>Status</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+  </div>`}
+</section>
+<section class="panel">
+  <div class="panelhead">
+    <div>
+      <h2>Add sender identity</h2>
+      <p>Create a verified sender address on one of your active sending domains.</p>
+    </div>
+  </div>
+  <div class="panelbody">
+    <form class="identityform-grid" method="post" action="/admin/identities/create">
+      ${hidden(sess.csrf_token)}
+      <div class="form-row-grid">
+        <label class="field">
+          <span class="field-title">Display name</span>
+          <input name="display_name" maxlength="100" required placeholder="neoPathshala Support" autocomplete="name">
+          <small>Human-friendly sender name</small>
+        </label>
+        <label class="field">
+          <span class="field-title">Local part</span>
+          <div class="input-suffix-wrap">
+            <input name="local_part" maxlength="64" required autocomplete="off" spellcheck="false" placeholder="support">
+            <span class="suffix-at">@</span>
+          </div>
+          <small>Username before domain</small>
+        </label>
+        <label class="field">
+          <span class="field-title">Verified domain</span>
+          <select name="domain" required class="custom-select">
+            ${domains.map(d => `<option value="${e(d)}">${e(d)}</option>`).join('') || '<option value="" disabled>No verified domains</option>'}
+          </select>
+          <small>Active sending domain</small>
+        </label>
+        <div class="form-btn-col">
+          <button class="button submit-btn">${icon('plus')}<span>Add identity</span></button>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>`;
 }
 
 export function compose(rows, sess) {
