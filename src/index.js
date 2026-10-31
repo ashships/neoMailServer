@@ -338,7 +338,10 @@ Idempotency-Key: unique-key
       await audit(env, request, 'PROVIDER_TOGGLED', { provider }); return redirect('/admin?view=providers&notice=Provider+updated');
     }
     if (path === '/admin/identities/create') {
-      const address = email(data.get('email_address')), displayName = text(data.get('display_name'), 100);
+      const localPart = data.get('local_part') ? text(data.get('local_part'), 64) : '';
+      const domain = data.get('domain') ? text(data.get('domain'), 253) : '';
+      const address = email(data.get('email_address')) || (localPart && domain ? email(localPart + '@' + domain) : null);
+      const displayName = text(data.get('display_name'), 100);
       if (!address) throw new HttpError(422, 'Invalid sender address.');
       // Tenants may only create identities on their own verified sending domains.
       const senderDomain = address.split('@')[1];
@@ -427,8 +430,7 @@ Idempotency-Key: unique-key
     }
     if (path === '/admin/domains/create') {
       const domain = text(data.get('domain'), 253);
-      const name = text(data.get('display_name'), 100);
-      if (!domain || !/^[a-z0-9.-]+$/i.test(domain) || !name) throw new HttpError(422, 'Valid domain and name required.');
+      const name = (text(data.get('display_name'), 100) || domain);
       const token = crypto.randomUUID().replace(/-/g, '');
       await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,owner_subject,verification_token) VALUES (?,?,0,unixepoch(),?,?,?)').bind(domain.toLowerCase(), name, subject, subject, token).run();
       await audit(env, request, 'DOMAIN_ADDED', { domain }); return redirect('/admin?view=domains&notice=' + encodeURIComponent('Domain added.'));
@@ -518,8 +520,9 @@ Idempotency-Key: unique-key
     content=ui.settings(cfg,sess,superadmin);
   } else if (view === 'identities' || view === 'compose') {
     const senders = await identities(env, subject);
+    const verifiedDomains = view === 'identities' ? (await rows(env, 'SELECT domain FROM managed_domains WHERE is_verified=1 ORDER BY domain')).map(r=>r.domain) : [];
     title=view==='compose'?'Send a test':'Sender identities'; subtitle=view==='compose'?'Verify your email delivery setup.':'Manage approved addresses for outbound mail.';
-    content=view==='compose'?ui.compose(senders,sess):ui.identities(senders,sess);
+    content=view==='compose'?ui.compose(senders,sess):ui.identities(senders,sess,verifiedDomains);
   } else if (view === 'providers') {
     title='Delivery providers'; subtitle='Control routing availability and inspect provider health.';
     content=`<div class="notice">Routing order: ${cfg.FALLBACK_ORDER.split(',').map(p=>ui.badge(p)).join(' → ')}. Circuit breakers pause a provider for five minutes after five consecutive failures.</div><section class="panel">${ui.providerList(await rows(env,'SELECT * FROM provider_health'),cfg,sess.csrf_token)}</section><div class="notice warn">SendFox is excluded until a supported transactional sending API is verified. Built-in delivery webhooks support Resend and Mailgun; other providers show acceptance only.</div>`;
