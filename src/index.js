@@ -359,6 +359,7 @@ Idempotency-Key: unique-key
       const sender = senderRaw ? email(senderRaw) : null;
       if (senderRaw && !sender) throw new HttpError(422, 'Invalid sender address.');
       if (sender && !await env.DB.prepare('SELECT 1 FROM sender_identities WHERE email_address=? AND is_active=1').bind(sender).first()) throw new HttpError(422, 'Sender must be an active identity.');
+      if (sender) { const d = sender.split('@')[1]; const dr = await env.DB.prepare('SELECT is_verified FROM managed_domains WHERE domain=?').bind(d).first(); if (dr && !dr.is_verified) throw new HttpError(422, 'Sender domain must be verified first.'); }
       const bytes = new Uint8Array(32); crypto.getRandomValues(bytes);
       const key = btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
       await env.DB.prepare('INSERT INTO api_clients (id,name,key_hash,sender_address,is_active,created_at,owner_subject) VALUES (?,?,?,?,1,unixepoch(),?)').bind(crypto.randomUUID(), name, await hash(key), sender, subject).run();
