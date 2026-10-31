@@ -3,7 +3,7 @@
 UPDATE email_logs SET owner_subject = COALESCE(owner_subject, 'local-admin') WHERE owner_subject IS NULL;
 UPDATE sender_identities SET owner_subject = COALESCE(owner_subject, 'local-admin') WHERE owner_subject IS NULL;
 
-INSERT OR IGNORE INTO managed_domains (domain, display_name, is_verified, created_at, created_by, owner_subject, verification_token) VALUES
+-- Sending domains are added and DNS-verified per workspace; no domain is seeded.
 
 -- Owner-scoped indexes keep tenant dashboards fast without full-table scans.
 CREATE INDEX IF NOT EXISTS idx_email_logs_owner ON email_logs(owner_subject, unix_timestamp DESC);

@@ -47,6 +47,16 @@ test('tenant isolation: admin workspaces are fully separated and sandbox capabil
     assert.equal(addD2.status,303);
     await db.prepare('UPDATE managed_domains SET is_verified=1 WHERE domain=?').bind('client2.test').run();
 
+    // Server-side validation and duplicate protection.
+    assert.equal((await post('tenant1@example.com',cookie1,'/admin/domains/create',{domain:'not a domain!',display_name:'Bad'})).status,422,'invalid domain must be rejected');
+    assert.equal((await post('tenant1@example.com',cookie1,'/admin/domains/create',{domain:'client1.test',display_name:'Again'})).status,409,'own duplicate domain must be rejected');
+    assert.equal((await post('tenant1@example.com',cookie1,'/admin/domains/create',{domain:'client2.test',display_name:'Steal'})).status,409,'another workspace domain must be rejected');
+
+    // The domains view only lists the tenant's own domains.
+    const domainsRes=await call('tenant1@example.com','/dashboard?view=domains',{headers:{cookie:cookie1}}); assert.equal(domainsRes.status,200);
+    const domainsHtml=await domainsRes.text();
+    assert.ok(domainsHtml.includes('client1.test')); assert.ok(!domainsHtml.includes('client2.test'),'tenant domains view must not leak other workspaces domains');
+
     // Verifying another tenant's domain is forbidden even with the right DNS content.
     assert.equal((await post('tenant2@example.com',cookie2,'/admin/domains/verify',{domain:'client1.test'})).status,404);
 
@@ -59,6 +69,21 @@ test('tenant isolation: admin workspaces are fully separated and sandbox capabil
     // Cross-tenant identity mutation is rejected; own mutation succeeds.
     assert.equal((await post('tenant1@example.com',cookie1,'/admin/identities/update',{email_address:'support@client2.test',action:'rename',display_name:'Hijacked'})).status,403);
     assert.equal(await db.prepare('SELECT display_name FROM sender_identities WHERE email_address=?').bind('support@client2.test').first('display_name'),'T2 Support');
+    // Cross-tenant deletion is rejected too.
+    assert.equal((await post('tenant1@example.com',cookie1,'/admin/identities/update',{email_address:'support@client2.test',action:'delete'})).status,403);
+    assert.ok(await db.prepare('SELECT 1 FROM sender_identities WHERE email_address=?').bind('support@client2.test').first(),'foreign identity must survive a delete attempt');
+    // A tenant may delete its own non-default identity.
+    assert.equal((await post('tenant1@example.com',cookie1,'/admin/identities/update',{email_address:'support@client1.test',action:'delete'})).status,303);
+    assert.equal(await db.prepare('SELECT 1 FROM sender_identities WHERE email_address=?').bind('support@client1.test').first(),null);
+    assert.equal((await post('tenant1@example.com',cookie1,'/admin/identities/create',{email_address:'support@client1.test',display_name:'T1 Support'})).status,303,'re-create for later send tests');
+
+    // The identities form only offers the workspace's own verified domains.
+    const identitiesHtml=await (await call('tenant1@example.com','/dashboard?view=identities',{headers:{cookie:cookie1}})).text();
+    assert.ok(identitiesHtml.includes('client1.test')); assert.ok(!identitiesHtml.includes('client2.test'),'verified domain dropdown must be owner-scoped');
+
+    // Tenant settings expose the profile only — no global credentials forms.
+    const settingsHtml=await (await call('tenant1@example.com','/dashboard?view=settings',{headers:{cookie:cookie1}})).text();
+    assert.ok(settingsHtml.includes('Administrator email')); assert.ok(!settingsHtml.includes('/admin/credentials'),'tenant settings must not render credential forms');
 
     // Tenant "set default" only flips its own identities and never the global DEFAULT_SENDER.
     assert.equal((await post('tenant2@example.com',cookie2,'/admin/identities/update',{email_address:'support@client2.test',action:'default'})).status,303);
@@ -97,7 +122,7 @@ test('tenant isolation: admin workspaces are fully separated and sandbox capabil
 
     // --- mail activity and message preview isolation ---
     await db.prepare("INSERT INTO email_logs (id,direction,provider_used,sender_address,recipient_address,subject,html_hash,transmission_status,unix_timestamp,updated_at,owner_subject) VALUES ('t2log','outbound','resend','support@client2.test','student@example.com','Tenant Two Private Secret','x','Sent',unixepoch(),unixepoch(),'tenant2@example.com')").run();
-    const mail1=await (await call('tenant1@example.com','/admin?view=mail',{headers:{cookie:cookie1}})).text();
+    const mail1=await (await call('tenant1@example.com','/dashboard?view=mail',{headers:{cookie:cookie1}})).text();
     assert.ok(!mail1.includes('Tenant Two Private Secret'),'tenant mail view must not contain other workspaces mail');
     const own1=await call('tenant1@example.com','/admin/view-mail?id=t2log',{headers:{cookie:cookie1}});
     assert.equal(own1.status,404,'cross-tenant message inspector must be a 404');

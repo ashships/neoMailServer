@@ -361,7 +361,7 @@ Idempotency-Key: unique-key
     }
     if (path === '/admin/identities/update') {
       const address = email(data.get('email_address')), action = data.get('action');
-      if (!address || !['default','toggle','rename'].includes(action)) throw new HttpError(422, 'Invalid identity action.');
+      if (!address || !['default','toggle','rename','delete'].includes(action)) throw new HttpError(422, 'Invalid identity action.');
       const identity = await env.DB.prepare('SELECT * FROM sender_identities WHERE email_address=?').bind(address).first();
       if (!identity) throw new HttpError(404, 'Identity not found.');
       const admin = await isSuperadmin(env, subject);
@@ -371,7 +371,7 @@ Idempotency-Key: unique-key
       const ownParams = admin ? [] : [subject];
       if (action === 'delete') {
         if (identity.is_default || address === cfg.DEFAULT_SENDER) throw new HttpError(409, 'Choose another default sender before deleting this identity.');
-        await env.DB.prepare('DELETE FROM sender_identities WHERE email_address=?').bind(address).run();
+        await env.DB.prepare(`DELETE FROM sender_identities WHERE email_address=?${ownClause}`).bind(address,...ownParams).run();
         await audit(env, request, 'IDENTITY_DELETED', { address }); return redirect('/admin?view=identities&notice=Identity+deleted');
       }
       if (action === 'rename') {
@@ -441,10 +441,13 @@ Idempotency-Key: unique-key
       await audit(env, request, 'ADMIN_USER_REVOKED', { subject: target }); return redirect('/admin?view=users&notice=' + encodeURIComponent('Administrator revoked.'));
     }
     if (path === '/admin/domains/create') {
-      const domain = text(data.get('domain'), 253);
-      const name = (text(data.get('display_name'), 100) || domain);
+      const domain = text(data.get('domain'), 253).toLowerCase().replace(/\.$/, '');
+      if (!/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(domain)) throw new HttpError(422, 'Enter a valid domain such as client.example.com.');
+      const name = text(data.get('display_name'), 100) || domain;
+      const existing = await env.DB.prepare('SELECT owner_subject FROM managed_domains WHERE domain=?').bind(domain).first();
+      if (existing) throw new HttpError(409, existing.owner_subject === subject ? 'This domain is already in your workspace.' : 'This domain is already registered to another workspace.');
       const token = crypto.randomUUID().replace(/-/g, '');
-      await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,owner_subject,verification_token) VALUES (?,?,0,unixepoch(),?,?,?)').bind(domain.toLowerCase(), name, subject, subject, token).run();
+      await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,owner_subject,verification_token) VALUES (?,?,0,unixepoch(),?,?,?)').bind(domain, name, subject, subject, token).run();
       await audit(env, request, 'DOMAIN_ADDED', { domain }); return redirect('/admin?view=domains&notice=' + encodeURIComponent('Domain added.'));
     }
     if (path === '/admin/users/role') {
@@ -532,7 +535,8 @@ Idempotency-Key: unique-key
     content=ui.settings(cfg,sess,superadmin);
   } else if (view === 'identities' || view === 'compose') {
     const senders = await identities(env, subject);
-    const verifiedDomains = view === 'identities' ? (await rows(env, 'SELECT domain FROM managed_domains WHERE is_verified=1 ORDER BY domain')).map(r=>r.domain) : [];
+    const superadmin = await isSuperadmin(env, subject);
+    const verifiedDomains = view === 'identities' ? (await rows(env, superadmin ? 'SELECT domain FROM managed_domains WHERE is_verified=1 ORDER BY domain' : 'SELECT domain FROM managed_domains WHERE is_verified=1 AND owner_subject=? ORDER BY domain', ...(superadmin?[]:[subject]))).map(r=>r.domain) : [];
     title=view==='compose'?'Send a test':'Sender identities'; subtitle=view==='compose'?'Verify your email delivery setup.':'Manage approved addresses for outbound mail.';
     content=view==='compose'?ui.compose(senders,sess):ui.identities(senders,sess,verifiedDomains);
   } else if (view === 'providers') {
