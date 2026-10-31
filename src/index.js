@@ -64,9 +64,10 @@ function otpLoginConfigured(env) {
   return env.EMAIL_OTP_LOGIN === 'true' && !accessConfigured(env);
 }
 async function adminVerifier(request, env) {
-  if (local(request, env)) return env.LOCAL_ADMIN_TOKEN ? hash(env.LOCAL_ADMIN_TOKEN) : env.ADMIN_TOKEN_HASH;
+  // Never undefined: session credential_version is derived from this value and must stay consistent.
+  if (local(request, env)) return env.LOCAL_ADMIN_TOKEN ? hash(env.LOCAL_ADMIN_TOKEN) : (env.ADMIN_TOKEN_HASH || '');
   if (accessConfigured(env)) return 'access-v2:' + env.ACCESS_TEAM_DOMAIN + ':' + env.ACCESS_AUD;
-  return env.ADMIN_TOKEN_HASH;
+  return env.ADMIN_TOKEN_HASH || '';
 }
 async function reauthenticate(request, env, data) {
   if (!local(request, env) && accessConfigured(env)) {

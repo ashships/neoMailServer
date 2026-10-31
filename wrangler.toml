@@ -45,6 +45,4 @@ ALLOW_TOKEN_LOGIN = "false"
 # ADMIN_TOKEN_HASH moved to a Worker secret: npx wrangler secret put ADMIN_TOKEN_HASH
 EMAIL_OTP_LOGIN = "true"
 
-[[upload.rules]]
-include = ["src/**/*.js"]
-exclude = [".env*", "test/**", "docs/**", "migrations/**", "*.md", ".git/**"]
+# Module bundling only includes imports of src/index.js; no manual upload rules needed.
