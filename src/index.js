@@ -362,6 +362,11 @@ Idempotency-Key: unique-key
       // Tenant mutations are scoped to their own identities; the global default sender stays superadmin-only.
       const ownClause = admin ? '' : ' AND owner_subject=?';
       const ownParams = admin ? [] : [subject];
+      if (action === 'delete') {
+        if (identity.is_default || address === cfg.DEFAULT_SENDER) throw new HttpError(409, 'Choose another default sender before deleting this identity.');
+        await env.DB.prepare('DELETE FROM sender_identities WHERE email_address=?').bind(address).run();
+        await audit(env, request, 'IDENTITY_DELETED', { address }); return redirect('/admin?view=identities&notice=Identity+deleted');
+      }
       if (action === 'rename') {
         const displayName=text(data.get('display_name'),100);
         const changes=[env.DB.prepare(`UPDATE sender_identities SET display_name=? WHERE email_address=?${ownClause}`).bind(displayName,address,...ownParams)];
