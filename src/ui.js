@@ -32,6 +32,17 @@ const iconMap = {
   play: 'Play',
   star: 'Star',
   user: 'User',
+  sun: 'Sun',
+  moon: 'Moon',
+  arrowUp: 'ArrowUp',
+  arrowDown: 'ArrowDown',
+  bold: 'Bold',
+  italic: 'Italic',
+  list: 'List',
+  code: 'Code',
+  link: 'Link',
+  eye: 'Eye',
+  zap: 'Zap',
 };
 
 function initial(name) {
@@ -57,10 +68,12 @@ function lucideSvgUri(iconName, stroke = '#64748b', strokeWidth = 2) {
 
 const chevronDownUri = lucideSvgUri('chevron', '#64748b', 2);
 const checkUri = lucideSvgUri('check', '#087d54', 2.5);
+const faviconSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23087d54'/><path d='M7 10h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2z' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='m5 11 11 8 11-8' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><circle cx='23' cy='9' r='3.5' fill='%2334d399'/></svg>`;
+const faviconUri = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
 
 const css = `
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
   --bg: #f8fafc;
   --surface: #ffffff;
   --surface-hover: #f1f5f9;
@@ -98,6 +111,79 @@ const css = `
   --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-family: var(--font);
   font-size: 14px;
+}
+
+/* neoPathshala Dark Mode */
+:root[data-theme="dark"],
+:root:has(#theme-toggle:checked) {
+  color-scheme: dark;
+  --bg: #090d16;
+  --surface: #0f172a;
+  --surface-hover: #1e293b;
+  --surface-active: #334155;
+  --text: #f8fafc;
+  --text-secondary: #cbd5e1;
+  --muted: #94a3b8;
+  --line: #1e293b;
+  --line-strong: #334155;
+  --accent: #10b981;
+  --accent-hover: #34d399;
+  --accent-active: #059669;
+  --tint: rgba(16, 185, 129, 0.15);
+  --tint-strong: rgba(16, 185, 129, 0.3);
+  --tint-text: #6ee7b7;
+  --danger: #f87171;
+  --danger-bg: rgba(239, 68, 68, 0.15);
+  --danger-line: rgba(239, 68, 68, 0.3);
+  --warn: #fbbf24;
+  --warn-bg: rgba(245, 158, 11, 0.15);
+  --warn-line: rgba(245, 158, 11, 0.3);
+  --info: #38bdf8;
+  --info-bg: rgba(56, 189, 248, 0.15);
+  --info-line: rgba(56, 189, 248, 0.3);
+  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not(:has(#theme-toggle-light:checked)) {
+    color-scheme: dark;
+    --bg: #090d16;
+    --surface: #0f172a;
+    --surface-hover: #1e293b;
+    --surface-active: #334155;
+    --text: #f8fafc;
+    --text-secondary: #cbd5e1;
+    --muted: #94a3b8;
+    --line: #1e293b;
+    --line-strong: #334155;
+    --accent: #10b981;
+    --accent-hover: #34d399;
+    --accent-active: #059669;
+    --tint: rgba(16, 185, 129, 0.15);
+    --tint-strong: rgba(16, 185, 129, 0.3);
+    --tint-text: #6ee7b7;
+    --danger: #f87171;
+    --danger-bg: rgba(239, 68, 68, 0.15);
+    --danger-line: rgba(239, 68, 68, 0.3);
+    --warn: #fbbf24;
+    --warn-bg: rgba(245, 158, 11, 0.15);
+    --warn-line: rgba(245, 158, 11, 0.3);
+    --info: #38bdf8;
+    --info-bg: rgba(56, 189, 248, 0.15);
+    --info-line: rgba(56, 189, 248, 0.3);
+    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  }
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
 }
 
 * { box-sizing: border-box; }
@@ -346,16 +432,17 @@ select option::checkmark {
 .app {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .sidebar {
-  position: sticky;
-  top: 0;
   height: 100vh;
+  overflow-y: auto;
+  overflow-x: hidden;
   border-right: 1px solid var(--line);
   background: var(--surface);
-  padding: 24px 14px;
+  padding: 20px 14px;
   display: flex;
   flex-direction: column;
   z-index: 40;
@@ -365,7 +452,7 @@ select option::checkmark {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8px 24px;
+  padding: 0 6px 20px;
 }
 
 .brand {
@@ -373,8 +460,8 @@ select option::checkmark {
   align-items: center;
   gap: 10px;
   font-weight: 750;
-  font-size: 20px;
-  letter-spacing: -0.6px;
+  font-size: 18px;
+  letter-spacing: -0.5px;
   color: var(--text);
 }
 
@@ -383,15 +470,42 @@ select option::checkmark {
   color: white;
   display: grid;
   place-items: center;
-  width: 32px;
-  height: 32px;
+  width: 34px;
+  height: 34px;
   border-radius: var(--radius-sm);
-  box-shadow: 0 2px 4px rgba(8, 125, 84, 0.25);
+  box-shadow: 0 2px 5px rgba(8, 125, 84, 0.28);
+  flex-shrink: 0;
 }
 
 .brandmark svg {
   width: 20px;
   height: 20px;
+}
+
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.brand-title {
+  font-size: 15px;
+  font-weight: 750;
+  letter-spacing: -0.4px;
+  color: var(--text);
+}
+
+.brand-title span {
+  color: var(--accent);
+}
+
+.brand-sub {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-top: 1px;
 }
 
 .brand span span {
@@ -499,21 +613,79 @@ nav {
 /* Workspace main content & topbar */
 .workspace {
   min-width: 0;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .topbar {
-  height: 68px;
+  height: 64px;
   background: var(--surface);
   border-bottom: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 32px;
-  position: sticky;
-  top: 0;
+  flex-shrink: 0;
   z-index: 30;
+}
+
+.theme-toggle-input {
+  display: none;
+}
+
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--surface-hover);
+  color: var(--accent);
+  border-color: var(--line-strong);
+}
+
+.theme-toggle-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.theme-toggle-btn .icon-moon {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle-btn .icon-sun,
+:root:has(#theme-toggle:checked) .theme-toggle-btn .icon-sun {
+  display: none;
+}
+
+:root[data-theme="dark"] .theme-toggle-btn .icon-moon,
+:root:has(#theme-toggle:checked) .theme-toggle-btn .icon-moon {
+  display: inline-flex;
+}
+
+.side-docs-link {
+  margin-bottom: 10px;
+  color: var(--accent);
+  background: var(--tint);
+  border: 1px solid var(--tint-strong);
+}
+
+.side-docs-link:hover {
+  background: var(--surface-hover);
+  color: var(--accent);
 }
 
 .topbar-left {
@@ -658,10 +830,15 @@ nav {
 }
 
 main {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
   width: 100%;
   max-width: 1600px;
   margin: 0;
-  padding: 24px 32px 48px;
+  padding: 28px 32px 56px;
   box-sizing: border-box;
 }
 
@@ -1871,10 +2048,351 @@ input[type=checkbox] {
   .loginart { display: none; }
   .loginform { padding: 32px 20px; }
 }
+
+/* Dark mode component enhancements */
+:root[data-theme="dark"] th, :root:has(#theme-toggle:checked) th { background: #0c1322; }
+:root[data-theme="dark"] tr:hover td, :root:has(#theme-toggle:checked) tr:hover td { background: #131d33; }
+:root[data-theme="dark"] td, :root:has(#theme-toggle:checked) td { border-bottom-color: #17233d; }
+:root[data-theme="dark"] .filters, :root:has(#theme-toggle:checked) .filters,
+:root[data-theme="dark"] .pagination, :root:has(#theme-toggle:checked) .pagination { background: #0c1322; }
+:root[data-theme="dark"] pre, :root:has(#theme-toggle:checked) pre { background: #060911; }
+:root[data-theme="dark"] .email-pill, :root:has(#theme-toggle:checked) .email-pill { background: #17223b; border-color: #24355a; color: #e2e8f0; }
+:root[data-theme="dark"] select, :root:has(#theme-toggle:checked) select { background-color: #0f172a; }
+:root[data-theme="dark"] .stat:hover, :root:has(#theme-toggle:checked) .stat:hover { background: #131d33; }
+:root[data-theme="dark"] .provider:hover, :root:has(#theme-toggle:checked) .provider:hover { background: #131d33; }
+:root[data-theme="dark"] .tag.Active, :root:has(#theme-toggle:checked) .tag.Active,
+:root[data-theme="dark"] .tag.good, :root:has(#theme-toggle:checked) .tag.good { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+:root[data-theme="dark"] .tag.Paused, :root:has(#theme-toggle:checked) .tag.Paused,
+:root[data-theme="dark"] .tag.warn, :root:has(#theme-toggle:checked) .tag.warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
+:root[data-theme="dark"] .tag.Failed, :root:has(#theme-toggle:checked) .tag.Failed,
+:root[data-theme="dark"] .tag.danger, :root:has(#theme-toggle:checked) .tag.danger { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+:root[data-theme="dark"] .editor-preview, :root:has(#theme-toggle:checked) .editor-preview { background: #090d16; }
+:root[data-theme="dark"] .routing-card, :root:has(#theme-toggle:checked) .routing-card { background: #0f172a; }
+:root[data-theme="dark"] .routing-card:hover, :root:has(#theme-toggle:checked) .routing-card:hover { background: #131d33; }
+:root[data-theme="dark"] .order-btn, :root:has(#theme-toggle:checked) .order-btn { background: #1e293b; color: #cbd5e1; border-color: #334155; }
+:root[data-theme="dark"] .docs-view-body, :root:has(#theme-toggle:checked) .docs-view-body { background: #0f172a; }
+
+/* Rich Text Editor */
+.rich-editor-container {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-bottom: 20px;
+}
+
+.rich-editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--surface-hover);
+  border-bottom: 1px solid var(--line);
+  flex-wrap: wrap;
+}
+
+.editor-btn-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  padding: 2px;
+}
+
+.editor-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.editor-btn:hover {
+  background: var(--surface-hover);
+  color: var(--accent);
+}
+
+.editor-btn.active {
+  background: var(--tint);
+  color: var(--accent);
+}
+
+.editor-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.editor-workspace {
+  display: grid;
+  grid-template-columns: 1fr;
+  min-height: 420px;
+}
+
+.editor-workspace.split-view {
+  grid-template-columns: 1fr 1fr;
+}
+
+.editor-textarea {
+  width: 100%;
+  height: 100%;
+  min-height: 420px;
+  border: 0;
+  padding: 16px 20px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  background: var(--surface);
+  color: var(--text);
+  resize: vertical;
+  outline: none;
+  box-shadow: none;
+  border-radius: 0;
+  margin: 0;
+}
+
+.editor-textarea:focus {
+  box-shadow: none;
+  outline: none;
+}
+
+.editor-preview {
+  display: none;
+  padding: 16px 24px;
+  background: var(--bg);
+  border-left: 1px solid var(--line);
+  overflow-y: auto;
+  max-height: 600px;
+  line-height: 1.6;
+  font-size: 13px;
+}
+
+.editor-workspace.split-view .editor-preview {
+  display: block;
+}
+
+.editor-preview h1, .editor-preview h2, .editor-preview h3 {
+  margin-top: 16px;
+  margin-bottom: 8px;
+}
+.editor-preview p {
+  margin: 8px 0;
+  color: var(--text);
+}
+.editor-preview code {
+  background: var(--surface-hover);
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+}
+.editor-preview pre {
+  margin: 12px 0;
+}
+.editor-preview ul, .editor-preview ol {
+  padding-left: 24px;
+  margin: 8px 0;
+}
+.editor-preview blockquote {
+  border-left: 3px solid var(--accent);
+  padding-left: 12px;
+  margin: 12px 0;
+  color: var(--muted);
+  font-style: italic;
+}
+
+.editor-statusbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  font-size: 11px;
+  color: var(--muted);
+  border-top: 1px solid var(--line);
+  background: var(--surface-hover);
+}
+
+/* Provider Routing & Priority Styles */
+.routing-chain {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.routing-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-xs);
+  transition: all 0.15s ease;
+  gap: 16px;
+}
+
+.routing-card:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--shadow-sm);
+}
+
+.routing-card.priority-primary {
+  border-left: 4px solid var(--accent);
+}
+
+.routing-card-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex: 1;
+}
+
+.routing-rank {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--tint);
+  border-radius: var(--radius-xs);
+  padding: 3px 8px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  min-width: 84px;
+}
+
+.routing-rank.primary {
+  background: linear-gradient(135deg, var(--accent) 0%, #065f46 100%);
+  color: white;
+}
+
+.routing-meta strong {
+  display: block;
+  font-size: 13px;
+  font-weight: 650;
+  text-transform: capitalize;
+}
+
+.routing-meta p {
+  margin: 2px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.routing-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.order-btn-group {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+}
+
+.order-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  background: var(--surface);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.12s ease;
+  padding: 0;
+}
+
+.order-btn:hover:not(:disabled) {
+  background: var(--tint);
+  color: var(--accent);
+}
+
+.order-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.order-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.order-btn-group form {
+  display: inline-flex;
+  margin: 0;
+}
+
+.provider-add-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  background: var(--surface-hover);
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+  margin-top: 12px;
+}
+
+/* Documentation Reader */
+.docs-view-body {
+  padding: 28px 32px;
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+.docs-view-body h1 {
+  font-size: 26px;
+  letter-spacing: -0.8px;
+  margin: 0 0 16px;
+  color: var(--accent);
+}
+.docs-view-body h2 {
+  font-size: 18px;
+  letter-spacing: -0.4px;
+  margin: 24px 0 10px;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 6px;
+}
+.docs-view-body h3 {
+  font-size: 15px;
+  margin: 18px 0 8px;
+}
+.docs-view-body pre {
+  margin: 16px 0;
+  padding: 16px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+}
 `;
 
 function document(title, content) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light"><title>${e(title)} · NeoMail</title><style>${css}</style></head><body>${content}</body></html>`;
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><link rel="icon" type="image/svg+xml" href="${faviconUri}"><title>${e(title)} · neoPathshala Mail</title><style>${css}</style></head><body>${content}</body></html>`;
 }
 
 const navAll = [
@@ -1908,6 +2426,7 @@ export function badge(status) {
 export function page(view, title, subtitle, content, sess, notice = '') {
   const base = sess?.role === 'superadmin' ? '/admin' : '/dashboard';
   return document(title, `
+    <input type="checkbox" id="theme-toggle" class="theme-toggle-input" aria-label="Toggle dark mode">
     <input type="checkbox" id="drawer-toggle" class="drawer-toggle-input" aria-hidden="true">
     <label for="drawer-toggle" class="drawer-backdrop" aria-label="Close navigation"></label>
     <div class="app">
@@ -1915,18 +2434,22 @@ export function page(view, title, subtitle, content, sess, notice = '') {
         <div class="sidehead">
           <a class="brand" href="${base}">
             <span class="brandmark">${icon('mail')}</span>
-            <span>neo<span>mail</span></span>
+            <div class="brand-text">
+              <span class="brand-title">neo<span>Pathshala</span></span>
+              <span class="brand-sub">Mail Infrastructure</span>
+            </div>
           </a>
           <label for="drawer-toggle" class="drawer-close" aria-label="Close navigation">${icon('close')}</label>
         </div>
         <div class="eyebrow">Workspace</div>
         <nav>${navFor(sess?.role).map(([id, label]) => `<a class="navlink ${id === view ? 'active' : ''}" ${id === view ? 'aria-current="page"' : ''} href="${base}?view=${id}">${icon(id)}<span>${label}</span></a>`).join('')}</nav>
         <div class="sidefoot">
+          <a class="navlink side-docs-link" href="/docs" target="_blank">${icon('docs')}<span>Documentation ↗</span></a>
           <div class="sys-health-pill">
             <span class="live-pulse"></span>
             <span>System active</span>
           </div>
-          <small>Private mail infrastructure<br>Access-protected workspace</small>
+          <small>Private mail infrastructure<br>neoPathshala workspace</small>
           <form method="post" action="/admin/logout">
             ${hidden(sess.csrf_token)}
             <button class="textbutton">Sign out</button>
@@ -1941,6 +2464,10 @@ export function page(view, title, subtitle, content, sess, notice = '') {
           </div>
           <div class="topright">
             <a class="button small secondary compose-quickbtn" href="${base}?view=compose">${icon('plus')}<span>Send test</span></a>
+            <label for="theme-toggle" class="theme-toggle-btn" title="Toggle dark / light theme" aria-label="Toggle dark mode">
+              <span class="icon-sun">${icon('sun')}</span>
+              <span class="icon-moon">${icon('moon')}</span>
+            </label>
             <details class="custom-dropdown profile-dropdown">
               <summary class="profilelink" aria-label="User menu">
                 ${profileAvatar(sess.profile)}
@@ -1982,10 +2509,30 @@ export function page(view, title, subtitle, content, sess, notice = '') {
           </div>
           ${notice ? `<div class="notice" role="status">${e(notice)}</div>` : ''}
           ${content}
-          <p class="footnote">NeoMail · Private transactional email workspace · All times shown in UTC</p>
+          <p class="footnote">neoPathshala Mail · Private transactional email infrastructure · UTC</p>
         </main>
       </div>
     </div>
+    ${sess?.script_nonce ? `<script nonce="${sess.script_nonce}">
+      (function() {
+        try {
+          var t = localStorage.getItem('neomail_theme');
+          var cb = document.getElementById('theme-toggle');
+          if (t === 'dark' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.setAttribute('data-theme', 'dark');
+            if (cb) cb.checked = true;
+          }
+          if (cb) {
+            cb.addEventListener('change', function(e) {
+              var isDark = e.target.checked;
+              localStorage.setItem('neomail_theme', isDark ? 'dark' : 'light');
+              document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+              document.cookie = 'neomail_theme=' + (isDark ? 'dark' : 'light') + '; path=/; max-age=31536000; SameSite=Lax';
+            });
+          }
+        } catch (err) {}
+      })();
+    </script>` : ''}
   `);
 }
 
@@ -2248,23 +2795,428 @@ export function docsEditor(content, sess) {
   return `<section class="panel">
     <div class="panelhead">
       <div>
-        <h2>Documentation content</h2>
-        <p>Edit the markdown or plain text documentation published at /docs.</p>
+        <h2>Documentation Content & Live Editor</h2>
+        <p>Edit, format, and preview system documentation published at /docs.</p>
       </div>
-      <a class="button secondary small" href="/docs" target="_blank">${icon('external')} <span>View public page</span></a>
+      <div class="actions">
+        <a class="button secondary small" href="/docs" target="_blank">${icon('external')} <span>View public page</span></a>
+      </div>
     </div>
     <div class="panelbody">
       <form method="post" action="/admin/docs/save">
         ${hidden(sess.csrf_token)}
-        <label class="field">
-          <span class="field-title">Content</span>
-          <textarea name="content" maxlength="20000" rows="18" style="min-height: 320px; font-family: var(--mono);">${e(content)}</textarea>
-          <small>Up to 20,000 characters. Plain text / pre-formatted documentation.</small>
-        </label>
-        <button class="button">${icon('check')} <span>Save documentation</span></button>
+        <div class="rich-editor-container">
+          <div class="rich-editor-toolbar" role="toolbar" aria-label="Editor toolbar">
+            <div class="editor-btn-group">
+              <button type="button" class="editor-btn" data-action="h1" title="Heading 1">H1</button>
+              <button type="button" class="editor-btn" data-action="h2" title="Heading 2">H2</button>
+              <button type="button" class="editor-btn" data-action="h3" title="Heading 3">H3</button>
+            </div>
+            <div class="editor-btn-group">
+              <button type="button" class="editor-btn" data-action="bold" title="Bold (Ctrl+B)">${icon('bold')}</button>
+              <button type="button" class="editor-btn" data-action="italic" title="Italic (Ctrl+I)">${icon('italic')}</button>
+              <button type="button" class="editor-btn" data-action="strike" title="Strikethrough">~S~</button>
+            </div>
+            <div class="editor-btn-group">
+              <button type="button" class="editor-btn" data-action="quote" title="Quote">${icon('quote')}</button>
+              <button type="button" class="editor-btn" data-action="code" title="Inline code">${icon('code')}</button>
+              <button type="button" class="editor-btn" data-action="codeblock" title="Code block">&lt;/&gt;</button>
+            </div>
+            <div class="editor-btn-group">
+              <button type="button" class="editor-btn" data-action="bullet" title="Bullet list">${icon('list')}</button>
+              <button type="button" class="editor-btn" data-action="link" title="Insert link (Ctrl+K)">${icon('link')}</button>
+              <button type="button" class="editor-btn" data-action="table" title="Insert table template">Table</button>
+              <button type="button" class="editor-btn" data-action="hr" title="Divider">—</button>
+            </div>
+            <div class="editor-btn-group" style="margin-left:auto">
+              <button type="button" id="editor-toggle-preview" class="editor-btn active" title="Toggle Live Preview">${icon('eye')} <span>Preview</span></button>
+            </div>
+          </div>
+          <div id="editor-workspace" class="editor-workspace split-view">
+            <textarea id="docs-editor-textarea" name="content" class="editor-textarea" maxlength="20000" placeholder="Write documentation here in Markdown or plain text...">${e(content)}</textarea>
+            <div id="docs-editor-preview" class="editor-preview" aria-live="polite"></div>
+          </div>
+          <div class="editor-statusbar">
+            <span id="editor-counter">0 words · 0 / 20,000 characters</span>
+            <span class="tag good">${icon('security')} Superadmin Mode · Auto-Sync</span>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <p class="footnote" style="margin:0">Documentation is visible to all authenticated administrators and published at <code>/docs</code>.</p>
+          <button class="button" type="submit">${icon('check')} <span>Publish documentation</span></button>
+        </div>
       </form>
     </div>
+  </section>
+  ${sess?.script_nonce ? `<script nonce="${sess.script_nonce}">
+    (function() {
+      var ta = document.getElementById('docs-editor-textarea');
+      var preview = document.getElementById('docs-editor-preview');
+      var counter = document.getElementById('editor-counter');
+      var ws = document.getElementById('editor-workspace');
+      var toggleBtn = document.getElementById('editor-toggle-preview');
+      if (!ta) return;
+
+      function renderMarkdown(md) {
+        if (!md) return '<p class="muted">No content to preview.</p>';
+        var text = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        var blocks = text.split(/\\n\\n+/);
+        var html = '';
+        for (var i = 0; i < blocks.length; i++) {
+          var b = blocks[i].trim();
+          if (!b) continue;
+          if (b.startsWith('### ')) {
+            html += '<h3>' + inlineFmt(b.slice(4)) + '</h3>';
+          } else if (b.startsWith('## ')) {
+            html += '<h2>' + inlineFmt(b.slice(3)) + '</h2>';
+          } else if (b.startsWith('# ')) {
+            html += '<h1>' + inlineFmt(b.slice(2)) + '</h1>';
+          } else if (b.startsWith('> ')) {
+            html += '<blockquote>' + inlineFmt(b.slice(2)) + '</blockquote>';
+          } else if (b.startsWith('\x60\x60\x60')) {
+            var lines = b.split('\\n');
+            var code = lines.slice(1, lines[lines.length - 1] === '\x60\x60\x60' ? -1 : undefined).join('\\n');
+            html += '<pre><code>' + code + '</code></pre>';
+          } else if (b.startsWith('- ') || b.startsWith('* ')) {
+            var items = b.split('\\n').map(function(l) { return l.replace(/^[-*]\\s+/, ''); });
+            html += '<ul>' + items.map(function(item) { return '<li>' + inlineFmt(item) + '</li>'; }).join('') + '</ul>';
+          } else if (/^\\d+\\.\\s/.test(b)) {
+            var numItems = b.split('\\n').map(function(l) { return l.replace(/^\\d+\\.\\s+/, ''); });
+            html += '<ol>' + numItems.map(function(item) { return '<li>' + inlineFmt(item) + '</li>'; }).join('') + '</ol>';
+          } else if (b === '---' || b === '***') {
+            html += '<hr style="border:0;border-top:1px solid var(--line);margin:16px 0;">';
+          } else {
+            html += '<p>' + inlineFmt(b.replace(/\\n/g, '<br>')) + '</p>';
+          }
+        }
+        return html;
+      }
+
+      function inlineFmt(str) {
+        return str
+          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+          .replace(/~~([^~]+)~~/g, '<del>$1</del>')
+          .replace(/\x60([^\x60]+)\x60/g, '<code>$1</code>')
+          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">$1</a>');
+      }
+
+      function update() {
+        var val = ta.value;
+        if (preview) preview.innerHTML = renderMarkdown(val);
+        if (counter) {
+          var words = val.trim() ? val.trim().split(/\\s+/).length : 0;
+          counter.textContent = words.toLocaleString() + ' words · ' + val.length.toLocaleString() + ' / 20,000 characters';
+        }
+      }
+
+      function insert(prefix, suffix) {
+        var start = ta.selectionStart;
+        var end = ta.selectionEnd;
+        var text = ta.value;
+        var sel = text.substring(start, end);
+        var replacement = prefix + (sel || 'text') + (suffix || '');
+        ta.value = text.substring(0, start) + replacement + text.substring(end);
+        ta.focus();
+        ta.setSelectionRange(start + prefix.length, start + prefix.length + (sel ? sel.length : 4));
+        update();
+      }
+
+      document.querySelectorAll('.rich-editor-toolbar button[data-action]').forEach(function(btn) {
+        btn.addEventListener('click', function(e) {
+          e.preventDefault();
+          var action = btn.getAttribute('data-action');
+          if (action === 'h1') insert('# ', '\\n');
+          else if (action === 'h2') insert('## ', '\\n');
+          else if (action === 'h3') insert('### ', '\\n');
+          else if (action === 'bold') insert('**', '**');
+          else if (action === 'italic') insert('*', '*');
+          else if (action === 'strike') insert('~~', '~~');
+          else if (action === 'quote') insert('> ', '\\n');
+          else if (action === 'code') insert('\x60', '\x60');
+          else if (action === 'codeblock') insert('\x60\x60\x60\\n', '\\n\x60\x60\x60');
+          else if (action === 'bullet') insert('- ', '\\n');
+          else if (action === 'link') insert('[link title](', ')');
+          else if (action === 'table') insert('\\n| Header 1 | Header 2 |\\n| -------- | -------- |\\n| Cell 1   | Cell 2   |\\n', '');
+          else if (action === 'hr') insert('\\n---\\n', '');
+        });
+      });
+
+      if (toggleBtn && ws) {
+        toggleBtn.addEventListener('click', function() {
+          ws.classList.toggle('split-view');
+          toggleBtn.classList.toggle('active');
+        });
+      }
+
+      ta.addEventListener('input', update);
+      ta.addEventListener('keydown', function(e) {
+        if ((e.ctrlKey || e.metaKey) && e.key === 'b') {
+          e.preventDefault(); insert('**', '**');
+        } else if ((e.ctrlKey || e.metaKey) && e.key === 'i') {
+          e.preventDefault(); insert('*', '*');
+        } else if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+          e.preventDefault(); insert('[', '](https://)');
+        } else if (e.key === 'Tab') {
+          e.preventDefault();
+          var s = ta.selectionStart;
+          ta.value = ta.value.substring(0, s) + '  ' + ta.value.substring(ta.selectionEnd);
+          ta.selectionStart = ta.selectionEnd = s + 2;
+          update();
+        }
+      });
+
+      update();
+    })();
+  </script>` : ''}`;
+}
+
+export function docsViewer(content, sess) {
+  function renderMarkdown(md) {
+    if (!md) return '<p class="muted">No documentation published yet. Ask your superadmin to add docs.</p>';
+    var text = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    var blocks = text.split(/\\n\\n+/);
+    var html = '';
+    for (var i = 0; i < blocks.length; i++) {
+      var b = blocks[i].trim();
+      if (!b) continue;
+      if (b.startsWith('### ')) html += '<h3>' + inlineFmt(b.slice(4)) + '</h3>';
+      else if (b.startsWith('## ')) html += '<h2>' + inlineFmt(b.slice(3)) + '</h2>';
+      else if (b.startsWith('# ')) html += '<h1>' + inlineFmt(b.slice(2)) + '</h1>';
+      else if (b.startsWith('> ')) html += '<blockquote>' + inlineFmt(b.slice(2)) + '</blockquote>';
+      else if (b.startsWith('\x60\x60\x60')) {
+        var lines = b.split('\\n');
+        var code = lines.slice(1, lines[lines.length - 1] === '\x60\x60\x60' ? -1 : undefined).join('\\n');
+        html += '<pre><code>' + code + '</code></pre>';
+      } else if (b.startsWith('- ') || b.startsWith('* ')) {
+        var items = b.split('\\n').map(function(l) { return l.replace(/^[-*]\\s+/, ''); });
+        html += '<ul>' + items.map(function(item) { return '<li>' + inlineFmt(item) + '</li>'; }).join('') + '</ul>';
+      } else if (/^\\d+\\.\\s/.test(b)) {
+        var numItems = b.split('\\n').map(function(l) { return l.replace(/^\\d+\\.\\s+/, ''); });
+        html += '<ol>' + numItems.map(function(item) { return '<li>' + inlineFmt(item) + '</li>'; }).join('') + '</ol>';
+      } else {
+        html += '<p>' + inlineFmt(b.replace(/\\n/g, '<br>')) + '</p>';
+      }
+    }
+    return html;
+  }
+  function inlineFmt(str) {
+    return str
+      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+      .replace(/~~([^~]+)~~/g, '<del>$1</del>')
+      .replace(/\x60([^\x60]+)\x60/g, '<code>$1</code>')
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">$1</a>');
+  }
+
+  return `<section class="panel">
+    <div class="panelhead">
+      <div>
+        <h2>Documentation & System Guide</h2>
+        <p>Reference guide for neoPathshala transactional mail infrastructure.</p>
+      </div>
+      <a class="button secondary small" href="/docs" target="_blank">${icon('external')} <span>View public page</span></a>
+    </div>
+    <div class="panelbody">
+      <div class="docs-view-body">
+        ${renderMarkdown(content)}
+      </div>
+    </div>
   </section>`;
+}
+
+export function providersView(rows, cfg, sess) {
+  const currentOrder = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',').map(p => p.trim()).filter(Boolean);
+  const unassigned = PROVIDERS.filter(p => !currentOrder.includes(p));
+
+  const isConfigured = p => {
+    if (p === 'smtp') return !!(cfg.SMTP_HOST && cfg.SMTP_USER && cfg.SMTP_PASS);
+    return !!cfg[p.toUpperCase() + '_API_KEY'];
+  };
+
+  return `
+    <div class="notice">
+      <strong>⚡ Intelligent Fallback Dispatch:</strong> Outbound mail is routed in priority sequence (<b>${currentOrder.join(' → ')}</b>).
+      If a provider encounters consecutive delivery rejections, circuit breakers isolate it for five minutes and fail over automatically.
+    </div>
+
+    <section class="panel">
+      <div class="panelhead">
+        <div>
+          <h2>Active Routing Priority Order (Superadmin Controlled)</h2>
+          <p>Reorder the sequence of outbound delivery providers. Highest priority (#1) is attempted first.</p>
+        </div>
+        <span class="tag good">${icon('security')} Superadmin Controlled</span>
+      </div>
+      <div class="panelbody">
+        <div class="routing-chain">
+          ${currentOrder.map((p, i) => {
+            const row = rows.find(r => r.provider_name === p);
+            const configured = isConfigured(p);
+            const failures = row?.consecutive_failures || 0;
+            const isPaused = row?.is_active === 0;
+            const inCooldown = failures >= 5;
+            const statusLabel = !configured ? 'Not configured' : isPaused ? 'Paused' : inCooldown ? 'Cooling down' : 'Ready';
+
+            return `
+              <div class="routing-card ${i === 0 ? 'priority-primary' : ''}">
+                <div class="routing-card-left">
+                  <div class="order-btn-group">
+                    <form method="post" action="/admin/providers/reorder">
+                      ${hidden(sess.csrf_token)}
+                      <input type="hidden" name="provider" value="${p}">
+                      <input type="hidden" name="direction" value="up">
+                      <button class="order-btn" title="Move up in priority" ${i === 0 ? 'disabled' : ''}>${icon('arrowUp')}</button>
+                    </form>
+                    <form method="post" action="/admin/providers/reorder">
+                      ${hidden(sess.csrf_token)}
+                      <input type="hidden" name="provider" value="${p}">
+                      <input type="hidden" name="direction" value="down">
+                      <button class="order-btn" title="Move down in priority" ${i === currentOrder.length - 1 ? 'disabled' : ''}>${icon('arrowDown')}</button>
+                    </form>
+                  </div>
+                  <span class="routing-rank ${i === 0 ? 'primary' : ''}">#${i + 1} ${i === 0 ? 'Primary' : 'Failover'}</span>
+                  <div class="providerlogo">${e(p[0].toUpperCase())}</div>
+                  <div class="routing-meta">
+                    <strong>${e(p)}</strong>
+                    <p>${configured ? 'Credential configured' : 'Add credentials below'}${failures ? ' · ' + failures + ' recent failures' : ''}</p>
+                  </div>
+                </div>
+                <div class="routing-actions">
+                  ${badge(statusLabel)}
+                  ${failures > 0 ? `
+                    <form method="post" action="/admin/providers/reset-health">
+                      ${hidden(sess.csrf_token)}
+                      <input type="hidden" name="provider" value="${p}">
+                      <button class="button secondary small" title="Reset failure counter and circuit breaker">${icon('zap')} Reset breaker</button>
+                    </form>
+                  ` : ''}
+                  <form method="post" action="/admin/providers/toggle">
+                    ${hidden(sess.csrf_token)}
+                    <input type="hidden" name="provider" value="${p}">
+                    <button class="button secondary small">${isPaused ? 'Enable' : 'Pause'}</button>
+                  </form>
+                  <form method="post" action="/admin/providers/remove">
+                    ${hidden(sess.csrf_token)}
+                    <input type="hidden" name="provider" value="${p}">
+                    <button class="button danger small" title="Remove from active routing" ${currentOrder.length <= 1 ? 'disabled' : ''}>Remove</button>
+                  </form>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        ${unassigned.length ? `
+          <div class="provider-add-card">
+            <div>
+              <strong>Enrol Unassigned Provider</strong>
+              <p class="sub" style="margin:2px 0 0">Add an available supported provider to the end of the failover routing chain.</p>
+            </div>
+            <form method="post" action="/admin/providers/add" style="display:flex;align-items:center;gap:10px">
+              ${hidden(sess.csrf_token)}
+              <select name="provider" class="custom-select" style="padding:6px 32px 6px 12px;font-size:12px">
+                ${unassigned.map(p => `<option value="${p}">${p.toUpperCase()}</option>`).join('')}
+              </select>
+              <button class="button small">${icon('plus')} Add to Routing</button>
+            </form>
+          </div>
+        ` : `
+          <div style="font-size:12px;color:var(--muted);margin-top:12px">
+            ✓ All supported providers (${PROVIDERS.join(', ')}) are enrolled in the fallback routing chain.
+          </div>
+        `}
+      </div>
+    </section>
+
+    <div class="grid2">
+      <section class="panel">
+        <div class="panelhead">
+          <div>
+            <h2>Configure Provider Credentials</h2>
+            <p>Add or update provider API credentials directly.</p>
+          </div>
+        </div>
+        <div class="panelbody">
+          <form method="post" action="/admin/providers/configure">
+            ${hidden(sess.csrf_token)}
+            <label class="field">Provider
+              <select name="provider" class="custom-select" id="provider-select-configure">
+                ${PROVIDERS.map(p => `<option value="${p}">${p.toUpperCase()}</option>`).join('')}
+              </select>
+            </label>
+            <div id="cfg-standard-key">
+              <label class="field">API Secret Key
+                <input type="password" name="api_key" autocomplete="new-password" placeholder="API key or token" minlength="16" maxlength="4096">
+                <small>Encrypted at rest with AES-256-GCM.</small>
+              </label>
+            </div>
+            <div class="settingsgrid">
+              <label class="field">Mailgun Verified Domain (Mailgun only)
+                <input name="mailgun_domain" placeholder="mg.yourdomain.com" maxlength="255">
+              </label>
+            </div>
+            <div class="settingsgrid">
+              <label class="field">SMTP Host (SMTP only)
+                <input name="smtp_host" placeholder="smtp.gmail.com" maxlength="255">
+              </label>
+              <label class="field">SMTP Port (SMTP only)
+                <select name="smtp_port" class="custom-select">
+                  <option value="465">465 · Implicit TLS</option>
+                  <option value="587">587 · STARTTLS</option>
+                </select>
+              </label>
+              <label class="field">SMTP Username (SMTP only)
+                <input name="smtp_user" placeholder="user@domain.com" maxlength="255">
+              </label>
+              <label class="field">SMTP Password (SMTP only)
+                <input type="password" name="smtp_pass" placeholder="Password" autocomplete="new-password" maxlength="4096">
+              </label>
+            </div>
+            <label class="checkbox" style="margin:12px 0 16px">
+              <input type="checkbox" name="add_to_routing" value="true" checked>
+              <span>Add to active fallback routing order automatically</span>
+            </label>
+            <button class="button">${icon('check')} Save & Activate Provider</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panelhead">
+          <div>
+            <h2>Circuit Breakers & Health Rules</h2>
+            <p>Built-in fault tolerance and resilience controls.</p>
+          </div>
+        </div>
+        <div class="panelbody">
+          <ol class="list">
+            <li class="step">
+              <span class="stepnum">1</span>
+              <div>
+                <h3>Sequential Priority Routing</h3>
+                <p>Every message is dispatched to the #1 Primary provider first. If the provider returns a rate limit, network timeout, or connection error, the next provider in the chain is dispatched instantaneously.</p>
+              </div>
+            </li>
+            <li class="step">
+              <span class="stepnum">2</span>
+              <div>
+                <h3>Five-Failure Circuit Breaker</h3>
+                <p>After five consecutive failures, a provider enters automatic cooldown for 5 minutes, preventing blocked queues and unneeded API calls.</p>
+              </div>
+            </li>
+            <li class="step">
+              <span class="stepnum">3</span>
+              <div>
+                <h3>Instant Manual Reset</h3>
+                <p>Superadmins can reset any provider's failure counter immediately with the "Reset breaker" button.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </section>
+    </div>
+  `;
 }
 
 export function apiClients(clients, sess, createdKey = '') {

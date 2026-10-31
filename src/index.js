@@ -119,7 +119,7 @@ async function handler(request, env) {
     requireMethod(request, ['GET']);
     const row = await env.DB.prepare("SELECT value FROM app_settings WHERE name='DOCS_CONTENT'").first();
     const content = row?.value || 'NeoMail documentation. Configure your deployment and providers in the admin panel.';
-    const html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>NeoMail Docs</title><style>body{font-family:Inter,system-ui,sans-serif;max-width:900px;margin:40px auto;padding:0 20px;line-height:1.6;color:#172820;white-space:pre-wrap}h1{color:#087d54}</style></head><body><h1>NeoMail Documentation</h1><p>' + content.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</p></body></html>';
+    const html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>neoPathshala Mail Documentation</title><style>body{font-family:Inter,system-ui,-apple-system,sans-serif;max-width:920px;margin:40px auto;padding:0 24px;line-height:1.7;color:#0f172a;background:#f8fafc}@media(prefers-color-scheme:dark){body{background:#090d16;color:#f8fafc;}}h1{color:#087d54;letter-spacing:-0.8px;font-size:32px;margin-bottom:8px;}h2{color:#0f172a;border-bottom:1px solid #e2e8f0;padding-bottom:8px;margin-top:28px;}@media(prefers-color-scheme:dark){h2{color:#f8fafc;border-color:#1e293b;}}pre{background:#f1f5f9;border:1px solid #e2e8f0;padding:16px;border-radius:8px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:13px;}@media(prefers-color-scheme:dark){pre{background:#0f172a;border-color:#1e293b;color:#f8fafc;}}code{background:#e2e8f0;padding:2px 6px;border-radius:4px;font-family:ui-monospace,monospace;}@media(prefers-color-scheme:dark){code{background:#1e293b;color:#34d399;}}a{color:#087d54;}</style></head><body><h1>neoPathshala Documentation</h1><pre style="white-space:pre-wrap;background:transparent;border:0;padding:0;font-family:inherit;font-size:15px;line-height:1.7">' + content.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</pre></body></html>';
     return reply(html, 200, { 'Content-Type': 'text/html; charset=utf-8' });
   }
   if (path === '/health') { requireMethod(request, ['GET']); return reply({ status: 'ok', service: 'neomail' }); }
@@ -483,6 +483,93 @@ async function handler(request, env) {
         ON CONFLICT(owner_subject,provider_name) DO UPDATE SET is_active=1-is_active,consecutive_failures=0,updated_at=unixepoch()`).bind(provider).run();
       await audit(env, request, 'PROVIDER_TOGGLED', { provider }); return redirect('/admin?view=providers&notice=Provider+updated');
     }
+    if (path === '/admin/providers/reorder') {
+      if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
+      const provider = data.get('provider');
+      const direction = data.get('direction');
+      const currentOrder = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',').map(p => p.trim()).filter(Boolean);
+      const idx = currentOrder.indexOf(provider);
+      if (idx === -1) throw new HttpError(422, 'Provider not in routing order.');
+      if (direction === 'up' && idx > 0) {
+        const tmp = currentOrder[idx];
+        currentOrder[idx] = currentOrder[idx - 1];
+        currentOrder[idx - 1] = tmp;
+      } else if (direction === 'down' && idx < currentOrder.length - 1) {
+        const tmp = currentOrder[idx];
+        currentOrder[idx] = currentOrder[idx + 1];
+        currentOrder[idx + 1] = tmp;
+      }
+      const newOrderStr = currentOrder.join(',');
+      await env.DB.prepare("INSERT INTO app_settings (name,value,is_secret,updated_at) VALUES ('FALLBACK_ORDER',?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,is_secret=0,updated_at=unixepoch()").bind(newOrderStr).run();
+      await audit(env, request, 'PROVIDER_ORDER_UPDATED', { order: newOrderStr });
+      return redirect('/admin?view=providers&notice=' + encodeURIComponent('Provider priority order updated.'));
+    }
+    if (path === '/admin/providers/add') {
+      if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
+      const provider = data.get('provider');
+      if (!PROVIDERS.includes(provider)) throw new HttpError(422, 'Invalid provider.');
+      const currentOrder = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',').map(p => p.trim()).filter(Boolean);
+      if (currentOrder.includes(provider)) throw new HttpError(422, 'Provider is already in routing order.');
+      currentOrder.push(provider);
+      const newOrderStr = currentOrder.join(',');
+      await env.DB.prepare("INSERT INTO app_settings (name,value,is_secret,updated_at) VALUES ('FALLBACK_ORDER',?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,is_secret=0,updated_at=unixepoch()").bind(newOrderStr).run();
+      await audit(env, request, 'PROVIDER_ADDED_TO_ROUTING', { provider });
+      return redirect('/admin?view=providers&notice=' + encodeURIComponent('Provider added to fallback routing.'));
+    }
+    if (path === '/admin/providers/remove') {
+      if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
+      const provider = data.get('provider');
+      const currentOrder = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',').map(p => p.trim()).filter(Boolean);
+      if (currentOrder.length <= 1) throw new HttpError(422, 'At least one provider must remain in routing order.');
+      const newOrder = currentOrder.filter(p => p !== provider);
+      const newOrderStr = newOrder.join(',');
+      await env.DB.prepare("INSERT INTO app_settings (name,value,is_secret,updated_at) VALUES ('FALLBACK_ORDER',?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,is_secret=0,updated_at=unixepoch()").bind(newOrderStr).run();
+      await audit(env, request, 'PROVIDER_REMOVED_FROM_ROUTING', { provider });
+      return redirect('/admin?view=providers&notice=' + encodeURIComponent('Provider removed from fallback routing.'));
+    }
+    if (path === '/admin/providers/reset-health') {
+      if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
+      const provider = data.get('provider');
+      if (!PROVIDERS.includes(provider)) throw new HttpError(422, 'Invalid provider.');
+      await env.DB.prepare("INSERT INTO provider_health (owner_subject,provider_name,is_active,consecutive_failures,updated_at) VALUES ('local-admin',?,1,0,unixepoch()) ON CONFLICT(owner_subject,provider_name) DO UPDATE SET consecutive_failures=0, is_active=1, updated_at=unixepoch()").bind(provider).run();
+      await audit(env, request, 'PROVIDER_HEALTH_RESET', { provider });
+      return redirect('/admin?view=providers&notice=' + encodeURIComponent('Circuit breaker reset for ' + provider + '.'));
+    }
+    if (path === '/admin/providers/configure') {
+      if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
+      const provider = data.get('provider');
+      if (!PROVIDERS.includes(provider)) throw new HttpError(422, 'Invalid provider.');
+      if (provider === 'smtp') {
+        const host = data.get('smtp_host');
+        const port = data.get('smtp_port');
+        const user = data.get('smtp_user');
+        const pass = data.get('smtp_pass');
+        const smtpMap = new Map();
+        if (host) smtpMap.set('SMTP_HOST', host);
+        if (port) smtpMap.set('SMTP_PORT', port);
+        if (user) smtpMap.set('SMTP_USER', user);
+        if (smtpMap.size) await saveSettings(env, smtpMap);
+        if (pass && pass.trim()) await saveSecret(env, 'SMTP_PASS', pass.trim());
+      } else {
+        const key = data.get('api_key');
+        if (key && key.trim()) {
+          await saveSecret(env, provider.toUpperCase() + '_API_KEY', key.trim());
+        }
+        if (provider === 'mailgun' && data.get('mailgun_domain')) {
+          await saveSettings(env, new Map([['MAILGUN_DOMAIN', data.get('mailgun_domain').trim()]]));
+        }
+      }
+      if (data.get('add_to_routing') === 'true') {
+        const currentOrder = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',').map(p => p.trim()).filter(Boolean);
+        if (!currentOrder.includes(provider)) {
+          currentOrder.push(provider);
+          const newOrderStr = currentOrder.join(',');
+          await env.DB.prepare("INSERT INTO app_settings (name,value,is_secret,updated_at) VALUES ('FALLBACK_ORDER',?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,is_secret=0,updated_at=unixepoch()").bind(newOrderStr).run();
+        }
+      }
+      await audit(env, request, 'PROVIDER_CONFIGURED', { provider });
+      return redirect('/admin?view=providers&notice=' + encodeURIComponent('Provider ' + provider + ' configured.'));
+    }
     if (path === '/admin/identities/create') {
       const localPart = data.get('local_part') ? text(data.get('local_part'), 64) : '';
       const domain = data.get('domain') ? text(data.get('domain'), 253) : '';
@@ -714,9 +801,10 @@ async function handler(request, env) {
     title=view==='compose'?'Send a test':'Sender identities'; subtitle=view==='compose'?'Verify your email delivery setup.':'Manage approved addresses for outbound mail.';
     content=view==='compose'?ui.compose(senders,sess):ui.identities(senders,sess,verifiedDomains);
   } else if (view === 'providers') {
-    title='Delivery providers'; subtitle='Control routing availability and inspect provider health.';
+    title='Delivery providers'; subtitle='Priority failover routing, health monitoring, and credential management.';
     const safeCfg = redactConfig(cfg);
-    content=`<div class="notice">Routing order: ${safeCfg.FALLBACK_ORDER.split(',').map(p=>ui.badge(p)).join(' → ')}. Circuit breakers pause a provider for five minutes after five consecutive failures.</div><section class="panel">${ui.providerList(await rows(env,"SELECT * FROM provider_health WHERE owner_subject='local-admin'"),safeCfg,sess.csrf_token)}</section><div class="notice warn">SendFox is excluded until a supported transactional sending API is verified. Built-in delivery webhooks support Resend and Mailgun; other providers show acceptance only.</div>`;
+    const healthRows = await rows(env,"SELECT * FROM provider_health WHERE owner_subject='local-admin'");
+    content = ui.providersView(healthRows, safeCfg, sess);
   } else if (view === 'security') {
     title='Security events'; subtitle='Review sign-ins, configuration changes, and access controls.';
     content=ui.security(await rows(env,'SELECT * FROM security_audit_logs ORDER BY unix_timestamp DESC LIMIT 100'),{
@@ -744,7 +832,8 @@ async function handler(request, env) {
     content = ui.domains(domains, sess);
   } else if (view === 'docs') {
     if (await adminRole(env, sess.access_subject || subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
-    title='Documentation'; subtitle='Edit the public /docs page.';
+    title='Documentation'; subtitle='Edit and preview system documentation published at /docs.';
+    sess.script_nonce=crypto.randomUUID();
     const row = await env.DB.prepare("SELECT value FROM app_settings WHERE name='DOCS_CONTENT'").first();
     content = ui.docsEditor(row?.value || '', sess);
   } else if (view === 'mail') {
