@@ -470,7 +470,7 @@ Idempotency-Key: unique-key
   }
   if (!['/admin','/admin/dashboard','/dashboard'].includes(path)) throw new HttpError(404, 'Endpoint not found.');
   const view = url.searchParams.get('view') || 'overview', notice = (url.searchParams.get('notice') || '').slice(0, 500);
-  if (['settings','providers','users','domains','docs'].includes(view) && role !== 'superadmin') throw new HttpError(403, 'Superadmin access required.');
+  if (['providers','users','domains','docs'].includes(view) && role !== 'superadmin') throw new HttpError(403, 'Superadmin access required.');
   let title, subtitle, content;
   if (view === 'settings') {
     sess.script_nonce=crypto.randomUUID();
