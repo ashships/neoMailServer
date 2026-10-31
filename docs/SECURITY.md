@@ -36,7 +36,7 @@ Production requires a correctly signed Cloudflare Access application JWT and a h
 
 Local HTTP bypass is explicit and restricted to loopback hosts. The local setup script creates a dedicated local admin token. A production public hostname cannot use this bypass or local token even if LOCAL_DEV is set.
 
-This is a single-administrator-role console. It does not implement individual application accounts, role-based settings permissions, tenant isolation, passkeys, or native TOTP. Individual administrator identity, enrollment, MFA and revocation should be controlled through Cloudflare Access. Anyone allowed through Access who possesses the admin token has full console authority, including reading retained mail and replacing integration credentials.
+The console now has two roles only: `superadmin` (deployment owner) and `admin` (an isolated tenant workspace). Tenant isolation, verified-domain ownership, per-tenant provider credentials and session revocation are described in the 31 October 2026 section below. Passkeys and native TOTP are still delegated to Cloudflare Access; the built-in email OTP is a fallback, not a second factor. Anyone who obtains a superadmin session has full deployment authority, including reading retained mail and replacing integration credentials.
 
 ## Threat model
 
@@ -51,14 +51,14 @@ Cloudflare Access policy mistakes, runtime compromise, credential theft, or mali
 ## Remaining risks and launch requirements
 
 - Configure real Cloudflare Access policies and MFA; this source change does not create them. Keep workers.dev/preview URLs disabled or covered by equivalent enforcement.
-- A single API token authorizes all configured senders. It has no per-service scopes or recipient restrictions. Rotate if leaked; enforce business authorization and rate limits in the calling neopathshala backend.
+- Per-tenant API clients exist and are scoped to their creator's workspace, but the legacy deployment `API_SECRET_KEY` still authorizes every deployment-owned sender. It has no per-service scopes or recipient restrictions. Rotate if leaked; enforce business authorization and rate limits in the calling neopathshala backend.
 - D1 counters are strict per fixed-window key but are not protection against all volumetric attacks, distributed IP traffic, D1 query-cost exhaustion, or provider quota abuse. Add Cloudflare edge WAF/rate controls and account spending alerts, appropriate to your plan.
 - Rate-limited response Retry-After is a conservative 60-second hint, not the exact remaining login lockout interval. Login windows can last up to fifteen minutes. Do not lower production protections just to resolve lockout.
 - Idempotency protects against repeats under the same key, not an attacker using a new key each time. Caller outbox design and operation identifiers matter. Records are retained indefinitely and need capacity monitoring.
 - External sends and D1 cannot share a transaction. Crashes or network ambiguity require provider reconciliation. There is no exactly-once delivery claim.
 - Unmatched early webhooks are not queued for replay. Some callback race conditions require manual inspection; implement durable pending-event processing before high-volume use.
 - Resend/Mailgun webhook paths need real signed callback tests. Brevo, Mailtrap and MailerSend callback verification is not implemented. Provider fallback contracts and actual account capabilities need staged verification.
-- No automatic suppression list, unsubscribe system, bulk marketing tool, attachment scanning, SMTP/IMAP service, multi-tenant API isolation, background delivery queue, or external alerting is implemented.
+- No automatic suppression list, unsubscribe system, bulk marketing tool, attachment scanning, SMTP/IMAP service, background delivery queue, or external alerting is implemented. Per-tenant API isolation exists but is not a substitute for provider-side scoping.
 - Body retention includes potentially sensitive OTPs, reset links and personal information if enabled. Keep it off for authentication mail. D1 metadata, audit events, retained bodies, backups and exports still require organizational access controls and privacy handling.
 - The application encryption key is a bootstrap secret outside D1. Loss prevents recovering encrypted settings; theft plus a D1 export exposes them. There is no automatic encryption-key migration UI.
 - The available Wrangler dependency is outdated. A registry upgrade attempt failed because outbound npm DNS was unavailable. Upgrade Wrangler and inspect a full dependency audit before production; the production-only audit does not assess development-tool supply-chain risk.
@@ -97,3 +97,38 @@ view other workspaces' mail or events, or send from other workspaces' domains.
 
 Legacy environment `API_SECRET_KEY` behaves as the deployment owner
 (`local-admin`) and is subject to the same verified-domain gate.
+
+## Phase 3–4 hardening pass (31 October 2026)
+
+This pass closes gaps found in the multi-tenant audit. It is code-level
+hardening plus regression tests, not a third-party penetration test.
+
+| Area | Risk closed | Control |
+| --- | --- | --- |
+| Role resolution | An empty or errored `admin_users` lookup could grant superadmin, and `local-admin` was always superadmin | Empty directory is a one-time bootstrap only; every later subject needs an active row. `local-admin` is implicit superadmin **only** when `LOCAL_DEV='true'`; production DB errors fail closed. Token sign-in binds to the first active superadmin, or `local-admin` only while the directory is empty. |
+| Role changes | A superadmin could rename/demote/replace another superadmin, or reserve the deployment subject for a tenant | Panel can assign only the `admin` role, refuses to modify existing superadmins, and rejects `local-admin` as a target. Workspace rename runs in one D1 batch across identities, domains, clients, logs, provider keys, profiles, OTPs and sessions. |
+| Session revocation | A deactivated administrator kept a live cookie | The request gate deletes any session whose subject no longer resolves to a role, before any tenant/superadmin handler runs. Revoke also deletes sessions and pending OTPs in the same batch. |
+| Login codes | OTP hashes used a single fast SHA-256 and codes could be guessed without a cap | PBKDF2 (`hashOtp`) with per-code salt, five-attempt burn, per-IP verify limit, per-IP request limit, and expired-code cleanup in the daily cron. Delivery errors are logged as an opaque reference, never upstream text. |
+| SMTP transport | A stored SMTP host/port could reach private hosts or send plaintext; passwords were duplicated in `extra_config` | Only public DNS names and ports **465 (implicit TLS)** or **587 (mandatory STARTTLS)** are accepted. Private/loopback/link-local suffixes are rejected. The encrypted key is the sole SMTP password source. Multiline replies are parsed correctly, writes/reads have timeouts, and sockets are closed in `finally`. |
+| Provider health | One tenant's failures paused a provider for every tenant | Composite `(owner_subject, provider_name)` primary key. `local-admin` rows are deployment defaults; a tenant row overrides only that workspace. Health writes are best-effort and never turn an accepted send into a fallback duplicate. |
+| Dispatch ownership | Identity and domain checks could fall back to a shared/default owner | `dispatch(env, cfg, mail, key, owner)` requires exact identity ownership and a verified domain owned by the same workspace. Idempotency keys are namespaced per tenant, and post-send D1 failures return the known outcome instead of inviting a duplicate retry. |
+| Config rendering | A template bug or debug branch could echo decrypted secrets | `redactConfig()` passes `[configured]` for secret fields to settings, setup, overview and provider views. Provider decryption errors log only the provider name. |
+| API domain scope | API keys could list or verify another tenant's domains | Listing, creation and verification are scoped by `owner_subject`; cross-tenant verification returns 404. Domain input uses the shared `hostname()` validator. |
+| Inbound/scheduled | Untrusted headers were persisted, and one failure could leave an unhandled rejection or abort a cron run | Inbound sender/subject control characters are stripped and the recipient is re-validated. Scheduled work is wrapped, per-domain DNS failures are isolated, and expired OTPs are purged. |
+| Committed secrets | `LOCAL_ADMIN_TOKEN`, `CONFIG_ENCRYPTION_KEY` and SMTP credentials were previously committed | Removed from `wrangler.toml`; secrets are set with `wrangler secret put`. **The old values remain in git history and must be treated as compromised and rotated.** |
+
+### Deployment gate
+
+Before exposing this build:
+
+1. Rotate `LOCAL_ADMIN_TOKEN`, `CONFIG_ENCRYPTION_KEY`, `ADMIN_TOKEN_HASH`, the
+   SMTP/Gmail app password and every provider key that ever appeared in a
+   committed file or a separate worktree.
+2. Set `LOCAL_DEV='false'`, `ALLOW_TOKEN_LOGIN='false'`, and real
+   `ACCESS_TEAM_DOMAIN`/`ACCESS_AUD`.
+3. Apply migrations through `0016_tenant_provider_health.sql` and verify
+   `provider_health` has the composite primary key.
+4. Confirm at least one active `superadmin` row exists before disabling the
+   token/bootstrap path.
+5. Re-run `npm test` (28 unit/integration tests) and `npm run test:worker`.
+

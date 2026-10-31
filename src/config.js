@@ -195,13 +195,8 @@ export async function resolveAccountProviderSecrets(env, ownerSubject) {
       try {
         if (!PROVIDERS.includes(row.provider_name)) continue;
         const decrypted = await decrypt(env.CONFIG_ENCRYPTION_KEY, row.encrypted_key, owner + ':' + row.provider_name);
-        secrets[row.provider_name.toUpperCase() + '_API_KEY'] = decrypted;
         let extra = {};
         if (row.extra_config) { try { extra = JSON.parse(row.extra_config) || {}; } catch { extra = {}; } }
-        if (row.provider_name === 'mailgun') {
-          const domain = hostname(extra.domain || '');
-          if (domain && !domain.startsWith('sandbox')) secrets.MAILGUN_DOMAIN = domain;
-        }
         if (row.provider_name === 'smtp') {
           const host = hostname(extra.smtp_host || '');
           const port = String(extra.smtp_port || '465');
@@ -211,6 +206,12 @@ export async function resolveAccountProviderSecrets(env, ownerSubject) {
           secrets.SMTP_USER = String(extra.smtp_user || '').slice(0, 255);
           // The encrypted key is the SMTP password; plaintext passwords are never read from extra_config.
           secrets.SMTP_PASS = decrypted;
+          continue;
+        }
+        secrets[row.provider_name.toUpperCase() + '_API_KEY'] = decrypted;
+        if (row.provider_name === 'mailgun') {
+          const domain = hostname(extra.domain || '');
+          if (domain && !domain.startsWith('sandbox')) secrets.MAILGUN_DOMAIN = domain;
         }
       } catch {
         // A single corrupt/foreign row must not disable other providers or leak details.
