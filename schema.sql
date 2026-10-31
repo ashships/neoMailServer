@@ -58,26 +58,27 @@ CREATE INDEX IF NOT EXISTS idx_security_audit_timestamp ON security_audit_logs(u
 CREATE INDEX IF NOT EXISTS idx_security_audit_event ON security_audit_logs(event_type);
 
 -- 4. Provider Real-Time Health & Circuit Breaker Tracking
+-- Per-workspace circuit breakers. The 'local-admin' rows are the deployment-wide
+-- defaults; a tenant row overrides them for that workspace only.
 CREATE TABLE IF NOT EXISTS provider_health (
-    provider_name TEXT PRIMARY KEY,
+    owner_subject TEXT NOT NULL DEFAULT 'local-admin',
+    provider_name TEXT NOT NULL,
     is_active INTEGER DEFAULT 1,
     consecutive_failures INTEGER DEFAULT 0,
     last_failure_reason TEXT,
     last_used_timestamp INTEGER,
-    updated_at INTEGER NOT NULL
+    updated_at INTEGER NOT NULL,
+    PRIMARY KEY (owner_subject, provider_name)
 );
 
-
-
-
-INSERT OR IGNORE INTO provider_health (provider_name, is_active, consecutive_failures, updated_at) VALUES 
-('resend', 1, 0, unixepoch()),
-('sendfox', 1, 0, unixepoch()),
-('brevo', 1, 0, unixepoch()),
-('mailgun', 1, 0, unixepoch()),
-('mailtrap', 1, 0, unixepoch()),
-('mailersend', 1, 0, unixepoch()),
-('smtp', 1, 0, unixepoch());
+INSERT OR IGNORE INTO provider_health (owner_subject, provider_name, is_active, consecutive_failures, updated_at) VALUES
+('local-admin', 'resend', 1, 0, unixepoch()),
+('local-admin', 'sendfox', 1, 0, unixepoch()),
+('local-admin', 'brevo', 1, 0, unixepoch()),
+('local-admin', 'mailgun', 1, 0, unixepoch()),
+('local-admin', 'mailtrap', 1, 0, unixepoch()),
+('local-admin', 'mailersend', 1, 0, unixepoch()),
+('local-admin', 'smtp', 1, 0, unixepoch());
 
 -- Application settings: only allowlisted names are loaded; secrets use AES-256-GCM.
 CREATE TABLE IF NOT EXISTS app_settings (

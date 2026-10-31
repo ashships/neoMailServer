@@ -1,4 +1,4 @@
-import { HttpError, email, text, encrypt, decrypt, bytes64 } from './security.js';
+import { HttpError, email, text, hostname, isPrivateHost, encrypt, decrypt, bytes64 } from './security.js';
 export const PROVIDERS = ['resend', 'brevo', 'mailgun', 'mailtrap', 'mailersend', 'smtp'];
 export const SETTINGS = {
   BIMI_LOGO_URL: ['Public BIMI SVG logo URL', 'https-url', ''],
@@ -13,10 +13,9 @@ export const SETTINGS = {
   RETENTION_DAYS: ['Message retention (days)', 'number', '30', 1, 365],
   STORE_MESSAGE_BODIES: ['Store message bodies (false recommended for OTPs)', 'boolean', 'false'],
   MAILGUN_DOMAIN: ['Mailgun production domain (verified custom domain)', 'optional-domain', ''],
-  SMTP_HOST: ['SMTP host (e.g. smtp.gmail.com)', 'text', ''],
-  SMTP_PORT: ['SMTP port', 'number', '465', 1, 65535],
+  SMTP_HOST: ['SMTP host (e.g. smtp.gmail.com)', 'hostname', ''],
+  SMTP_PORT: ['SMTP port (465 implicit TLS or 587 STARTTLS)', 'smtp-port', '465'],
   SMTP_USER: ['SMTP username', 'text', ''],
-  SMTP_SECURE: ['SMTP implicit TLS (port 465)', 'boolean', 'true'],
   MAILGUN_SANDBOX_DOMAIN: ['Mailgun sandbox domain (testing only)', 'sandbox-domain', ''],
 };
 export const SECRETS = ['API_SECRET_KEY', ...PROVIDERS.map(p => p.toUpperCase() + '_API_KEY'), 'RESEND_WEBHOOK_SECRET', 'MAILGUN_WEBHOOK_SIGNING_KEY', 'SMTP_PASS'];
@@ -33,6 +32,10 @@ export function validateSetting(name, value) {
   if (kind === 'email' && !email(value)) throw new HttpError(422, 'Invalid sender address.');
   if (kind === 'number' && (!/^\d+$/.test(value) || +value < spec[3] || +value > spec[4])) throw new HttpError(422, `${spec[0]} must be between ${spec[3]} and ${spec[4]}.`);
   if (kind === 'boolean' && !['true', 'false'].includes(value)) throw new HttpError(422, 'Choose true or false.');
+  // SMTP relays must be public DNS names on the two standards-compliant ports;
+  // IP literals, localhost and internal suffixes are rejected to prevent SSRF.
+  if (kind === 'hostname' && (!hostname(value) || isPrivateHost(value))) throw new HttpError(422, 'Enter a public SMTP hostname such as smtp.example.com.');
+  if (kind === 'smtp-port' && !['465', '587'].includes(value)) throw new HttpError(422, 'SMTP port must be 465 (implicit TLS) or 587 (STARTTLS).');
   if (kind === 'sandbox-domain' && value && !/^sandbox[a-z0-9]+\.mailgun\.org$/.test(value)) throw new HttpError(422, 'Enter the sandbox domain from your Mailgun dashboard, without https:// or an email address.');
   if (kind === 'optional-domain' && value && !/^(?=.{1,253}$)[a-z0-9]+(?:[a-z0-9.-]*[a-z0-9])?\.[a-z]{2,63}$/.test(value)) throw new HttpError(422, 'Invalid Mailgun production domain.');
   if (kind === 'optional-domain' && value.startsWith('sandbox') && value.endsWith('.mailgun.org')) throw new HttpError(422, 'Put your Mailgun sandbox in the separate sandbox field.');
@@ -43,6 +46,13 @@ export function validateSetting(name, value) {
     value = order.join(',');
   }
   return kind === 'text' ? text(value, 100) : value;
+}
+// Rendering helpers receive a redacted copy so a template bug can never echo a
+// decrypted credential into HTML. The real values stay in server-side scope.
+export function redactConfig(values = {}) {
+  const out = { ...values };
+  for (const name of SECRETS) if (out[name]) out[name] = '[configured]';
+  return out;
 }
 export async function config(env) {
   const result = { ...env }; const configured = new Set();
@@ -91,12 +101,13 @@ export function keyHint(key) {
   if (trimmed.startsWith('re_')) return 're_••••••••' + trimmed.slice(-4);
   if (trimmed.startsWith('xkeysib-')) return 'xkeysib-••••••••' + trimmed.slice(-4);
   if (trimmed.startsWith('mlsn.')) return 'mlsn.••••••••' + trimmed.slice(-4);
-  if (trimmed.length >= 8) return trimmed.slice(0, 3) + '••••••••' + trimmed.slice(-4);
+  // Generic secrets (including SMTP passwords) expose only the final two characters.
   return '••••••••' + trimmed.slice(-2);
 }
 
 export async function saveAccountProviderKey(env, ownerSubject, providerName, apiKey, extraConfig = null) {
-  if (!ownerSubject || typeof ownerSubject !== 'string') throw new HttpError(403, 'Owner workspace required.');
+  const owner = typeof ownerSubject === 'string' ? ownerSubject.trim() : '';
+  if (!owner || owner.length > 254 || /[\x00-\x1f\x7f]/.test(owner)) throw new HttpError(403, 'Owner workspace required.');
   if (!PROVIDERS.includes(providerName)) throw new HttpError(422, 'Invalid provider.');
   if (typeof apiKey !== 'string' || apiKey.length < 8 || apiKey.length > 4096 || /[\s\x00-\x1f\x7f]/.test(apiKey)) {
     throw new HttpError(422, 'API key must be 8–4096 non-whitespace characters.');
@@ -104,9 +115,29 @@ export async function saveAccountProviderKey(env, ownerSubject, providerName, ap
   if (!env.CONFIG_ENCRYPTION_KEY || bytes64(env.CONFIG_ENCRYPTION_KEY).length !== 32) {
     throw new HttpError(503, 'Configuration encryption key unavailable.');
   }
-  const encrypted = await encrypt(env.CONFIG_ENCRYPTION_KEY, apiKey, ownerSubject + ':' + providerName);
+  // extra_config holds routing metadata only. Passwords always live in the
+  // encrypted_key column and are never duplicated into plaintext JSON.
+  let extra = null;
+  if (providerName === 'smtp') {
+    const host = hostname(extraConfig?.smtp_host || '');
+    const port = String(extraConfig?.smtp_port || '465');
+    const user = typeof extraConfig?.smtp_user === 'string' ? extraConfig.smtp_user.trim() : '';
+    if (!host || isPrivateHost(host)) throw new HttpError(422, 'Enter a public SMTP hostname such as smtp.example.com.');
+    if (!['465', '587'].includes(port)) throw new HttpError(422, 'SMTP port must be 465 (implicit TLS) or 587 (STARTTLS).');
+    if (!user || user.length > 255 || /[\x00-\x1f\x7f]/.test(user)) throw new HttpError(422, 'SMTP username is required.');
+    extra = { smtp_host: host, smtp_port: port, smtp_user: user };
+  } else if (providerName === 'mailgun') {
+    const domain = String(extraConfig?.domain || '').trim().toLowerCase();
+    if (domain) {
+      if (!/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(domain) || domain.startsWith('sandbox')) {
+        throw new HttpError(422, 'Enter a verified Mailgun production domain, without https:// or an email address.');
+      }
+      extra = { domain };
+    }
+  }
+  const encrypted = await encrypt(env.CONFIG_ENCRYPTION_KEY, apiKey, owner + ':' + providerName);
   const hint = keyHint(apiKey);
-  const extraStr = extraConfig && typeof extraConfig === 'object' ? JSON.stringify(extraConfig) : null;
+  const extraStr = extra ? JSON.stringify(extra) : null;
   const id = crypto.randomUUID();
   await env.DB.prepare(`
     INSERT INTO account_provider_keys (id, owner_subject, provider_name, encrypted_key, key_hint, extra_config, is_active, created_at, updated_at)
@@ -117,18 +148,26 @@ export async function saveAccountProviderKey(env, ownerSubject, providerName, ap
       extra_config = excluded.extra_config,
       is_active = 1,
       updated_at = unixepoch()
-  `).bind(id, ownerSubject, providerName, encrypted, hint, extraStr).run();
+  `).bind(id, owner, providerName, encrypted, hint, extraStr).run();
   return { providerName, hint };
 }
 
+function ownerKey(ownerSubject) {
+  const owner = typeof ownerSubject === 'string' ? ownerSubject.trim() : '';
+  if (!owner || owner.length > 254 || /[\x00-\x1f\x7f]/.test(owner)) throw new HttpError(403, 'Owner workspace required.');
+  return owner;
+}
+
 export async function deleteAccountProviderKey(env, ownerSubject, providerName) {
-  if (!ownerSubject || !PROVIDERS.includes(providerName)) throw new HttpError(422, 'Invalid request.');
-  await env.DB.prepare('DELETE FROM account_provider_keys WHERE owner_subject=? AND provider_name=?').bind(ownerSubject, providerName).run();
+  const owner = ownerKey(ownerSubject);
+  if (!PROVIDERS.includes(providerName)) throw new HttpError(422, 'Invalid request.');
+  await env.DB.prepare('DELETE FROM account_provider_keys WHERE owner_subject=? AND provider_name=?').bind(owner, providerName).run();
 }
 
 export async function toggleAccountProviderKey(env, ownerSubject, providerName) {
-  if (!ownerSubject || !PROVIDERS.includes(providerName)) throw new HttpError(422, 'Invalid request.');
-  await env.DB.prepare('UPDATE account_provider_keys SET is_active=1-is_active, updated_at=unixepoch() WHERE owner_subject=? AND provider_name=?').bind(ownerSubject, providerName).run();
+  const owner = ownerKey(ownerSubject);
+  if (!PROVIDERS.includes(providerName)) throw new HttpError(422, 'Invalid request.');
+  await env.DB.prepare('UPDATE account_provider_keys SET is_active=1-is_active, updated_at=unixepoch() WHERE owner_subject=? AND provider_name=?').bind(owner, providerName).run();
 }
 
 export async function getAccountProviderKeys(env, ownerSubject) {
@@ -145,30 +184,37 @@ export async function getAccountProviderKeys(env, ownerSubject) {
 
 export async function resolveAccountProviderSecrets(env, ownerSubject) {
   if (!ownerSubject || !env.DB || !env.CONFIG_ENCRYPTION_KEY) return {};
+  let owner;
+  try { owner = ownerKey(ownerSubject); } catch { return {}; }
   try {
     const res = await env.DB.prepare(
       'SELECT provider_name, encrypted_key, extra_config FROM account_provider_keys WHERE owner_subject=? AND is_active=1'
-    ).bind(ownerSubject).all();
+    ).bind(owner).all();
     const secrets = {};
     for (const row of res.results || []) {
       try {
-        const decrypted = await decrypt(env.CONFIG_ENCRYPTION_KEY, row.encrypted_key, ownerSubject + ':' + row.provider_name);
+        if (!PROVIDERS.includes(row.provider_name)) continue;
+        const decrypted = await decrypt(env.CONFIG_ENCRYPTION_KEY, row.encrypted_key, owner + ':' + row.provider_name);
         secrets[row.provider_name.toUpperCase() + '_API_KEY'] = decrypted;
-        if (row.extra_config) {
-          try {
-            const extra = JSON.parse(row.extra_config);
-            if (row.provider_name === 'mailgun' && extra.domain) secrets.MAILGUN_DOMAIN = extra.domain;
-            if (row.provider_name === 'smtp') {
-              if (extra.smtp_host) secrets.SMTP_HOST = extra.smtp_host;
-              if (extra.smtp_port) secrets.SMTP_PORT = extra.smtp_port;
-              if (extra.smtp_user) secrets.SMTP_USER = extra.smtp_user;
-              if (extra.smtp_pass) secrets.SMTP_PASS = extra.smtp_pass;
-              if (extra.smtp_secure !== undefined) secrets.SMTP_SECURE = String(extra.smtp_secure);
-            }
-          } catch {}
+        let extra = {};
+        if (row.extra_config) { try { extra = JSON.parse(row.extra_config) || {}; } catch { extra = {}; } }
+        if (row.provider_name === 'mailgun') {
+          const domain = hostname(extra.domain || '');
+          if (domain && !domain.startsWith('sandbox')) secrets.MAILGUN_DOMAIN = domain;
         }
-      } catch (e) {
-        console.error('Failed decrypting provider key for', row.provider_name, e.message);
+        if (row.provider_name === 'smtp') {
+          const host = hostname(extra.smtp_host || '');
+          const port = String(extra.smtp_port || '465');
+          if (!host || isPrivateHost(host) || !['465', '587'].includes(port)) throw new Error('Invalid SMTP routing metadata.');
+          secrets.SMTP_HOST = host;
+          secrets.SMTP_PORT = port;
+          secrets.SMTP_USER = String(extra.smtp_user || '').slice(0, 255);
+          // The encrypted key is the SMTP password; plaintext passwords are never read from extra_config.
+          secrets.SMTP_PASS = decrypted;
+        }
+      } catch {
+        // A single corrupt/foreign row must not disable other providers or leak details.
+        console.error(JSON.stringify({ event: 'PROVIDER_KEY_DECRYPT_FAILED', provider: row.provider_name }));
       }
     }
     return secrets;

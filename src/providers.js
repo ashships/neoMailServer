@@ -1,6 +1,19 @@
-import { HttpError, hash, email, text, escape, hmac, base64, equal } from './security.js';
+import { HttpError, hash, email, text, escape, hmac, base64, equal, hostname, isPrivateHost } from './security.js';
 import { PROVIDERS, resolveAccountProviderSecrets } from './config.js';
 import { safeFetch } from './security.js';
+
+// Only two ports are accepted: 465 uses implicit TLS, 587 requires STARTTLS.
+// Anything else (including a plaintext downgrade) is refused before connecting.
+function smtpTarget(cfg) {
+  const host = hostname(cfg.SMTP_HOST || '');
+  if (!host || isPrivateHost(host)) throw new Error('SMTP host is invalid or private.');
+  const port = String(cfg.SMTP_PORT || '465');
+  if (!['465', '587'].includes(port)) throw new Error('SMTP port must be 465 or 587.');
+  const user = typeof cfg.SMTP_USER === 'string' ? cfg.SMTP_USER : '';
+  const pass = typeof cfg.SMTP_PASS === 'string' ? cfg.SMTP_PASS : '';
+  if (!user || !pass) throw new Error('SMTP credentials are not configured.');
+  return { host, port: Number(port), user, pass, secureTransport: port === '465' ? 'on' : 'starttls' };
+}
 
 export async function sendSmtp(cfg, mail) {
   let connect;
@@ -9,68 +22,76 @@ export async function sendSmtp(cfg, mail) {
   } catch {
     throw new Error('SMTP is not supported in this runtime.');
   }
-  const host = cfg.SMTP_HOST;
-  const port = Number(cfg.SMTP_PORT || 465);
-  const secure = cfg.SMTP_SECURE !== 'false';
-  const socket = connect({ hostname: host, port }, { secureTransport: secure ? 'on' : 'off', allowHalfOpen: false });
+  const target = smtpTarget(cfg);
+  const socket = connect({ hostname: target.host, port: target.port }, { secureTransport: target.secureTransport, allowHalfOpen: false });
   const encoder = new TextEncoder();
   const decoder = new TextDecoder();
   const writer = socket.writable.getWriter();
   const reader = socket.readable.getReader();
+  const timeoutMs = Math.min(15000, Math.max(1000, Number(cfg.REQUEST_TIMEOUT_MS) || 6000));
+  const withTimeout = promise => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(Object.assign(new Error('SMTP operation timed out.'), { name: 'TimeoutError' })), timeoutMs);
+    promise.then(value => { clearTimeout(timer); resolve(value); }, error => { clearTimeout(timer); reject(error); });
+  });
   let buffer = '';
   async function readResponse() {
-    while (true) {
-      const { value, done } = await reader.read();
+    for (;;) {
+      const index = buffer.indexOf('\r\n');
+      if (index !== -1) {
+        const line = buffer.slice(0, index);
+        buffer = buffer.slice(index + 2);
+        // Multiline replies use "250-"; only the final "250 " line is terminal.
+        if (/^\d{3} /.test(line)) return { code: Number(line.slice(0, 3)), data: line };
+        continue;
+      }
+      const { value, done } = await withTimeout(reader.read());
       if (value) buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\r\n');
-      const last = lines[lines.length - 2] || '';
-      if (/^\d{3} /.test(last)) break;
-      if (done) break;
+      if (done) throw new Error('SMTP connection closed unexpectedly.');
     }
-    const match = buffer.match(/^(\d{3})/);
-    const code = match ? Number(match[1]) : 0;
-    const data = buffer;
-    buffer = '';
-    return { code, data };
   }
-  async function write(command) { await writer.write(encoder.encode(command + '\r\n')); }
-  const greet = await readResponse();
-  console.error('SMTP GREET', greet.code, JSON.stringify(greet.data.slice(0,80)));
-  await write('EHLO neomail');
-  const ehlo = await readResponse();
-  console.error('SMTP EHLO', ehlo.code);
-  if (ehlo.code !== 250) throw new Error('SMTP EHLO failed.');
-  await write('AUTH LOGIN');
-  const authStart = await readResponse();
-  if (authStart.code !== 334) throw new Error('SMTP auth not supported.');
-  await write(btoa(cfg.SMTP_USER));
-  const userResp = await readResponse();
-  if (userResp.code !== 334) throw new Error('SMTP username rejected.');
-  await write(btoa(cfg.SMTP_PASS));
-  const passResp = await readResponse();
-  if (passResp.code !== 235) throw new Error('SMTP authentication failed.');
-  await write('MAIL FROM:<' + mail.from + '>');
-  const mailFrom = await readResponse();
-  if (mailFrom.code !== 250) throw new Error('SMTP MAIL FROM rejected.');
-  await write('RCPT TO:<' + mail.to + '>');
-  const rcpt = await readResponse();
-  if (rcpt.code !== 250 && rcpt.code !== 251) throw new Error('SMTP RCPT TO rejected.');
-  await write('DATA');
-  const dataStart = await readResponse();
-  if (dataStart.code !== 354) throw new Error('SMTP DATA rejected.');
-  const message = 'From: ' + mail.fromName + ' <' + mail.from + '>\r\n' +
-    'To: ' + mail.to + '\r\n' +
-    'Subject: ' + mail.subject + '\r\n' +
-    'MIME-Version: 1.0\r\n' +
-    'Content-Type: text/html; charset=UTF-8\r\n' +
-    '\r\n' + (mail.html || '') + '\r\n.\r\n';
-  await writer.write(encoder.encode(message));
-  const dataResp = await readResponse();
-  if (dataResp.code !== 250) throw new Error('SMTP message rejected.');
-  await write('QUIT');
-  await socket.close();
-  const match = dataResp.data.match(/<([^>]+)>/);
-  return (match && match[1]) || crypto.randomUUID();
+  async function write(command) { await withTimeout(writer.write(encoder.encode(command + '\r\n'))); }
+  function expect(response, codes, message) { if (!codes.includes(response.code)) throw new Error(message); }
+  try {
+    expect(await readResponse(), [220], 'SMTP server did not greet.');
+    await write('EHLO neomail');
+    expect(await readResponse(), [250], 'SMTP EHLO failed.');
+    await write('AUTH LOGIN');
+    expect(await readResponse(), [334], 'SMTP AUTH LOGIN was rejected.');
+    await write(base64(encoder.encode(target.user)));
+    expect(await readResponse(), [334], 'SMTP username was rejected.');
+    await write(base64(encoder.encode(target.pass)));
+    expect(await readResponse(), [235], 'SMTP authentication failed.');
+    await write('MAIL FROM:<' + mail.from + '>');
+    expect(await readResponse(), [250], 'SMTP MAIL FROM was rejected.');
+    await write('RCPT TO:<' + mail.to + '>');
+    expect(await readResponse(), [250, 251], 'SMTP RCPT TO was rejected.');
+    await write('DATA');
+    expect(await readResponse(), [354], 'SMTP DATA was rejected.');
+    // Base64 keeps arbitrary HTML out of SMTP control syntax; no line can begin with a dot.
+    const encoded = base64(encoder.encode(mail.html || ''));
+    const wrapped = encoded.match(/.{1,76}/g)?.join('\r\n') || '';
+    const message = [
+      'From: ' + mail.fromName + ' <' + mail.from + '>',
+      'To: <' + mail.to + '>',
+      'Subject: ' + mail.subject,
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=UTF-8',
+      'Content-Transfer-Encoding: base64',
+      '',
+      wrapped,
+      '.',
+    ].join('\r\n');
+    await write(message);
+    const dataResponse = await readResponse();
+    expect(dataResponse, [250], 'SMTP message was rejected.');
+    try { await write('QUIT'); await readResponse(); } catch { /* best effort */ }
+    const match = dataResponse.data.match(/<([^>]+)>/);
+    return (match && match[1]) || crypto.randomUUID();
+  } finally {
+    try { writer.releaseLock(); } catch {}
+    try { reader.releaseLock(); } catch {}
+    try { await socket.close(); } catch {}
+  }
 }
 
 export function validateMail(body, settings) {
@@ -113,47 +134,73 @@ export async function send(provider, env, mail, requestId) {
   if (typeof id !== 'string' || id.length > 512 || !id) throw new Error('Provider accepted request without a usable message identifier');
   return id;
 }
-export async function dispatch(env, mail, idempotencyKey, ownerSubject = null) {
+export async function dispatch(env, cfg, mail, idempotencyKey, ownerSubject = null) {
+  if (!env?.DB) throw new HttpError(503, 'Database binding unavailable.');
   if (!/^[a-zA-Z0-9_:.\-]{8,128}$/.test(idempotencyKey || '')) throw new HttpError(422, 'Idempotency-Key must contain 8–128 letters, digits, dots, colons, underscores or hyphens.');
+  const settings = cfg && typeof cfg === 'object' ? cfg : {};
+  const owner = typeof ownerSubject === 'string' && ownerSubject ? ownerSubject : 'local-admin';
   const identity = await env.DB.prepare('SELECT email_address,display_name,owner_subject FROM sender_identities WHERE email_address=? AND is_active=1').bind(mail.from).first();
   if (!identity) throw new HttpError(422, 'Sender must be an active identity configured in the console.');
-  // Tenant isolation: a workspace may only send from identities it owns.
-  if (ownerSubject && identity.owner_subject && identity.owner_subject !== ownerSubject) throw new HttpError(403, 'Sender identity belongs to another workspace.');
-  // Verified domains only: the sender domain must exist and be verified, except the
-  // deployment's own Mailgun sandbox used for console testing.
+  // Exact ownership: a workspace may only send from identities it owns. Legacy rows
+  // with no owner are treated as deployment-owned, never as a wildcard.
+  if ((identity.owner_subject || 'local-admin') !== owner) throw new HttpError(403, 'Sender identity belongs to another workspace.');
+  // Verified domains only: the sender domain must exist, be verified, and belong to
+  // the same workspace, except the deployment's own Mailgun sandbox test domain.
   const senderDomain = (mail.from || '').split('@')[1];
-  if (senderDomain && !(senderDomain === env.MAILGUN_SANDBOX_DOMAIN && senderDomain.endsWith('.mailgun.org'))) {
-    const domainRow = await env.DB.prepare('SELECT is_verified FROM managed_domains WHERE domain=?').bind(senderDomain).first();
+  const sandboxDomain = settings.MAILGUN_SANDBOX_DOMAIN || env.MAILGUN_SANDBOX_DOMAIN;
+  const isSandbox = !!senderDomain && !!sandboxDomain && senderDomain === sandboxDomain && /^sandbox[a-z0-9]+\.mailgun\.org$/.test(sandboxDomain);
+  if (!isSandbox) {
+    const domainRow = await env.DB.prepare('SELECT is_verified,owner_subject FROM managed_domains WHERE domain=?').bind(senderDomain).first();
     if (!domainRow || !domainRow.is_verified) throw new HttpError(422, 'Sender domain is not verified. Add and verify the domain before sending.');
+    if ((domainRow.owner_subject || 'local-admin') !== owner) throw new HttpError(403, 'Sender domain belongs to another workspace.');
   }
   if (mail.useIdentityName) mail = { ...mail, fromName: identity.display_name };
   delete mail.useIdentityName;
   // Idempotency keys are namespaced per tenant so one workspace can never observe another's operations.
-  const key = await hash((ownerSubject || 'local-admin') + '\u0000' + idempotencyKey), payloadHash = await hash(JSON.stringify(mail)), logId = crypto.randomUUID();
+  const key = await hash(owner + '\u0000' + idempotencyKey), payloadHash = await hash(JSON.stringify(mail)), logId = crypto.randomUUID();
   const reservation = await env.DB.prepare('INSERT INTO dispatch_requests (request_key,payload_hash,log_id,created_at) VALUES (?,?,?,unixepoch()) ON CONFLICT(request_key) DO NOTHING RETURNING request_key').bind(key, payloadHash, logId).first();
   if (!reservation) {
     const prior = await env.DB.prepare('SELECT payload_hash,response_json FROM dispatch_requests WHERE request_key=?').bind(key).first();
-    if (prior.payload_hash !== payloadHash) throw new HttpError(409, 'Idempotency key already used for different content.');
+    if (!prior || prior.payload_hash !== payloadHash) throw new HttpError(409, 'Idempotency key already used for different content.');
     if (!prior.response_json) throw new HttpError(409, 'Dispatch in progress or outcome unknown. Inspect its mail log before retrying.');
-    return { ...JSON.parse(prior.response_json), replayed: true };
+    try { return { ...JSON.parse(prior.response_json), replayed: true }; }
+    catch { throw new HttpError(409, 'Dispatch outcome unavailable. Inspect its mail log before retrying.'); }
   }
-  const keep = env.STORE_MESSAGE_BODIES === 'true';
-  const ownerText = ownerSubject || 'local-admin';
+  const keep = String(settings.STORE_MESSAGE_BODIES ?? env.STORE_MESSAGE_BODIES ?? 'false') === 'true';
   await env.DB.prepare(`INSERT INTO email_logs (id,direction,provider_used,sender_address,recipient_address,subject,html_body,text_body,html_hash,transmission_status,attempt_history,unix_timestamp,updated_at,owner_subject)
     VALUES (?,'outbound','unassigned',?,?,?,?,?,?,'Queued','[]',unixepoch(),unixepoch(),?)`)
-    .bind(logId, mail.from, mail.to, mail.subject, keep ? mail.html : null, keep ? mail.text : null, await hash(mail.html), ownerText).run();
+    .bind(logId, mail.from, mail.to, mail.subject, keep ? mail.html : null, keep ? mail.text : null, await hash(mail.html), owner).run();
   const attempts = []; let status = 'Failed', providerUsed = null, messageId = null, uncertain = false;
-  const health = (await env.DB.prepare('SELECT * FROM provider_health').all()).results || [];
-  const accountSecrets = await resolveAccountProviderSecrets(env, ownerSubject);
-  const effectiveEnv = { ...env, ...accountSecrets };
-  for (const provider of (effectiveEnv.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend,smtp').split(',')) {
-    if (!PROVIDERS.includes(provider)) continue;
+  // Per-tenant health rows override the deployment-wide (local-admin) circuit breaker.
+  const health = (await env.DB.prepare("SELECT * FROM provider_health WHERE owner_subject IN (?, 'local-admin')").bind(owner).all()).results || [];
+  const stateFor = provider => health.find(h => h.owner_subject === owner && h.provider_name === provider)
+    || health.find(h => h.owner_subject === 'local-admin' && h.provider_name === provider);
+  const accountSecrets = await resolveAccountProviderSecrets(env, owner);
+  const effectiveEnv = { ...env, ...settings, ...accountSecrets };
+  effectiveEnv.REQUEST_TIMEOUT_MS = String(Math.min(15000, Math.max(1000, Number(effectiveEnv.REQUEST_TIMEOUT_MS) || 6000)));
+  const recordFailure = async (provider, reason) => {
+    try {
+      await env.DB.prepare(`INSERT INTO provider_health (owner_subject,provider_name,is_active,consecutive_failures,last_failure_reason,updated_at)
+        VALUES (?,?,1,1,?,unixepoch())
+        ON CONFLICT(owner_subject,provider_name) DO UPDATE SET consecutive_failures=consecutive_failures+1,last_failure_reason=excluded.last_failure_reason,updated_at=unixepoch()`)
+        .bind(owner, provider, reason).run();
+    } catch { console.error(JSON.stringify({ event: 'PROVIDER_HEALTH_WRITE_FAILED', provider })); }
+  };
+  const recordSuccess = async provider => {
+    try {
+      await env.DB.prepare(`INSERT INTO provider_health (owner_subject,provider_name,is_active,consecutive_failures,last_used_timestamp,updated_at)
+        VALUES (?,?,1,0,unixepoch(),unixepoch())
+        ON CONFLICT(owner_subject,provider_name) DO UPDATE SET consecutive_failures=0,last_failure_reason=NULL,last_used_timestamp=unixepoch(),updated_at=unixepoch()`)
+        .bind(owner, provider).run();
+    } catch { console.error(JSON.stringify({ event: 'PROVIDER_HEALTH_WRITE_FAILED', provider })); }
+  };
+  const order = String(effectiveEnv.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend,smtp').split(',').map(p => p.trim()).filter(p => PROVIDERS.includes(p));
+  for (const provider of order) {
     if (provider === 'smtp') {
-      const hasSmtp = (effectiveEnv.SMTP_HOST && effectiveEnv.SMTP_USER && effectiveEnv.SMTP_PASS) || (effectiveEnv.cfg && effectiveEnv.cfg.SMTP_HOST && effectiveEnv.cfg.SMTP_USER && effectiveEnv.cfg.SMTP_PASS);
-      if (!hasSmtp) continue;
+      if (!(effectiveEnv.SMTP_HOST && effectiveEnv.SMTP_USER && effectiveEnv.SMTP_PASS)) continue;
     } else if (!effectiveEnv[provider.toUpperCase() + '_API_KEY'] || (provider === 'mailgun' && !effectiveEnv.MAILGUN_DOMAIN)) continue;
-    const state = health.find(p => p.provider_name === provider);
-    if (state && (!state.is_active || (state.consecutive_failures >= 5 && state.updated_at > Date.now() / 1000 - 300))) continue;
+    const state = stateFor(provider);
+    if (state && (!state.is_active || (state.consecutive_failures >= 5 && state.updated_at > Math.floor(Date.now() / 1000) - 300))) continue;
     const started = Date.now();
     // Record intent before the external side effect. A crash leaves a Queued log requiring reconciliation.
     await env.DB.prepare('UPDATE email_logs SET provider_used=?,updated_at=unixepoch() WHERE id=?').bind(provider, logId).run();
@@ -162,23 +209,30 @@ export async function dispatch(env, mail, idempotencyKey, ownerSubject = null) {
     } catch (error) {
       uncertain = !error.definitive;
       const reason = uncertain ? 'Outcome uncertain; automatic fallback stopped to avoid duplicates.' : error.message;
-      const errorCode = ['TimeoutError','AbortError','TypeError','SyntaxError'].includes(error.name) ? error.name : 'ProviderError';
+      const errorCode = ['TimeoutError', 'AbortError', 'TypeError', 'SyntaxError'].includes(error.name) ? error.name : 'ProviderError';
       attempts.push({ provider, success: false, latencyMs: Date.now() - started, error: reason, errorCode });
-      await env.DB.prepare('UPDATE provider_health SET consecutive_failures=consecutive_failures+1,last_failure_reason=?,updated_at=unixepoch() WHERE provider_name=?').bind(reason, provider).run();
+      await recordFailure(provider, reason);
       if (uncertain) { providerUsed = provider; status = 'Queued'; break; }
       continue;
     }
     // Database failures after acceptance must never cause another provider send.
     attempts.push({ provider, success: true, latencyMs: Date.now() - started });
-    await env.DB.prepare('UPDATE provider_health SET consecutive_failures=0,last_failure_reason=NULL,last_used_timestamp=unixepoch(),updated_at=unixepoch() WHERE provider_name=?').bind(provider).run();
+    await recordSuccess(provider);
     break;
   }
   const result = { id: logId, success: status === 'Sent', status, provider: providerUsed, providerMessageId: messageId, uncertain };
-  await env.DB.batch([
-    env.DB.prepare('UPDATE email_logs SET provider_used=?,transmission_status=?,provider_message_id=?,attempt_history=?,retry_count=?,error_message=?,updated_at=unixepoch() WHERE id=?')
-      .bind(providerUsed || 'none', status, messageId, JSON.stringify(attempts), Math.max(0, attempts.length - 1), status === 'Sent' ? null : (uncertain ? 'Outcome uncertain; reconcile with provider.' : 'No provider accepted this message.'), logId),
-    env.DB.prepare('UPDATE dispatch_requests SET response_json=? WHERE request_key=?').bind(JSON.stringify(result), key),
-  ]);
+  try {
+    await env.DB.batch([
+      env.DB.prepare('UPDATE email_logs SET provider_used=?,transmission_status=?,provider_message_id=?,attempt_history=?,retry_count=?,error_message=?,updated_at=unixepoch() WHERE id=?')
+        .bind(providerUsed || 'none', status, messageId, JSON.stringify(attempts), Math.max(0, attempts.length - 1), status === 'Sent' ? null : (uncertain ? 'Outcome uncertain; reconcile with provider.' : 'No provider accepted this message.'), logId),
+      env.DB.prepare('UPDATE dispatch_requests SET response_json=? WHERE request_key=?').bind(JSON.stringify(result), key),
+    ]);
+  } catch {
+    // The provider already accepted (or definitively rejected) the message. Returning
+    // the outcome avoids a client retry that could duplicate a successful send; the
+    // missing response_json makes any later retry fail closed as "outcome unknown".
+    console.error(JSON.stringify({ event: 'DISPATCH_PERSIST_FAILED', logId }));
+  }
   return result;
 }
 export async function verifyWebhook(provider, request, raw, env) {

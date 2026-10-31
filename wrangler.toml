@@ -23,27 +23,25 @@ DEFAULT_SENDER = "no-reply@mail.neopathshala.com"
 DEFAULT_SENDER_NAME = "neoPathshala"
 FALLBACK_ORDER = "resend,brevo,mailgun,mailtrap,mailersend"
 REQUEST_TIMEOUT_MS = "6000"
-MAX_LOGIN_ATTEMPTS = "20"
+MAX_LOGIN_ATTEMPTS = "5"
 API_RATE_LIMIT_PER_MINUTE = "60"
 WEBHOOK_RATE_LIMIT_PER_MINUTE = "120"
 RETENTION_DAYS = "30"
 STORE_MESSAGE_BODIES = "false"
-LOCAL_DEV = "true"
-LOCAL_ADMIN_TOKEN = "REDACTED_LOCAL_ADMIN_TOKEN"
-CONFIG_ENCRYPTION_KEY = "REDACTED_CONFIG_ENCRYPTION_KEY"
-SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = "465"
-SMTP_USER = "user@example.com"
-SMTP_SECURE = "true"
-# SMTP_PASS should be set via secret/panel; keep fallback available
-#   npx wrangler secret put ADMIN_TOKEN_HASH # SHA-256 verifier from: npm run credentials
-#   npx wrangler secret put CONFIG_ENCRYPTION_KEY
+# Production must never inherit the local-development bypass.
+LOCAL_DEV = "false"
+
+# Secrets are intentionally NOT stored in this file. Set them with:
+#   npx wrangler secret put CONFIG_ENCRYPTION_KEY   # 32 random bytes, base64
+#   npx wrangler secret put ADMIN_TOKEN_HASH        # only if ALLOW_TOKEN_LOGIN=true
+#   npx wrangler secret put LOCAL_ADMIN_TOKEN       # only for loopback development
+#   npx wrangler secret put SMTP_PASS               # optional deployment OTP relay
+# Provider keys are encrypted in D1 from the admin panel and never committed.
 
 # Set these before production admin access. No production bypass is provided.
 ACCESS_TEAM_DOMAIN = ""
 ACCESS_AUD = ""
 ALLOW_TOKEN_LOGIN = "false"
-# ADMIN_TOKEN_HASH moved to a Worker secret: npx wrangler secret put ADMIN_TOKEN_HASH
 EMAIL_OTP_LOGIN = "true"
 
 # Module bundling only includes imports of src/index.js; no manual upload rules needed.
