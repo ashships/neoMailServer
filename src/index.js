@@ -82,7 +82,14 @@ async function reauthenticate(request, env, data) {
 }
 async function handler(request, env) {
   const url = new URL(request.url); let path = url.pathname; const ip = request.headers.get('cf-connecting-ip') || 'local';
-  if (path === '/login') path = '/admin/login';
+  if (path === '/login') {
+    const existingSubject = await access(request, env).catch(() => null);
+    if (existingSubject) {
+      const existingRole = await adminRole(env, existingSubject);
+      return redirect(existingRole === 'superadmin' ? '/admin' : '/dashboard');
+    }
+    path = '/admin/login';
+  }
   // Public probes do not disclose configuration, secrets, or database details.
   if (path === '/docs' || path.startsWith('/docs/')) {
     requireMethod(request, ['GET']);
