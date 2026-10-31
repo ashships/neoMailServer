@@ -96,5 +96,41 @@ test('Worker request flow with SQLite: sessions, CSRF, settings, dispatch and we
   const decisions=await Promise.all(Array.from({length:20},()=>db.prepare("INSERT INTO rate_limits(bucket_key,count,expires_at) VALUES ('concurrent',1,9999999999) ON CONFLICT(bucket_key) DO UPDATE SET count=count+1 WHERE count<5 RETURNING count").first()));
   assert.equal(decisions.filter(Boolean).length,5);
  });
+ await t.test('inbound email handler accepts mail for active identities and rejects unknowns', async () => {
+  let rejected = null;
+  const fakeIncoming = {
+    from: 'student@example.com',
+    to: 'support@example.com',
+    headers: new Headers({ subject: 'Need help with course' }),
+    raw: new ReadableStream({
+      start(controller) {
+        controller.enqueue(new TextEncoder().encode('Hello, please help with my enrollment.'));
+        controller.close();
+      }
+    }),
+    rawSize: 38,
+    setReject(reason) { rejected = reason; }
+  };
+  await worker.email(fakeIncoming, env);
+  assert.equal(rejected, null, 'known recipient identity must not be rejected');
+  const inboundLog = await db.prepare("SELECT * FROM email_logs WHERE recipient_address='support@example.com' AND direction='inbound'").first();
+  assert.ok(inboundLog, 'inbound email must be recorded in email_logs');
+  assert.equal(inboundLog.provider_used, 'cloudflare_mx');
+  assert.equal(inboundLog.sender_address, 'student@example.com');
+  assert.equal(inboundLog.subject, 'Need help with course');
+  assert.equal(inboundLog.transmission_status, 'Delivered');
+
+  let rejectedUnknown = null;
+  const unknownIncoming = {
+    from: 'spammer@example.com',
+    to: 'nonexistent@example.com',
+    headers: new Headers({ subject: 'Spam' }),
+    raw: new ReadableStream({ start(c) { c.enqueue(new TextEncoder().encode('spam')); c.close(); } }),
+    rawSize: 4,
+    setReject(reason) { rejectedUnknown = reason; }
+  };
+  await worker.email(unknownIncoming, env);
+  assert.equal(rejectedUnknown, 'Recipient not accepted.');
+ });
  } finally { globalThis.fetch=originalFetch; db.close(); }
 });

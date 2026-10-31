@@ -2244,6 +2244,29 @@ export function setup(origin, cfg) {
   return `<div class="grid2"><section class="panel"><div class="panelhead"><h2>Connect nepathshala.com</h2></div><div class="panelbody"><ol class="list">${[['Deploy the Worker', 'Create D1, apply the schema and migration, configure secrets, and bind your chosen custom domain.'], ['Protect the console', 'Create a Cloudflare Access application for /admin and /admin/* with an explicit administrator allowlist and MFA. Configure team domain and audience in the Worker.'], ['Verify your sending domain', 'Copy provider-generated DNS records exactly. Enable one provider first, then verify fallback providers.'], ['Configure the workspace', 'Add a sender identity matching your verified domain, then save provider credentials and your separate API token in Settings.'], ['Connect your backend', 'Store NEOMAIL_URL and NEOMAIL_API_KEY in the neopathshala server environment. Send from authenticated backend flows only.'], ['Test and operate', 'Test acceptance, delivery webhooks, duplicate requests, invalid credentials, backups, and retention before launch.']].map(([title, desc], i) => `<li class="step"><span class="stepnum">${i + 1}</span><div><h3>${e(title)}</h3><p>${e(desc)}</p></div></li>`).join('')}</ol></div></section><section class="panel"><div class="panelhead"><h2>Backend request example</h2></div><div class="panelbody"><pre>${e(snippet)}</pre><div class="notice warn">Confirmed sender: your-sender@your-verified-domain.com. Verify this sending domain with each active provider before deployment.</div><p class="sub">Full deployment, security, API, recovery, and DNS instructions are included in the project’s docs directory.</p></div></section></div>`;
 }
 
+export function docsEditor(content, sess) {
+  return `<section class="panel">
+    <div class="panelhead">
+      <div>
+        <h2>Documentation content</h2>
+        <p>Edit the markdown or plain text documentation published at /docs.</p>
+      </div>
+      <a class="button secondary small" href="/docs" target="_blank">${icon('external')} <span>View public page</span></a>
+    </div>
+    <div class="panelbody">
+      <form method="post" action="/admin/docs/save">
+        ${hidden(sess.csrf_token)}
+        <label class="field">
+          <span class="field-title">Content</span>
+          <textarea name="content" maxlength="20000" rows="18" style="min-height: 320px; font-family: var(--mono);">${e(content)}</textarea>
+          <small>Up to 20,000 characters. Plain text / pre-formatted documentation.</small>
+        </label>
+        <button class="button">${icon('check')} <span>Save documentation</span></button>
+      </form>
+    </div>
+  </section>`;
+}
+
 export function apiClients(clients, sess, createdKey = '') {
   const keyNotice = createdKey ? `<div class="notice">New API key (shown once): <code>${e(createdKey)}</code>. Store it securely; it will not be displayed again.</div>` : '';
   return `${keyNotice}<section class="panel"><div class="panelhead"><h2>API clients</h2><p>Issue separate bearer tokens for each application. Keys are stored only as hashes.</p></div><div class="tablewrap"><table><thead><tr><th>Name</th><th>Sender</th><th>Status</th><th>Created</th><th>Last used</th><th>Action</th></tr></thead><tbody>${clients.map(c => `<tr><td>${e(c.name)}</td><td>${e(c.sender_address || 'Any active identity')}</td><td>${badge(c.is_active ? 'Active' : 'Revoked')}</td><td>${e(new Date(c.created_at * 1000).toISOString().slice(0, 16).replace('T', ' '))}</td><td>${c.last_used_at ? e(new Date(c.last_used_at * 1000).toISOString().slice(0, 16).replace('T', ' ')) : 'Never'}</td><td>${c.is_active ? `<form method="post" action="/admin/api-clients/revoke">${hidden(sess.csrf_token)}<input type="hidden" name="id" value="${e(c.id)}"><button class="button secondary small">Revoke</button></form>` : ''}</td></tr>`).join('') || `<tr><td colspan="6">No API clients yet.</td></tr>`}</tbody></table></div></section><section class="panel"><div class="panelhead"><h2>Create API client</h2></div><div class="panelbody"><form method="post" action="/admin/api-clients/create">${hidden(sess.csrf_token)}<div class="settingsgrid"><label class="field">Client name<input name="name" required maxlength="80" placeholder="neoPathshala backend"></label><label class="field">Restricted sender (optional)<input type="email" name="sender_address" maxlength="254" autocomplete="off" spellcheck="false" placeholder="your-sender@your-verified-domain.com"></label></div><button class="button">Create client key</button></form><p class="footnote">Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender.</p></div></section>`;
