@@ -69,13 +69,6 @@ CREATE TABLE IF NOT EXISTS provider_health (
 
 
 
--- Seed Initial Sender Identities for mail.neopathshala.com (owned and pre-verified by the deployment)
-INSERT OR IGNORE INTO sender_identities (id, email_address, display_name, is_default, is_active, created_at, owner_subject) VALUES
-('id_noreply', 'no-reply@mail.neopathshala.com', 'neoPathshala No-Reply', 1, 1, unixepoch(), 'local-admin'),
-('id_support', 'support@mail.neopathshala.com', 'neoPathshala Support', 0, 1, unixepoch(), 'local-admin'),
-('id_billing', 'billing@mail.neopathshala.com', 'neoPathshala Billing', 0, 1, unixepoch(), 'local-admin'),
-('id_notifications', 'notifications@mail.neopathshala.com', 'neoPathshala Notifications', 0, 1, unixepoch(), 'local-admin'),
-('id_admissions', 'admissions@mail.neopathshala.com', 'neoPathshala Admissions', 0, 1, unixepoch(), 'local-admin');
 
 INSERT OR IGNORE INTO provider_health (provider_name, is_active, consecutive_failures, updated_at) VALUES 
 ('resend', 1, 0, unixepoch()),
@@ -161,6 +154,3 @@ CREATE TABLE IF NOT EXISTS managed_domains (
 CREATE INDEX IF NOT EXISTS idx_managed_domains_owner ON managed_domains(owner_subject);
 CREATE INDEX IF NOT EXISTS idx_sender_identities_owner ON sender_identities(owner_subject);
 
--- Bootstrap sending domain: owned and already verified by the deployment.
-INSERT OR IGNORE INTO managed_domains (domain, display_name, is_verified, created_at, created_by, owner_subject, verification_token) VALUES
-('mail.neopathshala.com', 'neoPathshala Mail', 1, unixepoch(), 'local-admin', 'local-admin', 'bootstrap-verified');

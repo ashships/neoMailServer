@@ -46,7 +46,7 @@ test('Worker request flow with SQLite: sessions, CSRF, settings, dispatch and we
  assert.equal(await db.prepare("SELECT value FROM app_settings WHERE name='RETENTION_DAYS'").first(),null,'invalid save must be atomic');
  assert.equal((await post('/admin/credentials',{name:'BREVO_API_KEY',value:'secret-provider-key-placeholder',admin_token:token})).status,303);
  const stored=await db.prepare("SELECT value FROM app_settings WHERE name='BREVO_API_KEY'").first(); assert.ok(!stored.value.includes('secret-provider'));
- assert.equal((await post('/admin/settings',{DEFAULT_SENDER:'no-reply@mail.neopathshala.com',FALLBACK_ORDER:'resend',STORE_MESSAGE_BODIES:'true'})).status,303);
+ assert.equal((await post('/admin/settings',{DEFAULT_SENDER:'support@example.com',FALLBACK_ORDER:'resend',STORE_MESSAGE_BODIES:'true'})).status,303);
  const payload={to:'student@example.com',subject:'Welcome',text:'Hello student'};
  const send=(key,body=payload,auth='a'.repeat(43))=>req('/api/v1/send',{method:'POST',headers:{'content-type':'application/json',authorization:'Bearer '+auth,'idempotency-key':key},body:JSON.stringify(body)});
  assert.equal((await send('test-mail-1',payload,token)).status,401,'admin credential must never authorize API');
@@ -85,7 +85,7 @@ test('Worker request flow with SQLite: sessions, CSRF, settings, dispatch and we
  await t.test('sandbox test isolates Mailgun without changing normal provider order',async()=>{
   upstreamStatus=200;
   assert.equal((await post('/admin/credentials',{name:'MAILGUN_API_KEY',value:'mailgun-test-credential-123456',admin_token:token})).status,303);
-  assert.equal((await post('/admin/settings',{DEFAULT_SENDER:'no-reply@mail.neopathshala.com',MAILGUN_DOMAIN:'',MAILGUN_SANDBOX_DOMAIN:'sandbox123.mailgun.org'})).status,303);
+  assert.equal((await post('/admin/settings',{DEFAULT_SENDER:'support@example.com',MAILGUN_DOMAIN:'',MAILGUN_SANDBOX_DOMAIN:'sandbox123.mailgun.org'})).status,303);
   assert.ok(await db.prepare('SELECT * FROM sender_identities WHERE email_address=?').bind('postmaster@sandbox123.mailgun.org').first());
   const result=await post('/admin/send-test',{delivery_mode:'mailgun-sandbox',idempotency_key:'sandbox-mode-test-1',to:'student@example.com',subject:'Sandbox',text:'Test'});assert.equal(result.status,303);assert.ok(result.headers.get('location').includes('accepted%20by%20mailgun'));
   assert.equal(await db.prepare("SELECT value FROM app_settings WHERE name='FALLBACK_ORDER'").first('value'),'resend');
