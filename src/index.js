@@ -185,7 +185,7 @@ Idempotency-Key: unique-key
   const role = subject ? await adminRole(env, subject) : null;
   const dashboardMode = path === '/dashboard';
   if (dashboardMode && role === 'superadmin') return redirect('/admin');
-  if (!dashboardMode && path.startsWith('/admin') && role !== 'superadmin' && path !== '/admin/login') return redirect('/dashboard');
+  if (!dashboardMode && path.startsWith('/admin') && role !== 'superadmin' && path !== '/admin/login') return redirect('/dashboard' + (url.search || ''));
   if (path === '/admin/login') {
     requireMethod(request, ['GET', 'POST']);
     if (request.method === 'GET') {
