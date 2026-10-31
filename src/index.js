@@ -1,5 +1,5 @@
 import { HttpError, reply, redirect, hash, hashOtp, equal, email, text, hostname, cookie, local, sameOrigin, form, json, readBody, rate, audit, access, session, csrf, sessionCookie, bytes64, headers } from './security.js';
-import { config, redactConfig, saveSettings, saveSecret, PROVIDERS, getAccountProviderKeys, saveAccountProviderKey, deleteAccountProviderKey, toggleAccountProviderKey } from './config.js';
+import { config, redactConfig, saveSettings, saveSecret, PROVIDERS, getAccountProviderKeys, saveAccountProviderKey, deleteAccountProviderKey, toggleAccountProviderKey, resolveAccountProviderSecrets } from './config.js';
 import { dispatch, validateMail, verifyWebhook, applyWebhook, sendSmtp, send } from './providers.js';
 import { safeFetch } from './security.js';
 import * as ui from './ui.js';
@@ -123,6 +123,16 @@ async function handler(request, env) {
     return reply(html, 200, { 'Content-Type': 'text/html; charset=utf-8' });
   }
   if (path === '/health') { requireMethod(request, ['GET']); return reply({ status: 'ok', service: 'neomail' }); }
+  if (path === '/favicon.ico' || path === '/favicon.svg') {
+    requireMethod(request, ['GET']);
+    return new Response(ui.faviconSvg, {
+      status: 200,
+      headers: {
+        'Content-Type': 'image/svg+xml; charset=utf-8',
+        'Cache-Control': 'public, max-age=86400, stale-while-revalidate=604800',
+      },
+    });
+  }
   if (path === '/') { requireMethod(request, ['GET']); return redirect('/login'); }
 
   if (request.method === 'OPTIONS') return reply({ error: 'Browser cross-origin API calls are not supported.' }, 405);
@@ -241,10 +251,10 @@ async function handler(request, env) {
         // Hard cap on outbound login mail per IP so the OTP endpoint cannot be used
         // to bomb a mailbox or burn provider quota.
         await rate(env, 'otp:request:' + ip, 10, 3600);
-        const allowed = await env.DB.prepare('SELECT 1 FROM admin_users WHERE subject=? AND is_active=1').bind(emailAddr).first();
-        const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
+        const allowed = await env.DB.prepare('SELECT 1 FROM admin_users WHERE subject=? AND is_active=1').bind(emailAddr).first().catch(() => null);
+        const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n').catch(() => null);
         const authorized = (count?.n || 0) === 0 || !!allowed;
-        const existing = await env.DB.prepare('SELECT created_at FROM admin_otps WHERE subject=?').bind(emailAddr).first();
+        const existing = await env.DB.prepare('SELECT created_at FROM admin_otps WHERE subject=?').bind(emailAddr).first().catch(() => null);
         const nowSec = now();
         if (existing && nowSec - existing.created_at < 60) {
           return reply(ui.otpVerify(emailAddr));
@@ -254,7 +264,20 @@ async function handler(request, env) {
           const saltBytes = new Uint8Array(16); crypto.getRandomValues(saltBytes);
           const salt = [...saltBytes].map(b => b.toString(16).padStart(2, '0')).join('');
           const expires = nowSec + 300;
-          await env.DB.prepare('INSERT INTO admin_otps (subject,salt,code_hash,expires_at,attempts,created_at) VALUES (?,?,?,?,0,unixepoch()) ON CONFLICT(subject) DO UPDATE SET salt=excluded.salt,code_hash=excluded.code_hash,expires_at=excluded.expires_at,attempts=0,created_at=unixepoch()').bind(emailAddr, salt, await hashOtp(salt, code), expires).run();
+          try {
+            await env.DB.prepare('INSERT INTO admin_otps (subject,salt,code_hash,expires_at,attempts,created_at) VALUES (?,?,?,?,0,unixepoch()) ON CONFLICT(subject) DO UPDATE SET salt=excluded.salt,code_hash=excluded.code_hash,expires_at=excluded.expires_at,attempts=0,created_at=unixepoch()').bind(emailAddr, salt, await hashOtp(salt, code), expires).run();
+          } catch (dbErr) {
+            await env.DB.prepare(`CREATE TABLE IF NOT EXISTS admin_otps (
+              subject TEXT PRIMARY KEY,
+              salt TEXT,
+              code_hash TEXT NOT NULL,
+              expires_at INTEGER NOT NULL,
+              attempts INTEGER NOT NULL DEFAULT 0,
+              created_at INTEGER NOT NULL
+            )`).run().catch(() => {});
+            await env.DB.prepare('ALTER TABLE admin_otps ADD COLUMN salt TEXT').run().catch(() => {});
+            await env.DB.prepare('INSERT INTO admin_otps (subject,salt,code_hash,expires_at,attempts,created_at) VALUES (?,?,?,?,0,unixepoch()) ON CONFLICT(subject) DO UPDATE SET salt=excluded.salt,code_hash=excluded.code_hash,expires_at=excluded.expires_at,attempts=0,created_at=unixepoch()').bind(emailAddr, salt, await hashOtp(salt, code), expires).run();
+          }
           try {
             const masterCfg = {
               SMTP_HOST: env.OTP_SMTP_HOST || env.SMTP_HOST || cfg.SMTP_HOST,
@@ -305,7 +328,8 @@ async function handler(request, env) {
             // 2. Fallback across active system providers if SMTP failed or was not configured
             if (!sent) {
               const providers = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',');
-              const mergedEnv = { REQUEST_TIMEOUT_MS: '6000', ...env, ...cfg };
+              const adminSecrets = await resolveAccountProviderSecrets(env, 'local-admin').catch(() => ({}));
+              const mergedEnv = { REQUEST_TIMEOUT_MS: '6000', ...env, ...cfg, ...adminSecrets };
               for (const p of providers) {
                 if (p === 'smtp' || !PROVIDERS.includes(p)) continue;
                 if (!mergedEnv[p.toUpperCase() + '_API_KEY']) continue;
@@ -326,12 +350,13 @@ async function handler(request, env) {
               const reason = dispatchErr?.message ? `: ${dispatchErr.message}` : '';
               throw new Error('Unable to deliver login code' + reason);
             }
-          } catch {
-            await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
+          } catch (err) {
+            await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run().catch(() => {});
             // Upstream errors may echo credentials or addresses; log a correlation
             // reference only and return a generic retry message.
-            console.error(JSON.stringify({ event: 'OTP_DELIVERY_FAILED', reference: crypto.randomUUID() }));
-            throw new HttpError(503, 'Unable to deliver a login code right now. Try again shortly.');
+            console.error(JSON.stringify({ event: 'OTP_DELIVERY_FAILED', reference: crypto.randomUUID(), error: err?.message || String(err) }));
+            if (err instanceof HttpError) throw err;
+            throw new HttpError(503, 'Unable to deliver a login code right now. Check your email provider configuration and try again shortly.');
           }
           await audit(env, request, 'OTP_SENT', { subject: emailAddr });
         }
@@ -869,7 +894,9 @@ export default {
     try { return await handler(request, env); }
     catch (err) {
       const status = err instanceof HttpError ? err.status : 500, reference = crypto.randomUUID();
-      if (status === 500) console.error(JSON.stringify({event:'REQUEST_FAILURE',reference}));
+      if (status === 500) {
+        console.error(JSON.stringify({ event: 'REQUEST_FAILURE', reference, error: err?.message || String(err), stack: err?.stack }));
+      }
       const message = status === 500 ? 'Request could not complete. Reference: ' + reference : err.message;
       const extra = status===429 ? {'Retry-After':'60'} : {};
       const pathname = new URL(request.url).pathname;

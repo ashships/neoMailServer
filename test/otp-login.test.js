@@ -111,6 +111,47 @@ test('OTP login: robust default sender fallback, multi-provider dispatch, and ze
     const errText = await malformed.text();
     assert.ok(errText.includes('<!doctype html>'), 'Browser form error must render styled HTML page');
     assert.ok(errText.includes('422'));
+    assert.ok(errText.includes('Return to workspace'));
+    assert.ok(errText.includes('Back to Sign In'));
+
+    // 4. Corrupt secret in app_settings must not throw 500 error during config decryption
+    await db.prepare("INSERT INTO app_settings (name, value, is_secret, updated_at) VALUES ('RESEND_API_KEY', 'corrupt_iv:corrupt_ciphertext', 1, unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value, is_secret=1").run();
+
+    const corruptPost = await worker.fetch(new Request('https://mail.neopathshala.com/login', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        origin: 'https://mail.neopathshala.com',
+      },
+      body: new URLSearchParams({
+        step: 'request',
+        email: 'admin@neopathshala.com',
+      }),
+    }), env);
+
+    // Must be handled gracefully (either 200 if other credentials suffice, or 503 if provider dispatch fails, but NEVER unhandled 500)
+    assert.notEqual(corruptPost.status, 500, 'Corrupt encrypted setting must not crash with 500');
+
+    // 5. Favicon endpoints
+    const favIco = await worker.fetch(new Request('https://mail.neopathshala.com/favicon.ico'), env);
+    assert.equal(favIco.status, 200);
+    assert.equal(favIco.headers.get('content-type'), 'image/svg+xml; charset=utf-8');
+    const favSvg = await favIco.text();
+    assert.ok(favSvg.includes("fill='#087d54'"), 'Favicon must use primary neoPathshala green #087d54');
+    assert.ok(favSvg.includes("fill='#34d399'"), 'Favicon must use mint green dot #34d399');
+
+    const favSvgEndpoint = await worker.fetch(new Request('https://mail.neopathshala.com/favicon.svg'), env);
+    assert.equal(favSvgEndpoint.status, 200);
+
+    // 6. Zero drop shadows in platform theme
+    const loginHtml = await (await worker.fetch(new Request('https://mail.neopathshala.com/login'), env)).text();
+    assert.ok(loginHtml.includes('--shadow-xs: none;'), 'Shadow variables must be none');
+    assert.ok(loginHtml.includes('--shadow-sm: none;'), 'Shadow variables must be none');
+    assert.ok(loginHtml.includes('--shadow-md: none;'), 'Shadow variables must be none');
+    assert.ok(loginHtml.includes('--shadow-lg: none;'), 'Shadow variables must be none');
+    // Ensure no active box-shadow rules in CSS
+    assert.ok(!loginHtml.includes('box-shadow: 0 1px 3px rgba(8, 125, 84'), 'Explicit box shadows must be eliminated');
+    assert.ok(!loginHtml.includes('box-shadow: 0 2px 5px'), 'Explicit box shadows must be eliminated');
 
   } finally {
     globalThis.fetch = originalFetch;

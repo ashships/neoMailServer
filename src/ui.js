@@ -152,8 +152,9 @@ function lucideSvgUri(iconName, stroke = '#64748b', strokeWidth = 2) {
 
 const chevronDownUri = lucideSvgUri('chevron', '#64748b', 2);
 const checkUri = lucideSvgUri('check', '#087d54', 2.5);
-const faviconSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%23087d54'/><path d='M7 10h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2z' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='m5 11 11 8 11-8' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><circle cx='23' cy='9' r='3.5' fill='%2334d399'/></svg>`;
-const faviconUri = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
+const faviconSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='#087d54'/><path d='M7 10h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2z' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='m5 11 11 8 11-8' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><circle cx='23' cy='9' r='3.5' fill='#34d399'/></svg>`;
+export { faviconSvg };
+export const faviconUri = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
 
 const css = `
 :root {
@@ -182,10 +183,10 @@ const css = `
   --info: #0284c7;
   --info-bg: #f0f9ff;
   --info-line: #bae6fd;
-  --shadow-xs: 0 1px 2px 0 rgb(15 23 42 / 0.05);
-  --shadow-sm: 0 1px 3px 0 rgb(15 23 42 / 0.08), 0 1px 2px -1px rgb(15 23 42 / 0.08);
-  --shadow-md: 0 4px 6px -1px rgb(15 23 42 / 0.08), 0 2px 4px -2px rgb(15 23 42 / 0.08);
-  --shadow-lg: 0 10px 15px -3px rgb(15 23 42 / 0.1), 0 4px 6px -4px rgb(15 23 42 / 0.1);
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
   --radius-xs: 4px;
   --radius-sm: 6px;
   --radius-md: 10px;
@@ -225,10 +226,10 @@ const css = `
   --info: #38bdf8;
   --info-bg: rgba(56, 189, 248, 0.15);
   --info-line: rgba(56, 189, 248, 0.3);
-  --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-  --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -258,10 +259,10 @@ const css = `
     --info: #38bdf8;
     --info-bg: rgba(56, 189, 248, 0.15);
     --info-line: rgba(56, 189, 248, 0.3);
-    --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
-    --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.4);
-    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+    --shadow-xs: none;
+    --shadow-sm: none;
+    --shadow-md: none;
+    --shadow-lg: none;
   }
 }
 
@@ -301,20 +302,19 @@ select {
   font-weight: 500;
   line-height: 1.4;
   cursor: pointer;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease, background-color 0.15s ease;
-  box-shadow: var(--shadow-xs);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 select:hover {
   border-color: var(--line-strong);
-  background-color: #fafbfc;
+  background-color: var(--surface-hover);
 }
 
 select:focus,
 select:focus-visible {
   border-color: var(--accent);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(8, 125, 84, 0.15);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 @supports (appearance: base-select) {
@@ -350,9 +350,8 @@ select.custom-select::picker(select) {
   margin-bottom: 0;
   position-try-fallbacks: flip-block;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
   padding: 6px;
   z-index: 999;
 }
@@ -425,9 +424,8 @@ select option::checkmark {
   right: 0;
   min-width: 250px;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
   padding: 6px;
   z-index: 60;
   animation: dropMenuIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
@@ -557,7 +555,6 @@ select option::checkmark {
   width: 34px;
   height: 34px;
   border-radius: var(--radius-sm);
-  box-shadow: 0 2px 5px rgba(8, 125, 84, 0.28);
   flex-shrink: 0;
 }
 
@@ -669,14 +666,13 @@ nav {
   height: 6px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 0 2px rgba(8, 125, 84, 0.3);
-  animation: pulse 2s infinite;
+  animation: pulse 2s infinite ease-in-out;
 }
 
 @keyframes pulse {
-  0% { box-shadow: 0 0 0 0 rgba(8, 125, 84, 0.4); }
-  70% { box-shadow: 0 0 0 5px rgba(8, 125, 84, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(8, 125, 84, 0); }
+  0% { opacity: 1; }
+  50% { opacity: 0.35; }
+  100% { opacity: 1; }
 }
 
 .textbutton {
@@ -730,7 +726,6 @@ nav {
   background: var(--surface);
   color: var(--muted);
   cursor: pointer;
-  box-shadow: var(--shadow-xs);
   transition: all 0.15s ease;
   user-select: none;
 }
@@ -805,7 +800,6 @@ nav {
   font-size: 13px;
   font-weight: 650;
   color: var(--accent);
-  box-shadow: 0 1px 3px rgba(8, 125, 84, 0.15);
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
   line-height: 1.3;
@@ -815,7 +809,6 @@ nav {
   background: var(--accent);
   border-color: var(--accent);
   color: #ffffff;
-  box-shadow: 0 4px 12px rgba(8, 125, 84, 0.28);
   transform: translateY(-1px);
 }
 
@@ -825,7 +818,6 @@ nav {
 
 .compose-quickbtn:active {
   transform: translateY(0);
-  box-shadow: 0 1px 3px rgba(8, 125, 84, 0.15);
 }
 
 .compose-quickbtn svg {
@@ -844,7 +836,6 @@ nav {
   border-radius: var(--radius-full);
   border: 1px solid var(--line);
   background: var(--surface);
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   cursor: pointer;
   user-select: none;
@@ -853,13 +844,11 @@ nav {
 .profilelink:hover {
   background: var(--surface-hover);
   border-color: var(--line-strong);
-  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08);
 }
 
 .custom-dropdown[open] .profilelink {
   border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(8, 125, 84, 0.12);
-  background: var(--surface);
+  background: var(--surface-hover);
 }
 
 .profilemeta {
@@ -995,54 +984,46 @@ p {
   line-height: 1.25;
   cursor: pointer;
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 1px 2px rgba(8, 125, 84, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15);
   text-decoration: none;
 }
 
 .button:hover {
-  background: linear-gradient(180deg, #0b9e6a 0%, #07744d 100%);
-  border-color: #055e3e;
-  box-shadow: 0 3px 8px rgba(8, 125, 84, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  background: var(--accent-hover);
+  border-color: var(--accent-active);
   transform: translateY(-1px);
 }
 
 .button:active {
   transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(8, 125, 84, 0.2);
 }
 
 .button.secondary {
   color: var(--text);
   background: var(--surface);
   border: 1px solid var(--line);
-  box-shadow: var(--shadow-xs);
 }
 
 .button.secondary:hover {
   background: var(--surface-hover);
   border-color: var(--line-strong);
   color: var(--text);
-  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.06);
   transform: translateY(-1px);
 }
 
 .button.secondary:active {
   transform: translateY(0);
-  box-shadow: var(--shadow-xs);
 }
 
 .button.danger {
   background: #fef2f2;
   border: 1px solid #fecaca;
   color: #dc2626;
-  box-shadow: 0 1px 2px rgba(220, 38, 38, 0.05);
 }
 
 .button.danger:hover {
   background: #fee2e2;
   border-color: #fca5a5;
   color: #b91c1c;
-  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.12);
   transform: translateY(-1px);
 }
 
@@ -1071,7 +1052,6 @@ p {
   border-radius: var(--radius-md);
   background: var(--surface);
   margin-bottom: 24px;
-  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
@@ -1130,7 +1110,6 @@ p {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   margin-bottom: 24px;
-  box-shadow: var(--shadow-sm);
   overflow: hidden;
 }
 
@@ -1355,14 +1334,13 @@ input, select, textarea {
   padding: 9px 11px;
   margin-top: 6px;
   font-size: 13px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
-  box-shadow: var(--shadow-xs);
+  transition: border-color 0.15s ease, background-color 0.15s ease;
 }
 
 input:focus, select:focus, textarea:focus {
   border-color: var(--accent);
-  outline: none;
-  box-shadow: 0 0 0 3px rgba(8, 125, 84, 0.15);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 textarea {
@@ -1864,9 +1842,8 @@ input[type=checkbox] {
   top: calc(100% + 6px);
   left: 0;
   background: var(--surface);
-  border: 1px solid var(--line);
+  border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lg);
   padding: 12px;
   min-width: 250px;
   z-index: 50;
@@ -1917,7 +1894,6 @@ input[type=checkbox] {
   height: 6px;
   border-radius: 50%;
   background: #16a34a;
-  box-shadow: 0 0 0 2px rgba(22, 163, 74, 0.2);
 }
 
 .tag.Paused::before {
@@ -2080,7 +2056,7 @@ input[type=checkbox] {
     z-index: 100;
     transform: translateX(-100%);
     transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: var(--shadow-lg);
+    border-right: 1px solid var(--line-strong);
   }
   .drawer-toggle-input:checked ~ .app .sidebar,
   .drawer-toggle-input:checked ~ .sidebar,
@@ -2173,7 +2149,6 @@ input[type=checkbox] {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--surface);
-  box-shadow: var(--shadow-sm);
   overflow: hidden;
   margin-bottom: 20px;
 }
@@ -2334,14 +2309,13 @@ input[type=checkbox] {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-xs);
   transition: all 0.15s ease;
   gap: 16px;
 }
 
 .routing-card:hover {
   border-color: var(--line-strong);
-  box-shadow: var(--shadow-sm);
+  background: var(--surface-hover);
 }
 
 .routing-card.priority-primary {
@@ -2457,7 +2431,6 @@ input[type=checkbox] {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  box-shadow: var(--shadow-sm);
 }
 .docs-view-body h1 {
   font-size: 26px;
@@ -3339,7 +3312,7 @@ export function domains(rows, sess) {
 }
 
 export function errorPage(message, status) {
-  return document('Request could not complete', `<div class="login" style="grid-template-columns:1fr;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px"><div class="panel" style="max-width:540px;width:100%;margin:0"><div class="panelhead" style="background:#fee2e2;border-color:#fecaca"><div style="display:flex;align-items:center;gap:10px"><span class="tag danger" style="font-size:12px;padding:4px 8px">${status}</span><h2 style="color:#b91c1c">Request could not complete</h2></div></div><div class="panelbody"><p style="font-size:14px;color:var(--text);margin-bottom:20px">${e(message)}</p><a class="button" href="/admin">Return to workspace</a></div></div></div>`);
+  return document('Request could not complete', `<div class="login" style="grid-template-columns:1fr;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px"><div class="panel" style="max-width:540px;width:100%;margin:0"><div class="panelhead" style="background:#fee2e2;border-color:#fecaca"><div style="display:flex;align-items:center;gap:10px"><span class="tag danger" style="font-size:12px;padding:4px 8px">${status}</span><h2 style="color:#b91c1c">Request could not complete</h2></div></div><div class="panelbody"><p style="font-size:14px;color:var(--text);margin-bottom:20px">${e(message)}</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="button" href="/admin">Return to workspace</a><a class="button secondary" href="/login">Back to Sign In</a></div></div></div></div>`);
 }
 
 export function accessLogin() {

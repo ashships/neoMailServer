@@ -57,17 +57,35 @@ export function redactConfig(values = {}) {
 export async function config(env, decryptSecrets = true) {
   const result = { ...env }; const configured = new Set();
   for (const [name, spec] of Object.entries(SETTINGS)) result[name] = env[name] ?? spec[2];
-  const rows = await env.DB.prepare('SELECT name,value,is_secret FROM app_settings').all();
-  for (const row of rows.results || []) {
+  let rows = [];
+  try {
+    const res = await env.DB.prepare('SELECT name,value,is_secret FROM app_settings').all();
+    rows = res?.results || [];
+  } catch (err) {
+    console.error(JSON.stringify({ event: 'LOAD_SETTINGS_FAILED', error: err?.message || String(err) }));
+  }
+  for (const row of rows) {
     if (row.is_secret && SECRETS.includes(row.name)) {
-      if (decryptSecrets) {
-        if (!env.CONFIG_ENCRYPTION_KEY) throw new HttpError(503, 'Configuration encryption key unavailable.');
-        result[row.name] = await decrypt(env.CONFIG_ENCRYPTION_KEY, row.value, row.name);
+      if (decryptSecrets && env.CONFIG_ENCRYPTION_KEY) {
+        try {
+          result[row.name] = await decrypt(env.CONFIG_ENCRYPTION_KEY, row.value, row.name);
+          configured.add(row.name);
+        } catch (decryptErr) {
+          console.error(JSON.stringify({ event: 'SETTING_DECRYPT_FAILED', setting: row.name, error: decryptErr?.message || String(decryptErr) }));
+          result[row.name] = '[configured]';
+          configured.add(row.name);
+        }
       } else {
         result[row.name] = '[configured]';
+        configured.add(row.name);
       }
-      configured.add(row.name);
-    } else if (SETTINGS[row.name]) result[row.name] = validateSetting(row.name, row.value);
+    } else if (SETTINGS[row.name]) {
+      try {
+        result[row.name] = validateSetting(row.name, row.value);
+      } catch (valErr) {
+        console.error(JSON.stringify({ event: 'INVALID_SETTING_SKIPPED', setting: row.name, error: valErr?.message || String(valErr) }));
+      }
+    }
   }
   return { values: result, configured };
 }
