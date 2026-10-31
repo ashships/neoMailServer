@@ -51,7 +51,11 @@ export function validateImage(bytes, mime) {
   return {mime,width,height};
 }
 export async function getProfile(env, subject) {
- return await env.DB.prepare('SELECT display_name,avatar_mime,updated_at FROM admin_profiles WHERE access_subject=?').bind(subject).first() || {display_name:'Administrator',avatar_mime:null,updated_at:0};
+  try {
+    return await env.DB.prepare('SELECT display_name,avatar_mime,updated_at FROM admin_profiles WHERE access_subject=?').bind(subject).first() || {display_name:'Administrator',avatar_mime:null,updated_at:0};
+  } catch {
+    return {display_name:'Administrator',avatar_mime:null,updated_at:0};
+  }
 }
 export async function saveProfile(env, subject, data) {
  const name=text(data.get('display_name'),80);const image=data.get('avatar');const remove=data.get('remove_avatar')==='yes';

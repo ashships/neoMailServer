@@ -2616,9 +2616,10 @@ export function mailTable(logs) {
   return `<div class="tablewrap"><table><thead><tr><th>Message</th><th>Direction</th><th>Status</th><th>Provider</th><th>Time (UTC)</th><th>Details</th></tr></thead><tbody>${logs.map(m => `<tr><td><div class="subject">${e(m.subject)}</div><span class="muted">${e(m.recipient_address)}</span></td><td>${e(m.direction)}</td><td>${badge(m.transmission_status)}</td><td>${e(m.provider_used)}</td><td>${e(new Date(m.unix_timestamp * 1000).toISOString().slice(0, 16).replace('T', ' '))}</td><td><a class="button secondary small" href="/admin/view-mail?id=${e(m.id)}">Inspect ${icon('arrow')}</a></td></tr>`).join('')}</tbody></table></div>`;
 }
 
-export function providerList(rows, cfg, csrf) {
+export function providerList(rows = [], cfg = {}, csrf) {
+  const safeRows = Array.isArray(rows) ? rows : [];
   return PROVIDERS.map(p => {
-    const row = rows.find(r => r.provider_name === p);
+    const row = safeRows.find(r => r && r.provider_name === p);
     let configured = false;
     if (p === 'smtp') {
       configured = !!(cfg.SMTP_HOST && cfg.SMTP_USER && cfg.SMTP_PASS);
@@ -2629,8 +2630,14 @@ export function providerList(rows, cfg, csrf) {
   }).join('');
 }
 
-export function overview(stats, logs, health, cfg) {
-  return `<div class="stats">${[['Total messages', stats.total, 'Inbound and outbound'], ['Accepted / delivered', stats.accepted, 'Provider acceptance is not inbox placement'], ['Delivery issues', stats.issues, 'Failed or bounced'], ['Pending', stats.pending, 'Queued or awaiting reconciliation']].map(([label, value, note]) => `<div class="stat"><div class="statlabel"><span>${e(label)}</span>${icon('mail')}</div><div class="statvalue">${e(Number(value || 0).toLocaleString())}</div><div class="statnote">${e(note)}</div></div>`).join('')}</div><div class="split"><div><section class="panel"><div class="panelhead"><div><h2>Recent mail</h2><p>Your latest messages, in one place.</p></div><a class="button secondary small" href="/admin?view=mail">View all</a></div>${mailTable(logs)}</section><div class="notice">Message bodies are ${cfg.STORE_MESSAGE_BODIES === 'true' ? 'stored for inspection. Avoid sending secrets in email.' : 'not retained. Metadata remains available for delivery tracking.'}</div></div><div><section class="panel"><div class="panelhead"><div><h2>Delivery providers</h2><p>Availability based on configuration and recent attempts.</p></div></div>${providerList(health, cfg)}</section><section class="panel"><div class="panelbody"><h2>Connect your platform</h2><p class="sub">Send transactional mail from the neopathshala backend using a dedicated API credential.</p><a class="button secondary" href="/admin?view=setup">Integration guide ${icon('arrow')}</a></div></section></div></div>`;
+export function overview(stats = {}, logs = [], health = [], cfg = {}) {
+  const safeStats = stats || {};
+  return `<div class="stats">${[
+    ['Total messages', safeStats.total ?? 0, 'Inbound and outbound'],
+    ['Accepted / delivered', safeStats.accepted ?? 0, 'Provider acceptance is not inbox placement'],
+    ['Delivery issues', safeStats.issues ?? 0, 'Failed or bounced'],
+    ['Pending', safeStats.pending ?? 0, 'Queued or awaiting reconciliation']
+  ].map(([label, value, note]) => `<div class="stat"><div class="statlabel"><span>${e(label)}</span>${icon('mail')}</div><div class="statvalue">${e(Number(value || 0).toLocaleString())}</div><div class="statnote">${e(note)}</div></div>`).join('')}</div><div class="split"><div><section class="panel"><div class="panelhead"><div><h2>Recent mail</h2><p>Your latest messages, in one place.</p></div><a class="button secondary small" href="/admin?view=mail">View all</a></div>${mailTable(Array.isArray(logs) ? logs : [])}</section><div class="notice">Message bodies are ${cfg.STORE_MESSAGE_BODIES === 'true' ? 'stored for inspection. Avoid sending secrets in email.' : 'not retained. Metadata remains available for delivery tracking.'}</div></div><div><section class="panel"><div class="panelhead"><div><h2>Delivery providers</h2><p>Availability based on configuration and recent attempts.</p></div></div>${providerList(health, cfg)}</section><section class="panel"><div class="panelbody"><h2>Connect your platform</h2><p class="sub">Send transactional mail from the neopathshala backend using a dedicated API credential.</p><a class="button secondary" href="/admin?view=setup">Integration guide ${icon('arrow')}</a></div></section></div></div>`;
 }
 
 export function mailView(logs, filters, currentPage, hasNext) {
@@ -3321,7 +3328,8 @@ export function accessLogin() {
 
 function profileAvatar(profile) {
   const name = profile?.display_name || 'Administrator';
-  const initials = Array.from(name.trim().split(/\s+/).slice(0, 2).map(part => Array.from(part)[0]).join('')).join('').toUpperCase();
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const initials = parts.slice(0, 2).map(part => part[0] || '').join('').toUpperCase() || 'A';
   return `<span class="avatar">${profile?.avatar_mime ? `<img src="/admin/profile-image?v=${e(profile.updated_at)}" alt="${e(name)} profile image">` : e(initials)}</span>`;
 }
 

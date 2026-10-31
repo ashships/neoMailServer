@@ -7,7 +7,14 @@ import { getProfile, saveProfile, profileForm, profileImage } from './profile.js
 
 const now = () => Math.floor(Date.now() / 1000);
 const flash = message => redirect('/admin?notice=' + encodeURIComponent(message));
-async function rows(env, sql, ...params) { return (await env.DB.prepare(sql).bind(...params).all()).results || []; }
+async function rows(env, sql, ...params) {
+  try {
+    return (await env.DB.prepare(sql).bind(...params).all()).results || [];
+  } catch (err) {
+    console.error(JSON.stringify({ event: 'QUERY_FAILED', sql, error: err?.message || String(err) }));
+    return [];
+  }
+}
 async function identities(env, subject = null) {
   const superadmin = subject ? await adminRole(env, subject) === 'superadmin' : true;
   return rows(env, superadmin ? 'SELECT * FROM sender_identities ORDER BY is_default DESC,email_address' : 'SELECT * FROM sender_identities WHERE owner_subject=? ORDER BY is_default DESC,email_address', ...(superadmin?[]:[subject]));
@@ -876,15 +883,21 @@ async function handler(request, env) {
   } else if (view === 'overview') {
     title='Overview'; subtitle='A clear view of your email infrastructure.';
     const superadmin = await isSuperadmin(env, subject);
-    const stats = await env.DB.prepare(superadmin
-      ? "SELECT COUNT(*) AS total, SUM(transmission_status IN ('Sent','Delivered')) AS accepted, SUM(transmission_status IN ('Failed','Bounced')) AS issues, SUM(transmission_status='Queued') AS pending FROM email_logs"
-      : "SELECT COUNT(*) AS total, SUM(transmission_status IN ('Sent','Delivered')) AS accepted, SUM(transmission_status IN ('Failed','Bounced')) AS issues, SUM(transmission_status='Queued') AS pending FROM email_logs WHERE owner_subject=?")
-      .bind(...(superadmin ? [] : [subject])).first();
+    let stats = null;
+    try {
+      stats = await env.DB.prepare(superadmin
+        ? "SELECT COUNT(*) AS total, SUM(transmission_status IN ('Sent','Delivered')) AS accepted, SUM(transmission_status IN ('Failed','Bounced')) AS issues, SUM(transmission_status='Queued') AS pending FROM email_logs"
+        : "SELECT COUNT(*) AS total, SUM(transmission_status IN ('Sent','Delivered')) AS accepted, SUM(transmission_status IN ('Failed','Bounced')) AS issues, SUM(transmission_status='Queued') AS pending FROM email_logs WHERE owner_subject=?")
+        .bind(...(superadmin ? [] : [subject])).first();
+    } catch (statsErr) {
+      console.error(JSON.stringify({ event: 'STATS_QUERY_FAILED', error: statsErr?.message || String(statsErr) }));
+    }
+    const safeStats = stats || { total: 0, accepted: 0, issues: 0, pending: 0 };
     const [logs, health] = await Promise.all([
       rows(env, superadmin ? 'SELECT id,direction,subject,recipient_address,transmission_status,provider_used,unix_timestamp FROM email_logs ORDER BY unix_timestamp DESC LIMIT 7' : 'SELECT id,direction,subject,recipient_address,transmission_status,provider_used,unix_timestamp FROM email_logs WHERE owner_subject=? ORDER BY unix_timestamp DESC LIMIT 7', ...(superadmin ? [] : [subject])),
       rows(env, 'SELECT * FROM provider_health WHERE owner_subject=?', superadmin ? 'local-admin' : subject),
     ]);
-    content=ui.overview(stats,logs,health,redactConfig(cfg));
+    content=ui.overview(safeStats,logs || [],health || [],redactConfig(cfg));
   } else throw new HttpError(404,'View not found.');
   sess.role=role; return reply(ui.page(view,title,subtitle,content,sess,notice),200,sess.script_nonce?{'Content-Security-Policy':headers['Content-Security-Policy'].replace("script-src 'none'",`script-src 'nonce-${sess.script_nonce}'`)}:{});
 }

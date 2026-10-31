@@ -144,4 +144,12 @@ test('superadmin provider order, adding, credentials, circuit breaker reset and 
   const publicDocsHtml = await publicDocs.text();
   assert.ok(publicDocsHtml.includes('neoPathshala Documentation'));
   assert.ok(publicDocsHtml.includes('System Guide'));
+
+  // 9. Verify GET /admin (default overview view) renders 200 OK without errors
+  const overviewRes = await call('local-admin', '/admin', { headers: { cookie: superCookie } });
+  assert.equal(overviewRes.status, 200);
+  const overviewHtml = await overviewRes.text();
+  assert.ok(overviewHtml.includes('Overview'));
+  assert.ok(overviewHtml.includes('Total messages'));
+  assert.ok(overviewHtml.includes('Delivery providers'));
 });

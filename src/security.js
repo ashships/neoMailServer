@@ -186,8 +186,12 @@ export async function access(request, env) {
 
 export async function session(request, env, subject) {
   const token = cookie(request, '__Host-neomail'); if (!/^[a-f0-9-]{36}$/.test(token)) return null;
-  return env.DB.prepare('SELECT * FROM admin_sessions WHERE token_hash = ? AND expires_at > unixepoch() AND access_subject = ? AND credential_version = ?')
-    .bind(await hash(token), subject, await hash(env.ADMIN_TOKEN_HASH || '')).first();
+  try {
+    return await env.DB.prepare('SELECT * FROM admin_sessions WHERE token_hash = ? AND expires_at > unixepoch() AND access_subject = ? AND credential_version = ?')
+      .bind(await hash(token), subject, await hash(env.ADMIN_TOKEN_HASH || '')).first();
+  } catch {
+    return null;
+  }
 }
 export async function csrf(request, data, sess) {
   sameOrigin(request);
