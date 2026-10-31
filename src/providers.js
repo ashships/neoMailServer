@@ -1,5 +1,5 @@
 import { HttpError, hash, email, text, escape, hmac, base64, equal } from './security.js';
-import { PROVIDERS } from './config.js';
+import { PROVIDERS, resolveAccountProviderSecrets } from './config.js';
 import { safeFetch } from './security.js';
 
 export async function sendSmtp(cfg, mail) {
@@ -144,19 +144,21 @@ export async function dispatch(env, mail, idempotencyKey, ownerSubject = null) {
     .bind(logId, mail.from, mail.to, mail.subject, keep ? mail.html : null, keep ? mail.text : null, await hash(mail.html), ownerText).run();
   const attempts = []; let status = 'Failed', providerUsed = null, messageId = null, uncertain = false;
   const health = (await env.DB.prepare('SELECT * FROM provider_health').all()).results || [];
-  for (const provider of env.FALLBACK_ORDER.split(',')) {
+  const accountSecrets = await resolveAccountProviderSecrets(env, ownerSubject);
+  const effectiveEnv = { ...env, ...accountSecrets };
+  for (const provider of (effectiveEnv.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend,smtp').split(',')) {
     if (!PROVIDERS.includes(provider)) continue;
     if (provider === 'smtp') {
-      const hasSmtp = (env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) || (env.cfg && env.cfg.SMTP_HOST && env.cfg.SMTP_USER && env.cfg.SMTP_PASS);
+      const hasSmtp = (effectiveEnv.SMTP_HOST && effectiveEnv.SMTP_USER && effectiveEnv.SMTP_PASS) || (effectiveEnv.cfg && effectiveEnv.cfg.SMTP_HOST && effectiveEnv.cfg.SMTP_USER && effectiveEnv.cfg.SMTP_PASS);
       if (!hasSmtp) continue;
-    } else if (!env[provider.toUpperCase() + '_API_KEY'] || (provider === 'mailgun' && !env.MAILGUN_DOMAIN)) continue;
+    } else if (!effectiveEnv[provider.toUpperCase() + '_API_KEY'] || (provider === 'mailgun' && !effectiveEnv.MAILGUN_DOMAIN)) continue;
     const state = health.find(p => p.provider_name === provider);
     if (state && (!state.is_active || (state.consecutive_failures >= 5 && state.updated_at > Date.now() / 1000 - 300))) continue;
     const started = Date.now();
     // Record intent before the external side effect. A crash leaves a Queued log requiring reconciliation.
     await env.DB.prepare('UPDATE email_logs SET provider_used=?,updated_at=unixepoch() WHERE id=?').bind(provider, logId).run();
     try {
-      messageId = await send(provider, env, mail, key); providerUsed = provider; status = 'Sent';
+      messageId = await send(provider, effectiveEnv, mail, key); providerUsed = provider; status = 'Sent';
     } catch (error) {
       uncertain = !error.definitive;
       const reason = uncertain ? 'Outcome uncertain; automatic fallback stopped to avoid duplicates.' : error.message;

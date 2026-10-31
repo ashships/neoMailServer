@@ -28,8 +28,11 @@ For an existing local database, apply `npm run db:migrate:local`; fresh installa
 
 1. Add sender identities matching your provider-verified domain.
 2. Open Settings, set a default sender, configure routing and retention, and save.
-3. Save provider keys using the write-only credential forms. Confirm your admin token when replacing a credential.
-4. Generate a separate integration token with `npm run api-key`; save it as `API_SECRET_KEY` in Settings and in your backend’s secret environment.
+3. Configure your account's provider keys in **Workspace Provider Keys (Encrypted in SQLite)**:
+   - Each account / workspace stores its own provider API keys (Resend, Brevo, Mailgun, Mailtrap, MailerSend, SMTP) in SQLite (D1).
+   - Keys are encrypted at rest with **AES-256-GCM** using `CONFIG_ENCRYPTION_KEY` and account-bound authenticated data (AAD).
+   - **Write-Only Security**: Stored keys can never be viewed or retrieved by anyone, including the account owner. The UI renders only masked hints (`re_••••••••3a9f`). Decryption occurs strictly in-memory during dispatch.
+4. Generate a separate integration token under **API Clients** for backend dispatches via `/api/v1/send`.
 5. Send a test email to an inbox you control.
 
 Panel settings override Worker defaults for allowlisted keys. Credentials entered in the panel are AES-256-GCM encrypted in D1. Bootstrap secrets, Access policy, bindings, and deployment routes remain in Cloudflare.

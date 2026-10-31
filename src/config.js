@@ -84,3 +84,96 @@ export async function saveSecret(env, name, value) {
   const encrypted = await encrypt(env.CONFIG_ENCRYPTION_KEY, value, name);
   await env.DB.prepare('INSERT INTO app_settings (name,value,is_secret,updated_at) VALUES (?,?,1,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,is_secret=1,updated_at=unixepoch()').bind(name, encrypted).run();
 }
+
+export function keyHint(key) {
+  if (typeof key !== 'string' || !key) return '';
+  const trimmed = key.trim();
+  if (trimmed.startsWith('re_')) return 're_••••••••' + trimmed.slice(-4);
+  if (trimmed.startsWith('xkeysib-')) return 'xkeysib-••••••••' + trimmed.slice(-4);
+  if (trimmed.startsWith('mlsn.')) return 'mlsn.••••••••' + trimmed.slice(-4);
+  if (trimmed.length >= 8) return trimmed.slice(0, 3) + '••••••••' + trimmed.slice(-4);
+  return '••••••••' + trimmed.slice(-2);
+}
+
+export async function saveAccountProviderKey(env, ownerSubject, providerName, apiKey, extraConfig = null) {
+  if (!ownerSubject || typeof ownerSubject !== 'string') throw new HttpError(403, 'Owner workspace required.');
+  if (!PROVIDERS.includes(providerName)) throw new HttpError(422, 'Invalid provider.');
+  if (typeof apiKey !== 'string' || apiKey.length < 8 || apiKey.length > 4096 || /[\s\x00-\x1f\x7f]/.test(apiKey)) {
+    throw new HttpError(422, 'API key must be 8–4096 non-whitespace characters.');
+  }
+  if (!env.CONFIG_ENCRYPTION_KEY || bytes64(env.CONFIG_ENCRYPTION_KEY).length !== 32) {
+    throw new HttpError(503, 'Configuration encryption key unavailable.');
+  }
+  const encrypted = await encrypt(env.CONFIG_ENCRYPTION_KEY, apiKey, ownerSubject + ':' + providerName);
+  const hint = keyHint(apiKey);
+  const extraStr = extraConfig && typeof extraConfig === 'object' ? JSON.stringify(extraConfig) : null;
+  const id = crypto.randomUUID();
+  await env.DB.prepare(`
+    INSERT INTO account_provider_keys (id, owner_subject, provider_name, encrypted_key, key_hint, extra_config, is_active, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, 1, unixepoch(), unixepoch())
+    ON CONFLICT(owner_subject, provider_name) DO UPDATE SET
+      encrypted_key = excluded.encrypted_key,
+      key_hint = excluded.key_hint,
+      extra_config = excluded.extra_config,
+      is_active = 1,
+      updated_at = unixepoch()
+  `).bind(id, ownerSubject, providerName, encrypted, hint, extraStr).run();
+  return { providerName, hint };
+}
+
+export async function deleteAccountProviderKey(env, ownerSubject, providerName) {
+  if (!ownerSubject || !PROVIDERS.includes(providerName)) throw new HttpError(422, 'Invalid request.');
+  await env.DB.prepare('DELETE FROM account_provider_keys WHERE owner_subject=? AND provider_name=?').bind(ownerSubject, providerName).run();
+}
+
+export async function toggleAccountProviderKey(env, ownerSubject, providerName) {
+  if (!ownerSubject || !PROVIDERS.includes(providerName)) throw new HttpError(422, 'Invalid request.');
+  await env.DB.prepare('UPDATE account_provider_keys SET is_active=1-is_active, updated_at=unixepoch() WHERE owner_subject=? AND provider_name=?').bind(ownerSubject, providerName).run();
+}
+
+export async function getAccountProviderKeys(env, ownerSubject) {
+  if (!ownerSubject || !env.DB) return [];
+  try {
+    const res = await env.DB.prepare(
+      'SELECT id, provider_name, key_hint, extra_config, is_active, updated_at FROM account_provider_keys WHERE owner_subject=? ORDER BY provider_name'
+    ).bind(ownerSubject).all();
+    return res.results || [];
+  } catch {
+    return [];
+  }
+}
+
+export async function resolveAccountProviderSecrets(env, ownerSubject) {
+  if (!ownerSubject || !env.DB || !env.CONFIG_ENCRYPTION_KEY) return {};
+  try {
+    const res = await env.DB.prepare(
+      'SELECT provider_name, encrypted_key, extra_config FROM account_provider_keys WHERE owner_subject=? AND is_active=1'
+    ).bind(ownerSubject).all();
+    const secrets = {};
+    for (const row of res.results || []) {
+      try {
+        const decrypted = await decrypt(env.CONFIG_ENCRYPTION_KEY, row.encrypted_key, ownerSubject + ':' + row.provider_name);
+        secrets[row.provider_name.toUpperCase() + '_API_KEY'] = decrypted;
+        if (row.extra_config) {
+          try {
+            const extra = JSON.parse(row.extra_config);
+            if (row.provider_name === 'mailgun' && extra.domain) secrets.MAILGUN_DOMAIN = extra.domain;
+            if (row.provider_name === 'smtp') {
+              if (extra.smtp_host) secrets.SMTP_HOST = extra.smtp_host;
+              if (extra.smtp_port) secrets.SMTP_PORT = extra.smtp_port;
+              if (extra.smtp_user) secrets.SMTP_USER = extra.smtp_user;
+              if (extra.smtp_pass) secrets.SMTP_PASS = extra.smtp_pass;
+              if (extra.smtp_secure !== undefined) secrets.SMTP_SECURE = String(extra.smtp_secure);
+            }
+          } catch {}
+        }
+      } catch (e) {
+        console.error('Failed decrypting provider key for', row.provider_name, e.message);
+      }
+    }
+    return secrets;
+  } catch {
+    return {};
+  }
+}
+

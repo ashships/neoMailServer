@@ -50,9 +50,83 @@ export function mailView(logs, filters, currentPage, hasNext) {
   const query = new URLSearchParams({view:'mail',...filters});
   return `<section class="panel"><div class="panelhead"><div><h2>Mail activity</h2><p>Search and inspect inbound and outbound messages.</p></div></div><form class="filters" method="get" action="/admin"><input type="hidden" name="view" value="mail"><label class="search">Search<input name="search" maxlength="100" placeholder="Subject or recipient" value="${e(filters.search)}"></label><label>Direction<select name="direction"><option value="">All directions</option>${['outbound','inbound'].map(v=>`<option ${filters.direction===v?'selected':''}>${v}</option>`).join('')}</select></label><label>Status<select name="status"><option value="">All statuses</option>${['Queued','Sent','Delivered','Bounced','Failed'].map(v=>`<option ${filters.status===v?'selected':''}>${v}</option>`).join('')}</select></label><button class="button secondary">Apply filters</button></form>${mailTable(logs)}<div class="pagination"><span>Page ${currentPage} · Up to 25 messages per page</span><div class="actions">${currentPage>1?`<a class="button secondary small" href="/admin?${e(query)}&page=${currentPage-1}">Previous</a>`:''}${hasNext?`<a class="button secondary small" href="/admin?${e(query)}&page=${currentPage+1}">Next</a>`:''}</div></div></section>`;
 }
-export function settings(cfg, sess, canEditGlobal = true) {
-  if (!canEditGlobal) return `${profileSettings(sess)}<div class="notice">Global settings, delivery providers, and credentials are managed by your administrator.</div>`;
-  return `${profileSettings(sess)}${bimiSettings(cfg)}<div class="notice">Settings apply to new requests after saving. Credentials are write-only and encrypted with your Worker’s encryption key.</div><div class="grid2"><section class="panel"><div class="panelhead"><div><h2>Workspace settings</h2><p>Mail routing, limits, and retention.</p></div></div><div class="panelbody"><form method="post" action="/admin/settings">${hidden(sess.csrf_token)}<div class="settingsgrid">${Object.entries(SETTINGS).map(([name,spec])=>`<label class="field">${e(spec[0])}${spec[1]==='boolean'?`<select name="${name}"><option value="false" ${cfg[name]==='false'?'selected':''}>False</option><option value="true" ${cfg[name]==='true'?'selected':''}>True</option></select>`:`<input name="${name}" value="${e(cfg[name])}" type="${spec[1]==='number'?'number':spec[1]==='email'?'email':'text'}" ${spec[1]==='number'?`min="${spec[3]}" max="${spec[4]}"`:''} ${['https-url','optional-domain','sandbox-domain'].includes(spec[1])?'':'required'} maxlength="255">`}</label>`).join('')}</div><button class="button">Save settings</button></form></div></section><div><section class="panel"><div class="panelhead"><div><h2>Credentials</h2><p>Blank values keep your current credential. Values are never displayed.</p></div></div>${SECRETS.map(name=>`<details><summary>${e(name)} &nbsp; ${badge(cfg[name]?'Configured':'Not set')}</summary><form method="post" action="/admin/credentials">${hidden(sess.csrf_token)}<input type="hidden" name="name" value="${name}"><label class="field">New credential<input type="password" name="value" autocomplete="new-password" required minlength="${name==='API_SECRET_KEY'?43:16}" maxlength="4096" placeholder="Paste a new credential"></label>${sess.local_dev?'<label class="field">Confirm local administrator token<input type="password" name="admin_token" autocomplete="current-password" required minlength="43" maxlength="128"></label>':'<p class="footnote">Credential changes require a Cloudflare Access token issued within the last five minutes. Sign out of Access and sign in again if requested. This checks token age; identity-provider policy controls fresh user verification.</p>'}<button class="button">Save credential</button></form></details>`).join('')}</section><div class="notice warn">Access policy, local development token, encryption key, database binding, and domain routes stay in Cloudflare. They cannot be changed through this panel. Rotate credentials by replacing their values here.</div></div></div>`;
+function accountProviderCredentials(accountKeys = [], sess) {
+  const map = new Map(accountKeys.map(k => [k.provider_name, k]));
+  const providerMeta = {
+    resend: { label: 'Resend', desc: 'Transactional email API (starts with re_)', placeholder: 're_1234567890abcdef' },
+    brevo: { label: 'Brevo (Sendinblue)', desc: 'SMTP & transactional API (starts with xkeysib-)', placeholder: 'xkeysib-...' },
+    mailgun: { label: 'Mailgun', desc: 'Mailgun sending API key with custom domain', placeholder: 'key-...' },
+    mailtrap: { label: 'Mailtrap', desc: 'Mailtrap transactional API token', placeholder: 'api_token' },
+    mailersend: { label: 'MailerSend', desc: 'MailerSend API token', placeholder: 'mlsn.token...' },
+    smtp: { label: 'Custom SMTP', desc: 'Direct outbound SMTP credentials with TLS', placeholder: 'SMTP Password' }
+  };
+
+  return `<section class="panel" id="provider-keys">
+    <div class="panelhead">
+      <div>
+        <h2>Workspace Provider Keys (Encrypted in SQLite)</h2>
+        <p>Zero-Trust account isolation: Dispatches from this workspace use your encrypted credentials.</p>
+      </div>
+    </div>
+    <div class="panelbody">
+      <div class="notice">
+        <strong>🔒 Write-Only Zero-Trust Protection:</strong> Your API keys are encrypted at rest with AES-256-GCM in Cloudflare D1 (SQLite).
+        To protect your credentials from accidental disclosure or extraction, <strong>stored keys are strictly write-only and can never be viewed again by anyone</strong>.
+        To update or rotate an integration, enter a new key below.
+      </div>
+      <div style="display:grid;gap:16px">
+        ${PROVIDERS.map(p => {
+          const item = map.get(p);
+          const meta = providerMeta[p] || { label: p, desc: '', placeholder: 'API Key' };
+          let extra = {};
+          if (item?.extra_config) {
+            try { extra = JSON.parse(item.extra_config); } catch {}
+          }
+          return `<div class="provider" style="padding:16px;background:var(--bg);border-radius:8px;border:1px solid var(--line);display:block">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div>
+                <strong>${e(meta.label)}</strong>
+                <p class="sub">${e(meta.desc)}</p>
+              </div>
+              <div class="actions">
+                ${badge(item ? 'Encrypted (AES-256-GCM)' : 'Not configured')}
+                ${item ? badge(item.is_active ? 'Active' : 'Paused') : ''}
+                ${item ? `<form method="post" action="/admin/account-keys/toggle">${hidden(sess.csrf_token)}<input type="hidden" name="provider" value="${p}"><button class="button secondary small">${item.is_active ? 'Pause' : 'Enable'}</button></form>` : ''}
+                ${item ? `<form method="post" action="/admin/account-keys/delete" onsubmit="return confirm('Remove this provider key?')">${hidden(sess.csrf_token)}<input type="hidden" name="provider" value="${p}"><button class="button danger small">Remove</button></form>` : ''}
+              </div>
+            </div>
+            ${item ? `<div style="font-size:12px;margin-bottom:12px;color:var(--muted)">Key Hint: <code style="background:var(--surface);border:1px solid var(--line);padding:2px 6px;border-radius:4px;color:var(--text)">${e(item.key_hint)}</code>${p === 'mailgun' && extra.domain ? ` &nbsp; Domain: <code>${e(extra.domain)}</code>` : ''}${p === 'smtp' && extra.smtp_host ? ` &nbsp; Host: <code>${e(extra.smtp_host)}</code> (User: <code>${e(extra.smtp_user)}</code>)` : ''}</div>` : ''}
+            <details style="border-top:1px solid var(--line);padding-top:10px">
+              <summary style="font-size:12px;color:var(--accent);cursor:pointer;font-weight:600">${item ? 'Rotate / Replace Key' : '+ Configure ' + e(meta.label) + ' Key'}</summary>
+              <form method="post" action="/admin/account-keys/save" style="margin-top:10px">
+                ${hidden(sess.csrf_token)}
+                <input type="hidden" name="provider" value="${p}">
+                <div class="settingsgrid">
+                  <label class="field">${p === 'smtp' ? 'SMTP Password' : 'API Key'}
+                    <input type="password" name="api_key" autocomplete="new-password" required minlength="${p === 'smtp' ? 4 : 8}" maxlength="4096" placeholder="${e(meta.placeholder)}">
+                  </label>
+                  ${p === 'mailgun' ? `<label class="field">Mailgun Domain (e.g. mg.yourdomain.com)<input name="mailgun_domain" maxlength="255" value="${e(extra.domain || '')}" placeholder="mg.yourdomain.com"></label>` : ''}
+                  ${p === 'smtp' ? `
+                    <label class="field">SMTP Host<input name="smtp_host" maxlength="255" value="${e(extra.smtp_host || '')}" placeholder="smtp.gmail.com" required></label>
+                    <label class="field">SMTP Port<input name="smtp_port" type="number" min="1" max="65535" value="${e(extra.smtp_port || '465')}" required></label>
+                    <label class="field">SMTP Username<input name="smtp_user" maxlength="255" value="${e(extra.smtp_user || '')}" placeholder="user@gmail.com" required></label>
+                    <label class="field">TLS Security<select name="smtp_secure"><option value="true" ${extra.smtp_secure !== 'false' ? 'selected' : ''}>Port 465 (Implicit TLS)</option><option value="false" ${extra.smtp_secure === 'false' ? 'selected' : ''}>Port 587 (STARTTLS)</option></select></label>
+                  ` : ''}
+                </div>
+                <button class="button small" style="margin-top:8px">${item ? 'Encrypt & Update Key' : 'Encrypt & Save Key'}</button>
+              </form>
+            </details>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>
+  </section>`;
+}
+
+export function settings(cfg, sess, canEditGlobal = true, accountKeys = []) {
+  const accountCredentialsSection = accountProviderCredentials(accountKeys, sess);
+  if (!canEditGlobal) return `${profileSettings(sess)}${accountCredentialsSection}`;
+  return `${profileSettings(sess)}${accountCredentialsSection}${bimiSettings(cfg)}<div class="notice">Global settings apply to new requests without account-specific overrides. Global credentials are encrypted with your Worker’s encryption key.</div><div class="grid2"><section class="panel"><div class="panelhead"><div><h2>Global Workspace settings</h2><p>Mail routing, limits, and retention.</p></div></div><div class="panelbody"><form method="post" action="/admin/settings">${hidden(sess.csrf_token)}<div class="settingsgrid">${Object.entries(SETTINGS).map(([name,spec])=>`<label class="field">${e(spec[0])}${spec[1]==='boolean'?`<select name="${name}"><option value="false" ${cfg[name]==='false'?'selected':''}>False</option><option value="true" ${cfg[name]==='true'?'selected':''}>True</option></select>`:`<input name="${name}" value="${e(cfg[name])}" type="${spec[1]==='number'?'number':spec[1]==='email'?'email':'text'}" ${spec[1]==='number'?`min="${spec[3]}" max="${spec[4]}"`:''} ${['https-url','optional-domain','sandbox-domain'].includes(spec[1])?'':'required'} maxlength="255">`}</label>`).join('')}</div><button class="button">Save settings</button></form></div></section><div><section class="panel"><div class="panelhead"><div><h2>Global Fallback Credentials</h2><p>Blank values keep your current credential. Values are never displayed.</p></div></div>${SECRETS.map(name=>`<details><summary>${e(name)} &nbsp; ${badge(cfg[name]?'Configured':'Not set')}</summary><form method="post" action="/admin/credentials">${hidden(sess.csrf_token)}<input type="hidden" name="name" value="${name}"><label class="field">New credential<input type="password" name="value" autocomplete="new-password" required minlength="${name==='API_SECRET_KEY'?43:16}" maxlength="4096" placeholder="Paste a new credential"></label>${sess.local_dev?'<label class="field">Confirm local administrator token<input type="password" name="admin_token" autocomplete="current-password" required minlength="43" maxlength="128"></label>':'<p class="footnote">Credential changes require a Cloudflare Access token issued within the last five minutes. Sign out of Access and sign in again if requested. This checks token age; identity-provider policy controls fresh user verification.</p>'}<button class="button">Save credential</button></form></details>`).join('')}</section><div class="notice warn">Access policy, local development token, encryption key, database binding, and domain routes stay in Cloudflare. They cannot be changed through this panel. Rotate credentials by replacing their values here.</div></div></div>`;
 }
 export function identities(rows, sess, domains = []) {
   return `<div class="notice warn">Creating an identity here does not verify its domain. Verify every sending domain with each active provider before sending.</div><section class="panel"><div class="panelhead"><h2>Sender identities</h2></div><div class="tablewrap"><table><thead><tr><th>Sender</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${e(r.display_name)}<details class="rename"><summary>${icon('edit')}</summary><form method="post" action="/admin/identities/update">${hidden(sess.csrf_token)}<input type="hidden" name="email_address" value="${e(r.email_address)}"><input type="hidden" name="action" value="rename"><label class="field">Sender display name<input name="display_name" value="${e(r.display_name)}" required maxlength="100"></label><button class="button secondary small">Save name</button></form></details></td><td>${e(r.email_address)}</td><td>${badge(r.is_active?'Active':'Paused')} ${r.is_default?'<span class="tag default">★ Default</span>':''}</td><td><form method="post" action="/admin/identities/update" class="actions">${hidden(sess.csrf_token)}<input type="hidden" name="email_address" value="${e(r.email_address)}"><button class="button secondary small" name="action" value="toggle">${r.is_active?'Pause':'Enable'}</button>${r.is_active&&!r.is_default?'<button class="button secondary small" name="action" value="default">Set default</button>':''}<button class="button danger small" name="action" value="delete">${icon('trash')}</button></form></td></tr>`).join('')}</tbody></table></div></section><section class="panel"><div class="panelhead"><h2>Add sender identity</h2></div><div class="panelbody"><form class="identityform" method="post" action="/admin/identities/create">${hidden(sess.csrf_token)}<label class="field">Display name<input name="display_name" maxlength="100" required placeholder="neoPathshala Support"></label><label class="field">Local part<input name="local_part" maxlength="64" required autocomplete="off" spellcheck="false" placeholder="support"></label><label class="field">Verified domain<select name="domain" required>${domains.map(d=>`<option value="${e(d)}">${e(d)}</option>`).join('') || '<option value="" disabled>No verified domains</option>'}</select></label><button class="button">Add identity</button></form></div></section>`;

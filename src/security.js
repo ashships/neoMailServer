@@ -6,9 +6,10 @@ export const headers = {
   'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; img-src 'self' data:; frame-src 'self'; script-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
   'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY',
   // no-referrer turns Origin into "null" on browser form POSTs, breaking CSRF checks.
-  'Strict-Transport-Security': 'max-age=31536000', 'Referrer-Policy': 'same-origin',
-  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains', 'Referrer-Policy': 'same-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
   'Cross-Origin-Opener-Policy': 'same-origin', 'Cross-Origin-Resource-Policy': 'same-origin',
+  'Origin-Agent-Cluster': '?1', 'X-Permitted-Cross-Domain-Policies': 'none',
   'Cache-Control': 'no-store', 'X-Robots-Tag': 'noindex, nofollow',
 };
 export function reply(body, status = 200, extra = {}) {
@@ -19,7 +20,7 @@ export function reply(body, status = 200, extra = {}) {
 export function redirect(path, extra = {}) { return reply('', 303, { Location: path, ...extra }); }
 export function escape(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])); }
 export async function hash(s) { return Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(s))), b => b.toString(16).padStart(2, '0')).join(''); }
-export function bytes64(s) { return Uint8Array.from(atob(s.replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)); }
+export function bytes64(s) { return Uint8Array.from(atob(String(s).replace(/-/g, '+').replace(/_/g, '/')), c => c.charCodeAt(0)); }
 export function base64(b) { return btoa(String.fromCharCode(...new Uint8Array(b))); }
 export async function equal(a, b) {
   // Compare fixed-length digests, including when inputs have different lengths.
@@ -27,6 +28,14 @@ export async function equal(a, b) {
   let diff = 0; for (let i = 0; i < x.length; i++) diff |= x.charCodeAt(i) ^ y.charCodeAt(i);
   return diff === 0;
 }
+// PBKDF2 is used for low-entropy secrets (one-time login codes). A fast SHA-256
+// digest of a six-digit code is trivially reversible from a D1 snapshot.
+export async function pbkdf2(secret, salt, iterations = 120000) {
+  const material = await crypto.subtle.importKey('raw', enc.encode(String(secret)), 'PBKDF2', false, ['deriveBits']);
+  const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', salt: enc.encode(String(salt)), iterations, hash: 'SHA-256' }, material, 256);
+  return Array.from(new Uint8Array(bits), b => b.toString(16).padStart(2, '0')).join('');
+}
+export const hashOtp = (salt, code) => pbkdf2(code, salt, 120000);
 export async function hmac(secret, message, isBase64 = false) {
   const key = await crypto.subtle.importKey('raw', isBase64 ? bytes64(secret) : enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']);
   return new Uint8Array(await crypto.subtle.sign('HMAC', key, enc.encode(message)));
@@ -39,6 +48,23 @@ export function text(value, max = 255, required = true) {
   if (typeof value !== 'string' || value.length > max || /[\x00-\x1f\x7f<>]/.test(value) || (required && !value.trim())) throw new HttpError(422, 'Invalid text field or field too long.');
   return value.trim();
 }
+// DNS hostname validation: labels of 1-63 characters, no leading/trailing hyphen,
+// at least one dot, and a real alphabetic TLD. Used for domains and SMTP hosts.
+export function hostname(value, max = 253) {
+  if (typeof value !== 'string' || value.length > max) return null;
+  const v = value.trim().toLowerCase().replace(/\.$/, '');
+  if (!v || v.length > max || !/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/.test(v)) return null;
+  return v;
+}
+export function isPrivateHost(host) {
+  const v = String(host || '').toLowerCase();
+  if (!v) return true;
+  if (v === 'localhost' || v.endsWith('.localhost') || v.endsWith('.local') || v.endsWith('.internal') || v.endsWith('.home.arpa') || v.endsWith('.lan') || v.endsWith('.test')) return true;
+  // IPv4 literals and private/link-local/loopback ranges are never valid SMTP relays.
+  if (/^\d{1,3}(?:\.\d{1,3}){3}$/.test(v)) return true;
+  if (v.startsWith('[') || v.includes(':')) return true;
+  return false;
+}
 export function cookie(request, name) {
   const item = (request.headers.get('cookie') || '').split(';').find(v => v.trim().startsWith(name + '='));
   if (!item) return ''; try { return decodeURIComponent(item.trim().slice(name.length + 1)); } catch { return ''; }
@@ -48,7 +74,8 @@ export function sameOrigin(request) {
   if (request.headers.get('origin') !== new URL(request.url).origin || request.headers.get('sec-fetch-site') === 'cross-site') throw new HttpError(403, 'Request origin rejected.');
 }
 export async function readBody(request, maxBytes = 131072) {
-  if (Number(request.headers.get('content-length')) > maxBytes) throw new HttpError(413, 'Request body too large.');
+  const declared = Number(request.headers.get('content-length'));
+  if (Number.isFinite(declared) && declared > maxBytes) throw new HttpError(413, 'Request body too large.');
   if (!request.body) return '';
   const reader = request.body.getReader(); let size = 0; const chunks = [];
   try {
@@ -85,13 +112,15 @@ const ALLOWED_FETCH_HOSTS = new Set(['api.resend.com','api.brevo.com','api.mailg
 export function assertAllowedFetch(url) {
   const parsed = new URL(url);
   if (parsed.protocol !== 'https:') throw new HttpError(403, 'Outbound requests must use HTTPS.');
-  const host = parsed.hostname;
+  if (parsed.username || parsed.password) throw new HttpError(403, 'Outbound URLs must not contain credentials.');
+  if (parsed.port && parsed.port !== '443') throw new HttpError(403, 'Outbound requests must use the default HTTPS port.');
+  const host = parsed.hostname.toLowerCase();
   if (ALLOWED_FETCH_HOSTS.has(host) || host.endsWith('.cloudflareaccess.com')) return;
   throw new HttpError(403, 'Outbound host is not allowed.');
 }
-export async function safeFetch(url, init) {
+export async function safeFetch(url, init = {}) {
   assertAllowedFetch(url);
-  return fetch(url, init);
+  return fetch(url, { credentials: 'omit', redirect: 'manual', ...init });
 }
 
 const jwksCache = new Map();
@@ -119,10 +148,12 @@ export async function access(request, env) {
   if (!accessConfigured(env)) throw new HttpError(503, 'Cloudflare Access must be configured before admin access.');
   const team = env.ACCESS_TEAM_DOMAIN, audience = env.ACCESS_AUD;
   const token = request.headers.get('cf-access-jwt-assertion') || '';
+  let claims;
   try {
     if (token.length > 16000) throw Error();
     const parts = token.split('.'); if (parts.length !== 3) throw Error();
-    const head = JSON.parse(new TextDecoder().decode(bytes64(parts[0]))), claims = JSON.parse(new TextDecoder().decode(bytes64(parts[1])));
+    const head = JSON.parse(new TextDecoder().decode(bytes64(parts[0])));
+    claims = JSON.parse(new TextDecoder().decode(bytes64(parts[1])));
     const now = Math.floor(Date.now() / 1000);
     if (head.alg !== 'RS256' || !head.kid || claims.iss !== `https://${team}` || !Array.isArray(claims.aud) || !claims.aud.includes(audience) ||
       !Number.isFinite(claims.exp) || claims.exp <= now || !Number.isFinite(claims.iat) || claims.iat > now + 30 || (claims.nbf && claims.nbf > now + 30) || !claims.sub) throw Error();
@@ -134,17 +165,22 @@ export async function access(request, env) {
     const jwk = cached.keys.find(k => k.kid === head.kid && k.kty === 'RSA'); if (!jwk) throw Error();
     const key = await crypto.subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
     if (!await crypto.subtle.verify('RSASSA-PKCS1-v1_5', key, bytes64(parts[2]), enc.encode(parts[0] + '.' + parts[1]))) throw Error();
-    if (env.DB) {
-    try {
-      const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
-      if ((count?.n || 0) > 0) {
-        const account = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=? AND is_active=1').bind(claims.sub).first();
-        if (!account) throw new HttpError(403, 'Administrator account is not authorized.');
-      }
-    } catch { /* table may not exist yet */ }
-  }
-    return claims.sub;
   } catch { throw new HttpError(403, 'Valid Cloudflare Access authentication required.'); }
+  // Fail closed: an Access JWT is not enough. The subject must be an active
+  // administrator once the directory has been provisioned. Database errors are
+  // treated as denial, never as permission.
+  if (env.DB) {
+    let count;
+    try { count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n'); }
+    catch { throw new HttpError(403, 'Administrator directory unavailable.'); }
+    if ((count?.n || 0) > 0) {
+      let account;
+      try { account = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=? AND is_active=1').bind(claims.sub).first(); }
+      catch { throw new HttpError(403, 'Administrator directory unavailable.'); }
+      if (!account) throw new HttpError(403, 'Administrator account is not authorized.');
+    }
+  }
+  return claims.sub;
 }
 
 export async function session(request, env, subject) {
@@ -156,14 +192,24 @@ export async function csrf(request, data, sess) {
   sameOrigin(request);
   if (!sess || !await equal(data.get('csrf') || '', sess.csrf_token)) throw new HttpError(403, 'Form expired. Reload the page and try again.');
 }
-export function sessionCookie(value, age = 3600) { return `__Host-neomail=${value}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${age}`; }
+export function sessionCookie(value, age = 3600) { return `__Host-neomail=${value}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=${age}; Priority=High`; }
+function encryptionKey(secret) {
+  if (typeof secret !== 'string' || !secret) throw new HttpError(503, 'Configuration encryption key unavailable.');
+  const raw = bytes64(secret);
+  if (raw.length !== 32) throw new HttpError(503, 'Configuration encryption key must be exactly 32 bytes.');
+  return raw;
+}
 export async function encrypt(secret, value, name) {
-  const key = await crypto.subtle.importKey('raw', bytes64(secret), 'AES-GCM', false, ['encrypt']);
+  const key = await crypto.subtle.importKey('raw', encryptionKey(secret), 'AES-GCM', false, ['encrypt']);
   const iv = crypto.getRandomValues(new Uint8Array(12));
   return base64(iv) + '.' + base64(await crypto.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: enc.encode(name) }, key, enc.encode(value)));
 }
 export async function decrypt(secret, value, name) {
-  const [iv, data] = value.split('.');
-  const key = await crypto.subtle.importKey('raw', bytes64(secret), 'AES-GCM', false, ['decrypt']);
-  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv: bytes64(iv), additionalData: enc.encode(name) }, key, bytes64(data)));
+  if (typeof value !== 'string') throw new HttpError(500, 'Invalid encrypted value.');
+  const parts = value.split('.');
+  if (parts.length !== 2 || !parts[0] || !parts[1]) throw new HttpError(500, 'Invalid encrypted value.');
+  const iv = bytes64(parts[0]);
+  if (iv.length !== 12) throw new HttpError(500, 'Invalid encrypted value.');
+  const key = await crypto.subtle.importKey('raw', encryptionKey(secret), 'AES-GCM', false, ['decrypt']);
+  return new TextDecoder().decode(await crypto.subtle.decrypt({ name: 'AES-GCM', iv, additionalData: enc.encode(name) }, key, bytes64(parts[1])));
 }

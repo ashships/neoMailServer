@@ -1,5 +1,5 @@
 import { HttpError, reply, redirect, hash, equal, email, text, cookie, local, sameOrigin, form, json, readBody, rate, audit, access, session, csrf, sessionCookie, bytes64, headers } from './security.js';
-import { config, saveSettings, saveSecret, PROVIDERS } from './config.js';
+import { config, saveSettings, saveSecret, PROVIDERS, getAccountProviderKeys, saveAccountProviderKey, deleteAccountProviderKey, toggleAccountProviderKey } from './config.js';
 import { dispatch, validateMail, verifyWebhook, applyWebhook, sendSmtp } from './providers.js';
 import { safeFetch } from './security.js';
 import * as ui from './ui.js';
@@ -199,7 +199,7 @@ Idempotency-Key: unique-key
   if (dashboardMode && role === 'superadmin') return redirect('/admin');
   // Tenant workspaces may mutate their own resources via scoped action endpoints and inspect their
   // own messages; every other admin path (global settings, users, providers, docs, views) requires the superadmin role.
-  const tenantForm = (request.method === 'POST' && ['/admin/identities/create','/admin/identities/update','/admin/api-clients/create','/admin/api-clients/revoke','/admin/domains/create','/admin/domains/verify','/admin/send-test','/admin/logout','/admin/sessions/revoke','/admin/profile'].includes(path))
+  const tenantForm = (request.method === 'POST' && ['/admin/identities/create','/admin/identities/update','/admin/api-clients/create','/admin/api-clients/revoke','/admin/domains/create','/admin/domains/verify','/admin/send-test','/admin/logout','/admin/sessions/revoke','/admin/profile','/admin/account-keys/save','/admin/account-keys/delete','/admin/account-keys/toggle'].includes(path))
     || (request.method === 'GET' && ['/admin/view-mail','/admin/email','/admin/preview','/admin/profile-image'].includes(path));
   if (!dashboardMode && path.startsWith('/admin') && role !== 'superadmin' && path !== '/admin/login' && !tenantForm) return redirect('/dashboard' + (url.search || ''));
   if (path === '/admin/login') {
@@ -337,6 +337,43 @@ Idempotency-Key: unique-key
       await saveSecret(env, data.get('name'), data.get('value'));
       await audit(env, request, 'CREDENTIAL_UPDATED', { name: data.get('name') });
       return redirect('/admin?view=settings&notice=Credential+saved');
+    }
+    if (path === '/admin/account-keys/save') {
+      const provider = data.get('provider');
+      if (!PROVIDERS.includes(provider)) throw new HttpError(422, 'Invalid provider.');
+      const apiKey = data.get('api_key');
+      let extraConfig = null;
+      if (provider === 'mailgun') {
+        const domain = data.get('mailgun_domain')?.trim();
+        if (domain) extraConfig = { domain };
+      } else if (provider === 'smtp') {
+        extraConfig = {
+          smtp_host: data.get('smtp_host')?.trim(),
+          smtp_port: data.get('smtp_port')?.trim() || '465',
+          smtp_user: data.get('smtp_user')?.trim(),
+          smtp_pass: apiKey,
+          smtp_secure: data.get('smtp_secure') !== 'false',
+        };
+      }
+      await rate(env, 'account-keys:' + subject, 10, 60);
+      await saveAccountProviderKey(env, subject, provider, apiKey, extraConfig);
+      await audit(env, request, 'ACCOUNT_PROVIDER_KEY_SAVED', { provider, subject });
+      const targetBase = role === 'superadmin' ? '/admin' : '/dashboard';
+      return redirect(targetBase + '?view=settings&notice=' + encodeURIComponent('Provider API key encrypted with AES-256-GCM and saved. Stored keys are strictly write-only and cannot be viewed.'));
+    }
+    if (path === '/admin/account-keys/delete') {
+      const provider = data.get('provider');
+      await deleteAccountProviderKey(env, subject, provider);
+      await audit(env, request, 'ACCOUNT_PROVIDER_KEY_DELETED', { provider, subject });
+      const targetBase = role === 'superadmin' ? '/admin' : '/dashboard';
+      return redirect(targetBase + '?view=settings&notice=' + encodeURIComponent('Provider API key removed.'));
+    }
+    if (path === '/admin/account-keys/toggle') {
+      const provider = data.get('provider');
+      await toggleAccountProviderKey(env, subject, provider);
+      await audit(env, request, 'ACCOUNT_PROVIDER_KEY_TOGGLED', { provider, subject });
+      const targetBase = role === 'superadmin' ? '/admin' : '/dashboard';
+      return redirect(targetBase + '?view=settings&notice=' + encodeURIComponent('Provider status updated.'));
     }
     if (path === '/admin/providers/toggle') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
@@ -531,8 +568,9 @@ Idempotency-Key: unique-key
     sess.script_nonce=crypto.randomUUID();
     // Tenants see only their profile; global configuration is superadmin territory.
     const superadmin = role === 'superadmin';
-    title='Settings'; subtitle=superadmin?'Configure your workspace without redeploying.':'Your profile. Global configuration is managed by the administrator.';
-    content=ui.settings(cfg,sess,superadmin);
+    title='Settings'; subtitle=superadmin?'Configure your workspace credentials and routing without redeploying.':'Your profile and encrypted workspace provider credentials.';
+    const accountKeys = await getAccountProviderKeys(env, subject);
+    content=ui.settings(cfg,sess,superadmin,accountKeys);
   } else if (view === 'identities' || view === 'compose') {
     const senders = await identities(env, subject);
     const superadmin = await isSuperadmin(env, subject);
