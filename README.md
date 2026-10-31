@@ -41,7 +41,7 @@ Panel settings override Worker defaults for allowlisted keys. Credentials entere
 - [Validation results and remaining launch checks](docs/VALIDATION.md)
 - [Provider-specific DNS instructions](dns-records.txt)
 
-Confirmed sender: **no-reply@mail.neopathshala.com**. Use this domain consistently in DNS, provider verification, and Worker routes.
+Confirmed sender: **your-sender@your-verified-domain.com**. Use this domain consistently in DNS, provider verification, and Worker routes.
 
 ## Validate
 

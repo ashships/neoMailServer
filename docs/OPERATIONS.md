@@ -22,7 +22,7 @@ Prepared: 27 October 2026. Target: Cloudflare Workers (ES modules) and D1.
 | Node.js 22.13+, npm and current Wrangler | Build, test, deploy, recover | Development machine / CI |
 | Monitoring and recovery owner | Respond to failures and compromise | Your operational process |
 
-**Confirmed domain:** the owner confirmed `no-reply@mail.neopathshala.com`. Use `mail.neopathshala.com` for sender verification and the intended Worker hostname. DNS ownership and live provider authentication remain unverified.
+**Confirmed domain:** the owner confirmed `your-sender@your-verified-domain.com`. Use `your-worker-domain.com` for sender verification and the intended Worker hostname. DNS ownership and live provider authentication remain unverified.
 
 ## 2. Architecture and boundaries
 
@@ -70,7 +70,7 @@ Enable your verified domain route:
 
 ```toml
 [[routes]]
-pattern = "mail.neopathshala.com"
+pattern = "your-worker-domain.com"
 custom_domain = true
 ```
 
@@ -83,7 +83,7 @@ npm run db:init:remote
 npm run db:migrate:remote
 ```
 
-The fresh schema seeds sender identities for `mail.neopathshala.com`. The migration adds the configuration, session, rate limit, idempotency and webhook tables. Schema changes occur explicitly at deploy time; HTTP requests never run DDL.
+The fresh schema seeds sender identities for `your-worker-domain.com`. The migration adds the configuration, session, rate limit, idempotency and webhook tables. Schema changes occur explicitly at deploy time; HTTP requests never run DDL.
 
 ### 4.3 Bootstrap secrets
 
@@ -100,7 +100,7 @@ Save the encryption key in a separate protected recovery store. Do not paste sec
 
 ### 4.4 Configure Cloudflare Access
 
-1. Create a self-hosted Access application for both `mail.neopathshala.com/admin` and `mail.neopathshala.com/admin/*` as supported by the dashboard path configuration. Verify that the bare `/admin` path is covered too.
+1. Create a self-hosted Access application for both `your-worker-domain.com/admin` and `your-worker-domain.com/admin/*` as supported by the dashboard path configuration. Verify that the bare `/admin` path is covered too.
 2. Allow only explicitly approved administrator identities. Require MFA through the identity provider or applicable Access policy. Do not create an everyone/bypass policy.
 3. Set `ACCESS_TEAM_DOMAIN` to your actual `TEAM.cloudflareaccess.com` hostname and `ACCESS_AUD` to the application audience tag in Worker vars.
 4. Leave `/api/*`, `/webhooks/*`, and `/health` outside the admin Access path policy; they have separate application controls. A broad domain-wide Access policy can prevent provider callbacks and backend calls.
@@ -125,7 +125,7 @@ Panel settings take precedence over Worker vars; values are read afresh on subse
 
 | Key | Default | Allowed range / behavior |
 | --- | --- | --- |
-| DEFAULT_SENDER | no-reply@mail.neopathshala.com | Must match an active sender identity |
+| DEFAULT_SENDER | your-sender@your-verified-domain.com | Must match an active sender identity |
 | DEFAULT_SENDER_NAME | neopathshala | 1–100 safe text characters |
 | FALLBACK_ORDER | resend,brevo,mailgun,mailtrap,mailersend | Unique supported provider names |
 | REQUEST_TIMEOUT_MS | 6000 | 1000–15000 |
@@ -134,7 +134,7 @@ Panel settings take precedence over Worker vars; values are read afresh on subse
 | MAX_LOGIN_ATTEMPTS | 5 | 1–10 per 15-minute fixed window per IP and Access subject |
 | RETENTION_DAYS | 30 | 1–365; applies to mail records |
 | STORE_MESSAGE_BODIES | false | false / true; affects newly stored messages only |
-| MAILGUN_DOMAIN | mail.neopathshala.com | Verified domain; US Mailgun endpoint only |
+| MAILGUN_DOMAIN | your-worker-domain.com | Verified domain; US Mailgun endpoint only |
 
 Writable credentials: `API_SECRET_KEY`, provider-specific `*_API_KEY` for the five adapters, `RESEND_WEBHOOK_SECRET`, and `MAILGUN_WEBHOOK_SIGNING_KEY`. Forms never return their stored value. Updating requires CSRF and reconfirmation of the admin token. Blank/invalid submissions fail without deleting the current credential. The UI supports replacement, not deletion; disabling a provider uses Providers → Pause.
 
@@ -147,7 +147,7 @@ Both Settings and Sender identities → Set default update the sender used by AP
 Configure in the **server environment only**:
 
 ```dotenv
-NEOMAIL_URL=https://mail.neopathshala.com
+NEOMAIL_URL=https://your-worker-domain.com
 NEOMAIL_API_KEY=YOUR_SEPARATE_RANDOM_INTEGRATION_TOKEN
 ```
 
@@ -163,7 +163,7 @@ export async function sendWelcome(user) {
       'Idempotency-Key': `welcome:${user.id}:v1`,
     },
     body: JSON.stringify({
-      from: 'no-reply@mail.neopathshala.com',
+      from: 'your-sender@your-verified-domain.com',
       to: user.email,
       subject: 'Welcome to neopathshala',
       text: 'Your account is ready.',
@@ -220,8 +220,8 @@ After five consecutive failures a provider cools down for five minutes; Provider
 
 ## 8. Webhooks
 
-- Resend URL: `https://mail.neopathshala.com/webhooks/resend`. Enable sent, delivered, bounced, complained, and failed events. Save its exact signing secret as `RESEND_WEBHOOK_SECRET`. Verification checks Svix ID, timestamp (five-minute tolerance), and HMAC over the raw body.
-- Mailgun URL: `https://mail.neopathshala.com/webhooks/mailgun`. Save the webhook signing key as `MAILGUN_WEBHOOK_SIGNING_KEY`, not its sending API key. The verifier checks timestamp, token, and HMAC. API/message-id formatting must be confirmed against a real staged callback before launch.
+- Resend URL: `https://your-worker-domain.com/webhooks/resend`. Enable sent, delivered, bounced, complained, and failed events. Save its exact signing secret as `RESEND_WEBHOOK_SECRET`. Verification checks Svix ID, timestamp (five-minute tolerance), and HMAC over the raw body.
+- Mailgun URL: `https://your-worker-domain.com/webhooks/mailgun`. Save the webhook signing key as `MAILGUN_WEBHOOK_SIGNING_KEY`, not its sending API key. The verifier checks timestamp, token, and HMAC. API/message-id formatting must be confirmed against a real staged callback before launch.
 - Unsupported/generic/Brevo webhook paths are rejected. There is no query-string token authentication.
 - Events match both provider and provider message ID. Recipient-only matching is prohibited. Duplicate events are tracked in D1; update and replay insert share a database batch transaction.
 - Delivered/Bounced terminal states do not regress to Sent. A complaint/bounce can supersede Delivered. Open/click/delay events are ignored for delivery-state updates. Mailgun `failed` currently maps to Bounced regardless of temporary/permanent severity; refine before depending on temporary-failure reporting.

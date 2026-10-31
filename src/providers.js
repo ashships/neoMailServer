@@ -147,7 +147,8 @@ export async function dispatch(env, mail, idempotencyKey, ownerSubject = null) {
   for (const provider of env.FALLBACK_ORDER.split(',')) {
     if (!PROVIDERS.includes(provider)) continue;
     if (provider === 'smtp') {
-      if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) continue;
+      const hasSmtp = (env.SMTP_HOST && env.SMTP_USER && env.SMTP_PASS) || (env.cfg && env.cfg.SMTP_HOST && env.cfg.SMTP_USER && env.cfg.SMTP_PASS);
+      if (!hasSmtp) continue;
     } else if (!env[provider.toUpperCase() + '_API_KEY'] || (provider === 'mailgun' && !env.MAILGUN_DOMAIN)) continue;
     const state = health.find(p => p.provider_name === provider);
     if (state && (!state.is_active || (state.consecutive_failures >= 5 && state.updated_at > Date.now() / 1000 - 300))) continue;

@@ -1,10 +1,10 @@
 NeoMail DNS setup instructions — not a production zone import
 
-Confirmed sender: no-reply@mail.neopathshala.com.
-Use mail.neopathshala.com consistently for sender verification.
+Confirmed sender: your-sender@your-verified-domain.com.
+Use your-worker-domain.com consistently for sender verification.
 
 1. Worker custom domain
-   Bind your chosen hostname (for example mail.neopathshala.com) through Workers
+   Bind your chosen hostname (for example your-worker-domain.com) through Workers
    custom domain configuration. The route in wrangler.toml is commented until
    the operator confirms ownership and the spelling.
 

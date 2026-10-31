@@ -12,14 +12,14 @@ database_id = "ccf65664-c515-46b9-93f7-1278fd142b13"
 migrations_dir = "migrations"
 
 [[routes]]
-pattern = "mail.neopathshala.com"
+pattern = "your-worker-domain.com"
 custom_domain = true
 
 [triggers]
 crons = ["17 2 * * *"]
 
 [vars]
-DEFAULT_SENDER = "no-reply@mail.neopathshala.com"
+DEFAULT_SENDER = ""
 DEFAULT_SENDER_NAME = "neoPathshala"
 FALLBACK_ORDER = "resend,brevo,mailgun,mailtrap,mailersend"
 REQUEST_TIMEOUT_MS = "6000"
@@ -28,13 +28,7 @@ API_RATE_LIMIT_PER_MINUTE = "60"
 WEBHOOK_RATE_LIMIT_PER_MINUTE = "120"
 RETENTION_DAYS = "30"
 STORE_MESSAGE_BODIES = "false"
-REQUIRES_CLOUDFLARE_PROXY = "true"
-SMTP_HOST = "smtp.gmail.com"
-SMTP_PORT = "465"
-SMTP_USER = "user@example.com"
-SMTP_SECURE = "true"
-# Secrets are deployment secrets, never vars. Rotate any credential that was ever committed:
-#   npx wrangler secret put SMTP_PASS        # Gmail app password (rotate it in your Google account first)
+# SMTP removed from vars; configure via admin panel / secrets only if needed
 #   npx wrangler secret put ADMIN_TOKEN_HASH # SHA-256 verifier from: npm run credentials
 #   npx wrangler secret put CONFIG_ENCRYPTION_KEY
 
