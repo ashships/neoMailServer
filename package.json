@@ -8,7 +8,7 @@
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
     "build": "wrangler deploy --dry-run --outdir /tmp/neomail-build",
-    "test": "node --test test/*.test.js",
+    "test": "node --test --test-concurrency=1 test/*.test.js",
     "test:worker": "node --test test/worker.integration.js",
     "db:init:local": "wrangler d1 execute neomailserver --local --file=./schema.sql",
     "db:init:remote": "wrangler d1 execute neomailserver --remote --file=./schema.sql",

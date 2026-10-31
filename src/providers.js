@@ -81,7 +81,7 @@ export function validateMail(body, settings) {
   if (!body.html?.trim() && !body.text?.trim()) throw new HttpError(422, 'Provide an HTML or plain text body.');
   return { to, from, subject, fromName, useIdentityName: !body.from_name, html: body.html || `<p>${escape(body.text)}</p>`, text: body.text || '' };
 }
-async function send(provider, env, mail, requestId) {
+export async function send(provider, env, mail, requestId) {
   const { from, to, fromName, subject, html, text } = mail;
   if (provider === 'smtp') return sendSmtp(env, mail);
   const formattedSender = `"${fromName.replace(/["\\]/g, '\\$&')}" <${from}>`;

@@ -1,6 +1,6 @@
 import { HttpError, reply, redirect, hash, equal, email, text, cookie, local, sameOrigin, form, json, readBody, rate, audit, access, session, csrf, sessionCookie, bytes64, headers } from './security.js';
 import { config, saveSettings, saveSecret, PROVIDERS, getAccountProviderKeys, saveAccountProviderKey, deleteAccountProviderKey, toggleAccountProviderKey } from './config.js';
-import { dispatch, validateMail, verifyWebhook, applyWebhook, sendSmtp } from './providers.js';
+import { dispatch, validateMail, verifyWebhook, applyWebhook, sendSmtp, send } from './providers.js';
 import { safeFetch } from './security.js';
 import * as ui from './ui.js';
 import { getProfile, saveProfile, profileForm, profileImage } from './profile.js';
@@ -242,14 +242,73 @@ Idempotency-Key: unique-key
               SMTP_HOST: env.OTP_SMTP_HOST || env.SMTP_HOST || cfg.SMTP_HOST,
               SMTP_PORT: env.OTP_SMTP_PORT || env.SMTP_PORT || cfg.SMTP_PORT || '465',
               SMTP_USER: env.OTP_SMTP_USER || env.OTP_SMTP_USERNAME || env.SMTP_USER || env.SMTP_USERNAME || cfg.SMTP_USER || cfg.SMTP_USERNAME,
-              SMTP_PASS: env.OTP_SMTP_PASS || env.OTP_SMTP_PASSWORD || env.SMTP_PASS || env.SMTP_PASSWORD || cfg.SMTP_PASS || cfg.SMTP_PASSWORD,
+              SMTP_PASS: env.OTP_SMTP_PASS || env.OTP_SMTP_PASSWORD || env.OTP_SMTP_PASS || env.OTP_SMTP_PASSWORD || cfg.SMTP_PASS || cfg.SMTP_PASSWORD,
               SMTP_SECURE: env.OTP_SMTP_SECURE || env.SMTP_SECURE || cfg.SMTP_SECURE || 'true',
               DEFAULT_SENDER: cfg.DEFAULT_SENDER,
               DEFAULT_SENDER_NAME: 'neoMail',
             };
-            if (!masterCfg.SMTP_HOST || !masterCfg.SMTP_USER || !masterCfg.SMTP_PASS) throw new Error('master smtp not configured');
-            const mail = validateMail({ to: emailAddr, from_name: 'neoMail', subject: 'NeoMail login code', text: 'Your NeoMail login code is ' + code + '. It expires in 5 minutes.' }, masterCfg);
-            await sendSmtp(masterCfg, mail);
+            const defaultSender = email(cfg.DEFAULT_SENDER) || email(env.DEFAULT_SENDER) || 'no-reply@mail.neopathshala.com';
+            const isGmail = (masterCfg.SMTP_HOST || '').toLowerCase().includes('gmail') || (masterCfg.SMTP_HOST || '').toLowerCase().includes('google');
+            const smtpUserEmail = email(masterCfg.SMTP_USER);
+            const smtpSender = (isGmail && smtpUserEmail) ? smtpUserEmail : (defaultSender || smtpUserEmail || 'no-reply@mail.neopathshala.com');
+            masterCfg.DEFAULT_SENDER = smtpSender;
+
+            const mailText = `Your NeoMail verification code is: ${code}\n\nIt expires in 5 minutes.\nIf you did not request this code, you can safely ignore this email.`;
+            const mailHtml = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:24px auto;padding:32px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;color:#0f172a;">
+  <div style="font-size:20px;font-weight:700;color:#087d54;margin-bottom:16px;">NeoMail</div>
+  <h2 style="font-size:18px;font-weight:600;margin:0 0 12px 0;">Sign-in verification code</h2>
+  <p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 24px 0;">Enter the following 6-digit verification code to complete your login to the NeoMail administration panel. This code is valid for 5 minutes.</p>
+  <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:20px;text-align:center;font-size:32px;font-weight:700;letter-spacing:6px;color:#0f172a;font-family:monospace;margin:0 0 24px 0;">${code}</div>
+  <p style="font-size:12px;line-height:1.5;color:#94a3b8;margin:0;">If you did not request this login code, you can safely ignore this email. Do not share this code with anyone.</p>
+</div>`;
+
+            const mail = validateMail({
+              to: emailAddr,
+              from: smtpSender,
+              from_name: masterCfg.DEFAULT_SENDER_NAME || 'neoMail',
+              subject: 'NeoMail verification code',
+              text: mailText,
+              html: mailHtml,
+            }, masterCfg);
+
+            let sent = false;
+            let dispatchErr = null;
+
+            // 1. Try master SMTP first if configured
+            if (masterCfg.SMTP_HOST && masterCfg.SMTP_USER && masterCfg.SMTP_PASS) {
+              try {
+                await sendSmtp(masterCfg, mail);
+                sent = true;
+              } catch (err) {
+                dispatchErr = err;
+                console.error('Master SMTP failed during OTP dispatch:', err.message || err);
+              }
+            }
+
+            // 2. Fallback across active system providers if SMTP failed or was not configured
+            if (!sent) {
+              const providers = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',');
+              const mergedEnv = { REQUEST_TIMEOUT_MS: '6000', ...env, ...cfg };
+              for (const p of providers) {
+                if (p === 'smtp' || !PROVIDERS.includes(p)) continue;
+                if (!mergedEnv[p.toUpperCase() + '_API_KEY']) continue;
+                if (p === 'mailgun' && !mergedEnv.MAILGUN_DOMAIN) continue;
+                try {
+                  const providerMail = { ...mail, from: defaultSender };
+                  await send(p, mergedEnv, providerMail, 'otp-' + crypto.randomUUID());
+                  sent = true;
+                  break;
+                } catch (provErr) {
+                  dispatchErr = provErr;
+                  console.error(`Provider ${p} failed during OTP dispatch:`, provErr.message || provErr);
+                }
+              }
+            }
+
+            if (!sent) {
+              const reason = dispatchErr?.message ? `: ${dispatchErr.message}` : '';
+              throw new Error('Unable to deliver login code' + reason);
+            }
           } catch (e) {
             await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
             throw new HttpError(503, 'Unable to send login code: ' + (e?.message || e));
@@ -633,7 +692,12 @@ export default {
       if (status === 500) console.error(JSON.stringify({event:'REQUEST_FAILURE',reference}));
       const message = status === 500 ? 'Request could not complete. Reference: ' + reference : err.message;
       const extra = status===429 ? {'Retry-After':'60'} : {};
-      return new URL(request.url).pathname.startsWith('/admin') ? reply(ui.errorPage(message,status),status,extra) : reply({error:message,reference},status,extra);
+      const pathname = new URL(request.url).pathname;
+      const isUiPath = pathname.startsWith('/admin') || pathname.startsWith('/login') || pathname.startsWith('/dashboard');
+      const acceptsHtml = (request.headers.get('accept') || '').includes('text/html');
+      return (isUiPath || acceptsHtml) && !pathname.startsWith('/api/') && !pathname.startsWith('/webhooks/')
+        ? reply(ui.errorPage(message, status), status, extra)
+        : reply({ error: message, reference }, status, extra);
     }
   },
   async email(message, env) {
