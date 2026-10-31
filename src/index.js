@@ -539,6 +539,7 @@ Idempotency-Key: unique-key
     content = ui.users(users, sess, role === 'superadmin');
   } else if (view === 'domains') {
     title='Domains'; subtitle='Track client sending domains and DNS onboarding.';
+    sess.script_nonce=crypto.randomUUID();
     const domains = await rows(env, await isSuperadmin(env, subject) ? 'SELECT domain,display_name,is_verified,created_at,verification_token FROM managed_domains ORDER BY created_at DESC' : 'SELECT domain,display_name,is_verified,created_at,verification_token FROM managed_domains WHERE owner_subject=? ORDER BY created_at DESC', ...(await isSuperadmin(env, subject)?[]:[subject]));
     content = ui.domains(domains, sess);
   } else if (view === 'docs') {
