@@ -72,5 +72,5 @@ export async function saveProfile(env, subject, data) {
 export async function profileImage(env, subject) {
  const row=await env.DB.prepare('SELECT avatar_data,avatar_mime FROM admin_profiles WHERE access_subject=?').bind(subject).first();
  if(!row?.avatar_data)throw new HttpError(404,'No profile image uploaded.');
- return new Response(bytes64(row.avatar_data),{headers:{...headers,'Content-Type':row.avatar_mime,'Content-Disposition':'inline; filename="profile.'+(row.avatar_mime==='image/png'?'png':row.avatar_mime==='image/webp'?'webp':'jpg')+'"'}});
+ return new Response(bytes64(row.avatar_data),{headers:{...headers,'Content-Type':row.avatar_mime,'Cache-Control':'public, max-age=3600, immutable','Content-Disposition':'inline; filename="profile.'+(row.avatar_mime==='image/png'?'png':row.avatar_mime==='image/webp'?'webp':'jpg')+'"'}});
 }
