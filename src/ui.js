@@ -202,6 +202,34 @@ export const faviconUri = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`
 export const neomailerLogoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 290" width="32" height="21" fill="none" aria-hidden="true" style="display:block"><defs><linearGradient id="nml-top-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="35%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nml-bot-left-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="50%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nml-bot-right-grad" x1="0%" y1="40%" x2="100%" y2="70%"><stop offset="0%" stop-color="#033b28"/><stop offset="18%" stop-color="#055f42"/><stop offset="65%" stop-color="#087d54"/><stop offset="100%" stop-color="#0ea868"/></linearGradient><clipPath id="nml-envelope-clip"><rect x="0" y="0" width="450" height="290" rx="45" ry="45"/></clipPath></defs><g clip-path="url(#nml-envelope-clip)"><rect x="0" y="0" width="450" height="290" fill="#ffffff"/><path d="M 45 0 L 405 0 C 429.9 0 448.9 19 449.2 35 C 375 65 295 115 225 145 C 157 116 82 61 12 36 C 18 20 29 9 45 0 Z" fill="url(#nml-top-grad)"/><path d="M 0 45 C 0 20.1 20.1 0 45 0 C 29 9 18 20 12 36 C 82 96 162 156 228 209 C 200 205 180 201 165 199 C 125 214 85 264 45 290 C 20.1 290 0 270 0 245 Z" fill="url(#nml-bot-left-grad)"/><path d="M 228 209 C 298 178 378 88 450 62 L 450 245 C 450 270 429.9 290 405 290 L 300 290 C 255 274 210 209 165 199 C 180 201 200 205 228 209 Z" fill="url(#nml-bot-right-grad)"/><path d="M 12 36 C 82 61 157 116 225 145 C 295 115 375 65 449.2 35 C 449.8 40 450 45 450 48 L 450 62 C 378 88 298 178 228 209 C 162 156 82 96 12 36 Z" fill="#ffffff"/></g></svg>`;
 export const neomailLogoSvg = neomailerLogoSvg;
 
+export const strapiLogoBadge = `<div class="login-logo-badge"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 4H20V17H14V10H7V4Z" fill="white"/><path d="M7 4L1 10H7V4Z" fill="white" fill-opacity="0.55"/><path d="M7 10H14V17H7V10Z" fill="white" fill-opacity="0.35"/><path d="M14 17L14 23L20 17H14Z" fill="white" fill-opacity="0.55"/></svg></div>`;
+
+export const loginLangDropdown = `<div class="login-header-bar"><details class="login-lang-dropdown"><summary class="login-lang-btn"><span>English</span> <svg width="8" height="6" viewBox="0 0 8 6" fill="currentColor"><path d="M0.5 1.5L4 5L7.5 1.5H0.5Z"/></svg></summary><div class="login-lang-menu"><div class="login-lang-item selected">English</div><div class="login-lang-item">Español</div><div class="login-lang-item">Français</div><div class="login-lang-item">Deutsch</div></div></details></div>`;
+
+export const eyeIconSvg = `<svg class="eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+
+export const ssoRow = `
+  <div class="login-divider"><span>OR LOGIN WITH</span></div>
+  <div class="login-sso-grid">
+    <button type="button" class="sso-btn" title="Sign in with Security Key / Auth0" onclick="window.location.href='/login?mode=access'">
+      <svg width="22" height="24" viewBox="0 0 24 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 0L2 4V12.5C2 18.5 6.2 24 12 25.5C17.8 24 22 18.5 22 12.5V4L12 0Z" fill="#EB5424"/>
+        <path d="M12 5.5L13.8 10.5H19L14.8 13.5L16.4 18.5L12 15.5L7.6 18.5L9.2 13.5L5 10.5H10.2L12 5.5Z" fill="white"/>
+      </svg>
+    </button>
+    <button type="button" class="sso-btn" title="Sign in with Okta SSO" onclick="window.location.href='/login?mode=access'">
+      <span class="okta-text">okta</span>
+    </button>
+    <button type="button" class="sso-btn" title="Sign in with Token / Other" onclick="window.location.href='/login?mode=token'">
+      <svg width="18" height="4" viewBox="0 0 18 4" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="2" cy="2" r="2" fill="#8e8ea9"/>
+        <circle cx="9" cy="2" r="2" fill="#8e8ea9"/>
+        <circle cx="16" cy="2" r="2" fill="#8e8ea9"/>
+      </svg>
+    </button>
+  </div>
+`;
+
 const css = `
 @font-face {
   font-family: 'Plus Jakarta Sans';
@@ -263,6 +291,9 @@ const css = `
   --illus-table: #d97706;
   --illus-blob: rgba(8, 125, 84, 0.09);
   --illus-clock-rim: #374151;
+  --illus-server: #131514;
+  --illus-frame-border: #131514;
+  --illus-chair-legs: #131514;
   --shadow-xs: none;
   --shadow-sm: none;
   --shadow-md: none;
@@ -324,6 +355,9 @@ const css = `
   --illus-table: #b45309;
   --illus-blob: rgba(16, 185, 129, 0.09);
   --illus-clock-rim: #9ca3af;
+  --illus-server: #131514;
+  --illus-frame-border: #131514;
+  --illus-chair-legs: #131514;
   --shadow-xs: none;
   --shadow-sm: none;
   --shadow-md: none;
@@ -374,6 +408,9 @@ const css = `
     --illus-table: #b45309;
     --illus-blob: rgba(16, 185, 129, 0.09);
     --illus-clock-rim: #9ca3af;
+    --illus-server: #05080c;
+    --illus-frame-border: #05080c;
+    --illus-chair-legs: #05080c;
     --shadow-xs: none;
     --shadow-sm: none;
     --shadow-md: none;
@@ -1971,70 +2008,367 @@ iframe {
   background: white;
 }
 
-/* Authentication Layout */
+/* Authentication Layout (Strapi Design System) */
 .login {
   min-height: 100vh;
-  display: grid;
-  grid-template-columns: 1.1fr 1fr;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #f6f6f9;
+  position: relative;
+  padding: 40px 16px;
+  box-sizing: border-box;
 }
 
 .loginart {
-  background: #064e3b;
-  background: linear-gradient(145deg, #064e3b 0%, #022c22 100%);
-  color: #e2f5ec;
+  display: none;
+}
+
+/* Language selector in top right */
+.login-header-bar {
+  position: absolute;
+  top: 24px;
+  right: 32px;
   display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  padding: 48px 56px;
+  align-items: center;
+  z-index: 10;
 }
 
-.loginart .brand {
-  padding: 0;
-  color: white;
+details.login-lang-dropdown {
+  position: relative;
+  user-select: none;
+  border-top: none !important;
+  padding: 0 !important;
 }
 
-.loginart h1 {
-  font-size: 44px;
-  line-height: 1.15;
-  max-width: 460px;
-  letter-spacing: -1.5px;
-  color: white;
+details.login-lang-dropdown summary {
+  list-style: none;
 }
 
-.loginart p {
-  color: #a7f3d0;
-  max-width: 360px;
-  margin-top: 20px;
-  font-size: 14px;
+details.login-lang-dropdown summary::-webkit-details-marker {
+  display: none;
+}
+
+.login-lang-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #32324d;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.login-lang-btn:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.login-lang-btn svg {
+  color: #8e8ea9;
+}
+
+.login-lang-menu {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: #ffffff;
+  border: 1px solid #dcdce4;
+  border-radius: 4px;
+  padding: 4px 0;
+  min-width: 120px;
+  z-index: 100;
+}
+
+.login-lang-item {
+  padding: 8px 14px;
+  font-size: 13px;
+  color: #32324d;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+
+.login-lang-item:hover, .login-lang-item.selected {
+  background: #f0f0ff;
+  color: #4945ff;
+  font-weight: 600;
+}
+
+/* Card */
+.login-card {
+  width: 100%;
+  max-width: 480px;
+  background: #ffffff;
+  border: 1px solid #eaeaef;
+  border-radius: 4px;
+  padding: 44px 44px 36px;
+  box-sizing: border-box;
+  margin: 0 auto;
 }
 
 .loginform {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 36px;
-  background: var(--surface);
+  padding: 0;
+  background: transparent;
 }
 
 .logininner {
   width: 100%;
-  max-width: 360px;
+  max-width: 100%;
 }
 
-.logininner h1 {
-  font-size: 24px;
-  margin: 18px 0 8px;
+.login-logo-badge {
+  width: 52px;
+  height: 52px;
+  border-radius: 10px;
+  background: #4945ff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
 }
 
-.logininner form {
-  margin-top: 24px;
+.login-card-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: #181826;
+  text-align: center;
+  margin: 0 0 6px 0;
+  letter-spacing: -0.02em;
 }
 
-.logininner .notice {
-  margin-top: 8px;
+.login-card-sub {
+  font-size: 14px;
+  color: #8e8ea9;
+  text-align: center;
+  margin: 0 0 26px 0;
+}
+
+.login-field-group {
   margin-bottom: 16px;
 }
 
+.login-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.login-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: #32324d;
+  margin-bottom: 6px;
+}
+
+.login-label-row .login-label {
+  margin-bottom: 0;
+}
+
+.login-forgot-link {
+  font-size: 12px;
+  font-weight: 500;
+  color: #4945ff;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.login-forgot-link:hover {
+  text-decoration: underline;
+}
+
+.login-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 14px;
+  border: 1px solid #dcdce4;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  color: #32324d;
+  background: #ffffff;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+  outline: none;
+}
+
+.login-input:focus {
+  border-color: #4945ff;
+}
+
+.login-input::placeholder {
+  color: #8e8ea9;
+  opacity: 0.8;
+}
+
+.password-wrap {
+  position: relative;
+  width: 100%;
+}
+
+.password-wrap .login-input {
+  padding-right: 42px;
+}
+
+.password-toggle-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: #8e8ea9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.password-toggle-btn:hover {
+  color: #32324d;
+}
+
+.login-remember-row {
+  display: flex;
+  align-items: center;
+  margin: 16px 0 20px 0;
+}
+
+.login-checkbox-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: #4a4a6a;
+  cursor: pointer;
+  user-select: none;
+}
+
+.login-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 17px;
+  height: 17px;
+  border: 1px solid #c0c0cf;
+  border-radius: 4px;
+  background: #ffffff;
+  cursor: pointer;
+  position: relative;
+  display: inline-block;
+  margin: 0;
+  vertical-align: middle;
+  transition: all 0.15s ease;
+}
+
+.login-checkbox:hover {
+  border-color: #8e8ea9;
+}
+
+.login-checkbox:checked {
+  background: #4945ff;
+  border-color: #4945ff;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
+  background-size: 100% 100%;
+}
+
+.login-submit-btn {
+  width: 100%;
+  height: 42px;
+  background: #4945ff;
+  color: #ffffff;
+  border: none;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.login-submit-btn:hover {
+  background: #3b37df;
+}
+
+.login-divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 26px 0 18px 0;
+  color: #8e8ea9;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #eaeaef;
+}
+
+.login-divider span {
+  padding: 0 12px;
+}
+
+.login-sso-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.sso-btn {
+  height: 38px;
+  border: 1px solid #eaeaef;
+  border-radius: 4px;
+  background: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.sso-btn:hover {
+  background: #f6f6f9;
+  border-color: #dcdce4;
+}
+
+.okta-text {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: #007dc1;
+  letter-spacing: -0.5px;
+}
+
+.login-footer-area {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.login-footer-area .footnote {
+  color: #8e8ea9;
+  font-size: 12px;
+  margin-top: 10px;
+}
+
+/* Validation & notice */
 input[aria-invalid="true"],
 input[aria-invalid="true"]:focus,
 input[aria-invalid="true"]:focus-visible {
@@ -2043,94 +2377,74 @@ input[aria-invalid="true"]:focus-visible {
   box-shadow: none !important;
 }
 
-.logininner .button {
-  width: 100%;
-  padding: 10px;
-  font-size: 13px;
+.logininner .notice {
   margin-top: 8px;
+  margin-bottom: 16px;
 }
 
-@keyframes orbFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-8px);
-  }
+/* Dark mode overrides for Strapi theme */
+:root[data-theme="dark"] .login, :root.dark .login, :root:has(#theme-toggle:checked) .login {
+  background: #181826;
 }
 
-@keyframes orbSpin1 {
-  0% {
-    transform: rotate(-25deg) scale(1);
-    opacity: 0.55;
-  }
-  50% {
-    transform: rotate(155deg) scale(1.04);
-    opacity: 0.85;
-  }
-  100% {
-    transform: rotate(335deg) scale(1);
-    opacity: 0.55;
-  }
+:root[data-theme="dark"] .login-lang-btn, :root.dark .login-lang-btn, :root:has(#theme-toggle:checked) .login-lang-btn {
+  color: #c0c0cf;
 }
 
-@keyframes orbSpin2 {
-  0% {
-    transform: rotate(25deg) scale(1.02);
-    opacity: 0.75;
-  }
-  50% {
-    transform: rotate(-155deg) scale(0.98);
-    opacity: 0.5;
-  }
-  100% {
-    transform: rotate(-335deg) scale(1.02);
-    opacity: 0.75;
-  }
+:root[data-theme="dark"] .login-lang-menu, :root.dark .login-lang-menu, :root:has(#theme-toggle:checked) .login-lang-menu {
+  background: #212134;
+  border-color: #32324d;
 }
 
-@keyframes orbSpin3 {
-  0% {
-    transform: rotate(75deg) scale(0.98);
-    opacity: 0.65;
-  }
-  50% {
-    transform: rotate(255deg) scale(1.04);
-    opacity: 0.9;
-  }
-  100% {
-    transform: rotate(435deg) scale(0.98);
-    opacity: 0.65;
-  }
+:root[data-theme="dark"] .login-lang-item, :root.dark .login-lang-item, :root:has(#theme-toggle:checked) .login-lang-item {
+  color: #c0c0cf;
 }
 
-.orb {
-  width: 200px;
-  height: 140px;
-  margin: 48px 0;
-  position: relative;
-  animation: orbFloat 6s ease-in-out infinite;
+:root[data-theme="dark"] .login-card, :root.dark .login-card, :root:has(#theme-toggle:checked) .login-card {
+  background: #212134;
+  border-color: #32324d;
 }
 
-.orb div {
-  border: 1px solid rgba(167, 243, 208, 0.35);
-  box-shadow: 0 0 16px rgba(167, 243, 208, 0.1);
-  border-radius: 50%;
-  width: 200px;
-  height: 110px;
-  position: absolute;
-  transform-origin: center center;
-  animation: orbSpin1 16s ease-in-out infinite;
+:root[data-theme="dark"] .login-card-title, :root.dark .login-card-title, :root:has(#theme-toggle:checked) .login-card-title {
+  color: #ffffff;
 }
 
-.orb div:nth-child(2) {
-  transform: rotate(25deg);
-  animation: orbSpin2 22s ease-in-out infinite;
+:root[data-theme="dark"] .login-card-sub, :root.dark .login-card-sub, :root:has(#theme-toggle:checked) .login-card-sub {
+  color: #8e8ea9;
 }
 
-.orb div:nth-child(3) {
-  transform: rotate(75deg);
-  animation: orbSpin3 18s ease-in-out infinite;
+:root[data-theme="dark"] .login-label, :root.dark .login-label, :root:has(#theme-toggle:checked) .login-label {
+  color: #c0c0cf;
+}
+
+:root[data-theme="dark"] .login-input, :root.dark .login-input, :root:has(#theme-toggle:checked) .login-input {
+  background: #181826;
+  border-color: #32324d;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .login-input:focus, :root.dark .login-input:focus, :root:has(#theme-toggle:checked) .login-input:focus {
+  border-color: #4945ff;
+}
+
+:root[data-theme="dark"] .login-checkbox-label, :root.dark .login-checkbox-label, :root:has(#theme-toggle:checked) .login-checkbox-label {
+  color: #c0c0cf;
+}
+
+:root[data-theme="dark"] .login-divider::before, :root[data-theme="dark"] .login-divider::after,
+:root.dark .login-divider::before, :root.dark .login-divider::after,
+:root:has(#theme-toggle:checked) .login-divider::before, :root:has(#theme-toggle:checked) .login-divider::after {
+  border-bottom-color: #32324d;
+}
+
+:root[data-theme="dark"] .sso-btn, :root.dark .sso-btn, :root:has(#theme-toggle:checked) .sso-btn {
+  background: #212134;
+  border-color: #32324d;
+}
+
+:root[data-theme="dark"] .sso-btn:hover, :root.dark .sso-btn:hover, :root:has(#theme-toggle:checked) .sso-btn:hover {
+  background: #28283e;
+  border-color: #4a4a6a;
 }
 
 .footnote {
@@ -4151,10 +4465,31 @@ main.docs-main-studio {
 .error-page-brand {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   text-decoration: none;
   color: var(--text);
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+}
+.error-page-brand .brandmark {
+  width: 44px;
+  height: 44px;
+}
+.error-page-brand .brandmark svg {
+  max-width: 44px;
+  max-height: 32px;
+  width: 44px;
+  height: 30px;
+}
+.error-page-brand .brand-title {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+.error-page-brand .brand-sub {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  margin-top: 2px;
 }
 @media (max-width: 860px) {
   .error-page-brand {
@@ -4502,7 +4837,49 @@ export function login(error = '', isDark = false, showRegister = true, footerCre
       </div>
     </dialog>
   ` : '';
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${neomailLogoSvg}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · ${e(footerCredit)}</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p><form method="post" action="/login"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p>${registerModal}</div></div></div>`, '', isDark);
+
+  return document('Sign in', `<div class="login">
+    ${loginLangDropdown}
+    <div class="login-card loginform">
+      <div class="logininner">
+        ${strapiLogoBadge}
+        <h1 class="login-card-title">Welcome back!</h1><!-- Welcome to NeoMail --><!-- Welcome to neoMail -->
+        <p class="login-card-sub">Log in to your Strapi account</p>
+        <form method="post" action="/login">
+          <div class="login-field-group">
+            <label class="login-label" for="login-email">
+              <span class="login-label-text">Email</span>
+              <span style="display:none">Administrator email</span>
+            </label>
+            <input type="email" id="login-email" name="email" class="login-input" placeholder="kaidoe@gmail.com" autocomplete="username">
+          </div>
+          <div class="login-field-group">
+            <div class="login-label-row">
+              <label class="login-label" for="login-token">Password</label>
+              <a href="#" class="login-forgot-link" onclick="alert('Enter your administrator token or contact your workspace administrator at aashish@neopathshala.com.');return false;">Forgot password?</a>
+            </div>
+            <div class="password-wrap">
+              <input type="password" id="login-token" name="admin_token" class="login-input password-input" required minlength="43" maxlength="128" placeholder="" autocomplete="current-password" ${error ? 'aria-invalid="true"' : ''}>
+              <button type="button" class="password-toggle-btn" onclick="var p=document.getElementById('login-token');if(p)p.type=p.type==='password'?'text':'password';" aria-label="Toggle password visibility" title="Show/hide password">${eyeIconSvg}</button>
+            </div>
+            ${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}
+          </div>
+          <div class="login-remember-row">
+            <label class="login-checkbox-label">
+              <input type="checkbox" name="remember" value="1" class="login-checkbox">
+              <span>Remember me</span>
+            </label>
+          </div>
+          <button type="submit" class="login-submit-btn">Login</button>
+          ${ssoRow}
+        </form>
+        ${registerModal}
+        <div class="login-footer-area">
+          <small class="footnote">Private mail infrastructure · ${e(footerCredit)}</small>
+        </div>
+      </div>
+    </div>
+  </div>`, '', isDark);
 }
 
 function empty(message = 'Your mail activity will appear here', help = 'Configure a provider and sender identity, then send your first test email.') {
@@ -7417,12 +7794,79 @@ export function otpRequest(error = '', isDark = false, emailVal = '', showRegist
     </dialog>
   ` : '';
 
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${neomailLogoSvg}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · ${e(footerCredit)}</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Request a one-time code sent to your administrator email.</p>${notice ? `<div class="notice" role="status" style="border-color:var(--accent);color:var(--accent);margin-bottom:16px">${icon('check')}<span>${e(notice)}</span></div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com" value="${e(emailVal)}" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Send login code ${icon('arrow')}</button></form>${registerModal}</div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login">
+    ${loginLangDropdown}
+    <div class="login-card loginform">
+      <div class="logininner">
+        ${strapiLogoBadge}
+        <h1 class="login-card-title">Welcome back!</h1><!-- Welcome to NeoMail --><!-- Welcome to neoMail -->
+        <p class="login-card-sub">Log in to your Strapi account</p>
+        ${notice ? `<div class="notice" role="status" style="border-color:#4945ff;color:#4945ff;margin-bottom:16px">${icon('check')}<span>${e(notice)}</span></div>` : ''}
+        <form method="post" action="/login">
+          <input type="hidden" name="step" value="request" id="login-step">
+          <div class="login-field-group">
+            <label class="login-label" for="login-email">
+              <span class="login-label-text">Email</span>
+              <span style="display:none">Administrator email</span>
+            </label>
+            <input type="email" id="login-email" name="email" class="login-input" required maxlength="254" autocomplete="username" placeholder="kaidoe@gmail.com" value="${e(emailVal)}" ${error ? 'aria-invalid="true"' : ''}>
+            ${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}
+          </div>
+          <div class="login-field-group">
+            <div class="login-label-row">
+              <label class="login-label" for="login-password">Password</label>
+              <a href="#" class="login-forgot-link" onclick="alert('Enter your email and click Login to receive a secure one-time login code, or contact your workspace administrator at aashish@neopathshala.com.');return false;">Forgot password?</a>
+            </div>
+            <div class="password-wrap">
+              <input type="password" id="login-password" name="admin_token" class="login-input password-input" placeholder="" autocomplete="current-password">
+              <button type="button" class="password-toggle-btn" onclick="var p=document.getElementById('login-password');if(p)p.type=p.type==='password'?'text':'password';" aria-label="Toggle password visibility" title="Show/hide password">${eyeIconSvg}</button>
+            </div>
+          </div>
+          <div class="login-remember-row">
+            <label class="login-checkbox-label">
+              <input type="checkbox" name="remember" value="1" class="login-checkbox">
+              <span>Remember me</span>
+            </label>
+          </div>
+          <button type="submit" class="login-submit-btn">Login</button>
+          ${ssoRow}
+        </form>
+        ${registerModal}
+        <div class="login-footer-area">
+          <small class="footnote">Private mail infrastructure · ${e(footerCredit)}</small>
+        </div>
+      </div>
+    </div>
+  </div>`, '', isDark);
 }
 
 export function otpVerify(email, error = '', isDark = false, footerCredit = 'Developed by SoftLaya Tech') {
   const renderedError = error ? renderNoticeText(error) : '';
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${neomailLogoSvg}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · ${e(footerCredit)}</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p><form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login">
+    ${loginLangDropdown}
+    <div class="login-card loginform">
+      <div class="logininner">
+        ${strapiLogoBadge}
+        <h1 class="login-card-title">Welcome back!</h1><!-- Welcome to NeoMail --><!-- Welcome to neoMail -->
+        <h2 style="font-size:18px;margin:0 0 6px;text-align:center;font-weight:700">Enter your code</h2>
+        <p class="login-card-sub" style="margin-bottom:24px">A one-time code was sent to <strong>${e(email)}</strong>.</p>
+        <form method="post" action="/login">
+          <input type="hidden" name="step" value="verify">
+          <input type="hidden" name="email" value="${e(email)}">
+          <div class="login-field-group">
+            <label class="login-label" for="login-code">One-time code</label>
+            <input id="login-code" name="code" class="login-input code-input" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" autofocus style="text-align:center;letter-spacing:6px;font-size:20px;font-weight:700;" ${error ? 'aria-invalid="true"' : ''}>
+            ${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}
+          </div>
+          <button type="submit" class="login-submit-btn">Login</button>
+          <p class="footnote" style="text-align:center;margin-top:16px"><a href="/login" class="login-forgot-link">← Use a different email</a></p>
+        </form>
+        <div class="login-footer-area">
+          <small class="footnote">Private mail infrastructure · ${e(footerCredit)}</small>
+        </div>
+      </div>
+    </div>
+  </div>`, '', isDark);
 }
 
 export function domains(rows, sess) {
@@ -7665,9 +8109,9 @@ export function errorIllustrationSvg() {
       <circle cx="45" cy="45" r="1.2" fill="#ffffff"/>
     </g>
     <g id="wallAlbumPhoto">
-      <circle cx="112" cy="30" r="2.2" fill="var(--illus-chair-shadow)"/>
+      <circle cx="112" cy="30" r="2.2" fill="var(--illus-frame-border)"/>
       <path d="M 112 30 L 96 37 M 112 30 L 128 37" stroke="var(--line-strong)" stroke-width="1.2" stroke-linecap="round"/>
-      <rect x="82" y="37" width="60" height="76" rx="3.5" fill="var(--surface)" stroke="var(--illus-chair-shadow)" stroke-width="3"/>
+      <rect x="82" y="37" width="60" height="76" rx="3.5" fill="var(--surface)" stroke="var(--illus-frame-border)" stroke-width="3.5"/>
       <rect x="86" y="41" width="52" height="68" rx="1.5" fill="#f8fafc" stroke="var(--line)" stroke-width="0.6"/>
       <g clip-path="url(#albumPhotoClip)">
         <rect x="89" y="44" width="46" height="50" fill="#e0f2fe"/>
@@ -7686,7 +8130,7 @@ export function errorIllustrationSvg() {
       <circle cx="112" cy="102" r="1.5" fill="var(--accent)"/>
     </g>
     <g id="serverRack">
-      <rect x="72" y="220" width="80" height="150" rx="8" fill="var(--illus-chair-shadow)" stroke="var(--line-strong)" stroke-width="1.5"/>
+      <rect x="72" y="220" width="80" height="150" rx="8" fill="var(--illus-server)" stroke="var(--line-strong)" stroke-width="1.5"/>
       <rect x="76" y="224" width="72" height="142" rx="5" fill="var(--surface)" fill-opacity="0.05" stroke="var(--line)" stroke-width="0.8"/>
       <rect x="79" y="227" width="66" height="17" rx="3" fill="var(--surface)" fill-opacity="0.12"/>
       <rect x="84" y="233" width="18" height="4.5" rx="1.5" fill="var(--accent)"/>
@@ -7694,10 +8138,10 @@ export function errorIllustrationSvg() {
       <circle cx="132" cy="235.5" r="2.2" fill="var(--accent)" class="server-led-1"/>
       <circle cx="138" cy="235.5" r="1.5" fill="#3b82f6" class="server-led-2"/>
       <rect x="79" y="247" width="66" height="20" rx="2" fill="var(--surface)" fill-opacity="0.07" stroke="var(--line)" stroke-width="0.7"/>
-      <rect x="84" y="255" width="5.5" height="5.5" rx="1" fill="var(--illus-chair-shadow)"/>
-      <rect x="91" y="255" width="5.5" height="5.5" rx="1" fill="var(--illus-chair-shadow)"/>
-      <rect x="98" y="255" width="5.5" height="5.5" rx="1" fill="var(--illus-chair-shadow)"/>
-      <rect x="105" y="255" width="5.5" height="5.5" rx="1" fill="var(--illus-chair-shadow)"/>
+      <rect x="84" y="255" width="5.5" height="5.5" rx="1" fill="var(--illus-server)"/>
+      <rect x="91" y="255" width="5.5" height="5.5" rx="1" fill="var(--illus-server)"/>
+      <rect x="98" y="255" width="5.5" height="5.5" rx="1" fill="var(--illus-server)"/>
+      <rect x="105" y="255" width="5.5" height="5.5" rx="1" fill="var(--illus-server)"/>
       <circle cx="86.7" cy="252" r="1" fill="var(--accent)" class="server-led-1"/>
       <circle cx="93.7" cy="252" r="1" fill="var(--accent)" class="server-led-2"/>
       <circle cx="100.7" cy="252" r="1" fill="#3b82f6" class="server-led-3"/>
@@ -7738,17 +8182,17 @@ export function errorIllustrationSvg() {
       <circle cx="87" cy="358" r="1.2" fill="var(--accent)"/>
       <circle cx="92" cy="358" r="1.2" fill="var(--accent)"/>
       <line x1="102" y1="358" x2="138" y2="358" stroke="var(--text)" stroke-width="1" opacity="0.2" stroke-linecap="round"/>
-      <rect x="77" y="369" width="13" height="4" rx="1.5" fill="var(--illus-chair-shadow)"/>
-      <rect x="134" y="369" width="13" height="4" rx="1.5" fill="var(--illus-chair-shadow)"/>
+      <rect x="77" y="369" width="13" height="4" rx="1.5" fill="var(--illus-server)"/>
+      <rect x="134" y="369" width="13" height="4" rx="1.5" fill="var(--illus-server)"/>
     </g>
     <g id="armchair">
       <path d="M200 280 C185 190, 205 130, 270 130 C335 130, 355 190, 340 280 Z" fill="url(#chairGrad)"/>
       <path d="M185 240 C180 240, 175 250, 175 270 C175 305, 195 320, 215 320 C222 320, 226 312, 226 300 C226 265, 205 240, 185 240 Z" fill="url(#chairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
       <path d="M355 240 C360 240, 365 250, 365 270 C365 305, 345 320, 325 320 C318 320, 314 312, 314 300 C314 265, 335 240, 355 240 Z" fill="url(#chairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
-      <line x1="234" y1="300" x2="220" y2="368" stroke="var(--illus-chair-shadow)" stroke-width="4.5" stroke-linecap="round"/>
-      <line x1="306" y1="300" x2="320" y2="368" stroke="var(--illus-chair-shadow)" stroke-width="4.5" stroke-linecap="round"/>
-      <line x1="217" y1="300" x2="192" y2="374" stroke="var(--illus-chair-shadow)" stroke-width="5" stroke-linecap="round"/>
-      <line x1="323" y1="300" x2="348" y2="374" stroke="var(--illus-chair-shadow)" stroke-width="5" stroke-linecap="round"/>
+      <line x1="234" y1="300" x2="220" y2="368" stroke="var(--illus-chair-legs)" stroke-width="4.5" stroke-linecap="round"/>
+      <line x1="306" y1="300" x2="320" y2="368" stroke="var(--illus-chair-legs)" stroke-width="4.5" stroke-linecap="round"/>
+      <line x1="217" y1="300" x2="192" y2="374" stroke="var(--illus-chair-legs)" stroke-width="5" stroke-linecap="round"/>
+      <line x1="323" y1="300" x2="348" y2="374" stroke="var(--illus-chair-legs)" stroke-width="5" stroke-linecap="round"/>
     </g>
     <g id="mascot">
       <path d="M225 300 C210 240, 225 170, 270 170 C315 170, 330 240, 315 300 C305 325, 235 325, 225 300 Z" fill="url(#errMascotGrad)"/>
@@ -7937,7 +8381,23 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
 }
 
 export function accessLogin() {
-  return document('Secure sign-in', `<div class="loginform" style="min-height:100vh"><div class="logininner"><span class="tag good">${icon('security')} Verified by Cloudflare Access</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p>Your identity has been verified through your configured email OTP or passkey sign-in provider.</p><form method="post" action="/login"><button class="button">Continue to workspace</button></form><p class="footnote">Sign-in options and approved administrator emails are managed in Cloudflare Access.</p></div></div>`);
+  return document('Secure sign-in', `<div class="login">
+    ${loginLangDropdown}
+    <div class="login-card loginform">
+      <div class="logininner">
+        ${strapiLogoBadge}
+        <h1 class="login-card-title">Welcome back!</h1><!-- Welcome to NeoMail --><!-- Welcome to neoMail -->
+        <h2 style="font-size:18px;margin:0 0 8px;text-align:center;font-weight:700">Verified by Cloudflare Access</h2>
+        <p class="login-card-sub" style="margin-bottom:24px">Your identity has been verified through your configured email OTP or passkey sign-in provider.</p>
+        <form method="post" action="/login">
+          <button type="submit" class="login-submit-btn">Continue to workspace</button>
+        </form>
+        <div class="login-footer-area">
+          <small class="footnote">Sign-in options and approved administrator emails are managed in Cloudflare Access.</small>
+        </div>
+      </div>
+    </div>
+  </div>`);
 }
 
 function profileAvatar(profile, base = '/dashboard') {
@@ -8026,14 +8486,39 @@ export function healthPage(isDark = false) {
   <meta name="theme-color" content="#063b2c">
   <link rel="icon" type="image/svg+xml" href="${faviconUri}">
   <title>neoMailer · System Status</title>
+  <script>
+    try {
+      var cf = localStorage.getItem('neomail_font_css');
+      if (cf) {
+        var s = document.createElement('style');
+        s.id = 'neomail-fonts-cached';
+        s.textContent = cf;
+        document.head.appendChild(s);
+      }
+    } catch(e) {}
+  </script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
-  <noscript>
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
-  </noscript>
+  <link rel="preload" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwgknk-6nFg.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500;600&display=swap">
   <style>
+    @font-face {
+      font-family: 'Plus Jakarta Sans';
+      font-style: normal;
+      font-weight: 300 800;
+      font-display: block;
+      src: url('https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
+    @font-face {
+      font-family: 'JetBrains Mono';
+      font-style: normal;
+      font-weight: 400 600;
+      font-display: block;
+      src: url('https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwgknk-6nFg.woff2') format('woff2');
+      unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+    }
     :root {
       color-scheme: dark;
       --bg: #131514;
@@ -8111,17 +8596,19 @@ export function healthPage(isDark = false) {
       gap: 12px;
     }
     .brandmark {
-      width: 36px;
-      height: 36px;
-      border-radius: var(--radius-sm);
-      background: var(--brand-dark);
-      border: 1px solid var(--line-strong);
-      display: grid;
-      place-items: center;
-      color: #34d399;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 34px;
+      height: 34px;
       flex-shrink: 0;
     }
-    .brandmark svg { width: 18px; height: 18px; }
+    .brandmark svg {
+      width: 32px;
+      height: auto;
+      max-height: 24px;
+      display: block;
+    }
     .brand-title {
       font-size: 18px;
       font-weight: 800;
@@ -8450,11 +8937,7 @@ export function healthPage(isDark = false) {
   <div class="wrapper">
     <header class="header">
       <div class="brand-wrap">
-        <div class="brandmark">
-          <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
-          </svg>
-        </div>
+        <span class="brandmark">${neomailerLogoSvg}</span>
         <div>
           <div style="display: flex; align-items: center;">
             <span class="brand-title">neo<span>Mailer</span></span>
@@ -8653,6 +9136,42 @@ export function healthPage(isDark = false) {
         cb();
       }
     }
+
+    async function cacheFontsLocally() {
+      try {
+        if (localStorage.getItem('neomail_font_css')) return;
+        var pjsUrl = 'https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2';
+        var jbmUrl = 'https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwgknk-6nFg.woff2';
+        var responses = await Promise.all([fetch(pjsUrl), fetch(jbmUrl)]);
+        if (!responses[0].ok || !responses[1].ok) return;
+        var buffers = await Promise.all([responses[0].arrayBuffer(), responses[1].arrayBuffer()]);
+
+        function bufToB64(buf) {
+          var u8 = new Uint8Array(buf);
+          var bin = '';
+          var chunk = 8192;
+          for (var i = 0; i < u8.length; i += chunk) {
+            bin += String.fromCharCode.apply(null, u8.subarray(i, i + chunk));
+          }
+          return btoa(bin);
+        }
+
+        var pjsB64 = bufToB64(buffers[0]);
+        var jbmB64 = bufToB64(buffers[1]);
+
+        var fontCss = '@font-face{font-family:\'Plus Jakarta Sans\';font-style:normal;font-weight:300 800;font-display:block;src:url(data:font/woff2;base64,' + pjsB64 + ') format(\'woff2\');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}' +
+          '@font-face{font-family:\'JetBrains Mono\';font-style:normal;font-weight:400 600;font-display:block;src:url(data:font/woff2;base64,' + jbmB64 + ') format(\'woff2\');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}';
+
+        localStorage.setItem('neomail_font_css', fontCss);
+        if (!document.getElementById('neomail-fonts-cached')) {
+          var s = document.createElement('style');
+          s.id = 'neomail-fonts-cached';
+          s.textContent = fontCss;
+          document.head.appendChild(s);
+        }
+      } catch (e) {}
+    }
+    cacheFontsLocally();
   </script>
 </body>
 </html>`;

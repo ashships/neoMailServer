@@ -315,6 +315,8 @@ test('neoMail enhancements: clean slugs, dark mode hover, SPA encrypted cache, D
   assert.ok(healthHtml.includes('service-icon-sm'), 'Must use small small icons for telemetry');
   assert.ok(healthHtml.includes('Plus Jakarta Sans'), 'Must load Plus Jakarta Sans');
   assert.ok(healthHtml.includes('JetBrains Mono'), 'Must load JetBrains Mono');
+  assert.ok(healthHtml.includes('neomail_font_css'), 'Must support local font caching to prevent FOUT on hard refresh');
+  assert.ok(healthHtml.includes('nml-envelope-clip'), 'Must display the real neoMailer logo SVG in brandmark');
   // Strict Privacy: Verify zero upstream provider names on the public page
   assert.ok(!healthHtml.includes('Resend'), 'Must NOT leak Resend provider name');
   assert.ok(!healthHtml.includes('Brevo'), 'Must NOT leak Brevo provider name');
