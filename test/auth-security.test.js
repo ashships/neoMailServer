@@ -198,6 +198,42 @@ test('auth security: only superadmin-provisioned accounts can request OTP and lo
     assert.ok(customCreditHtml.includes('outline: none !important;'), 'Must suppress outline to prevent double border');
     assert.ok(customCreditHtml.includes('box-shadow: none !important;'), 'Must suppress box-shadow to prevent double border');
 
+    // 11. DEDICATED REQUEST CLIENT ACCESS PAGE
+    await db.prepare("UPDATE app_settings SET value='true' WHERE name='PUBLIC_REGISTRATION'").run();
+    const getReqPage = await worker.fetch(new Request('https://mail.neopathshala.com/request-access'), env);
+    assert.equal(getReqPage.status, 200, 'GET /request-access must return 200');
+    const reqPageHtml = await getReqPage.text();
+    assert.ok(reqPageHtml.includes('Request Client Access'), 'Must display Request Client Access title');
+    assert.ok(reqPageHtml.includes('name="organization"'), 'Must have organization field');
+    assert.ok(reqPageHtml.includes('name="volume"'), 'Must have expected volume selector');
+    assert.ok(reqPageHtml.includes('Submit Access Request'), 'Must have submit button');
+
+    // Test POST /request-access
+    const postReqPage = await worker.fetch(new Request('https://mail.neopathshala.com/request-access', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        origin: 'https://mail.neopathshala.com',
+        'cf-connecting-ip': '10.0.0.12',
+      },
+      body: new URLSearchParams({
+        name: 'Enterprise Client',
+        email: 'corp@enterprise.com',
+        organization: 'Enterprise Corp',
+        volume: '100k - 500k',
+        notes: 'Core transactional delivery',
+      }),
+    }), env);
+    assert.equal(postReqPage.status, 200, 'POST /request-access must succeed with 200');
+    const postReqHtml = await postReqPage.text();
+    assert.ok(postReqHtml.includes('Request Received') || postReqHtml.includes('Your access request has been submitted'), 'Must display confirmation notice');
+    assert.ok(postReqHtml.includes('corp@enterprise.com'), 'Must summarize submitted email');
+
+    const enterpriseReqRow = await db.prepare("SELECT * FROM access_requests WHERE email='corp@enterprise.com'").first();
+    assert.ok(enterpriseReqRow, 'Dedicated request must be saved in access_requests table');
+    assert.equal(enterpriseReqRow.name, 'Enterprise Client');
+    assert.ok(enterpriseReqRow.notes.includes('[Volume: 100k - 500k]'), 'Notes should record volume');
+
   } finally {
     globalThis.fetch = originalFetch;
     db.close();

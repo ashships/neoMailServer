@@ -204,8 +204,8 @@ export const neomailLogoSvg = neomailerLogoSvg;
 
 export const neomailBrandBadge = `
   <div class="login-brand-header">
-    <a class="brand" href="/" style="justify-content:center;margin-bottom:12px;text-decoration:none">
-      <div class="login-brand-badge">${neomailLogoSvg}</div>
+    <a class="brand" href="/" style="justify-content:center;text-decoration:none">
+      <span class="brandmark">${neomailLogoSvg}</span>
       <div class="brand-text" style="text-align:left">
         <span class="brand-title">neo<span>Mailer</span></span>
         <span class="brand-sub">Mail Infrastructure</span>
@@ -773,15 +773,16 @@ select option::checkmark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   flex-shrink: 0;
 }
 
 .brandmark svg {
-  width: 32px;
-  height: auto;
-  max-height: 24px;
+  width: 44px;
+  height: 30px;
+  max-width: 44px;
+  max-height: 32px;
   display: block;
 }
 
@@ -792,9 +793,9 @@ select option::checkmark {
 }
 
 .brand-title {
-  font-size: 15px;
-  font-weight: 750;
-  letter-spacing: -0.4px;
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
   color: var(--text);
 }
 
@@ -803,12 +804,12 @@ select option::checkmark {
 }
 
 .brand-sub {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--muted);
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 .brand span span {
@@ -2032,27 +2033,33 @@ iframe {
 
 .login-brand-header {
   display: flex;
-  flex-direction: column;
-  align-items: center;
   justify-content: center;
-  margin-bottom: 20px;
+  margin-bottom: 24px;
 }
 
-.login-brand-badge {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
-  background: var(--brand-dark);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 12px;
+.login-brand-header .brandmark {
+  width: 44px;
+  height: 44px;
 }
 
-.login-brand-badge svg {
-  width: 32px;
-  height: auto;
-  display: block;
+.login-brand-header .brandmark svg {
+  width: 44px;
+  height: 30px;
+  max-width: 44px;
+  max-height: 32px;
+}
+
+.login-brand-header .brand-title {
+  font-size: 21px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+}
+
+.login-brand-header .brand-sub {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  margin-top: 2px;
 }
 
 .login-card-title {
@@ -4585,8 +4592,8 @@ export function login(error = '', isDark = false, showRegister = true, footerCre
     <div class="login-card loginform">
       <div class="logininner">
         ${neomailBrandBadge}
-        <h1 class="login-card-title">Sign in to neoMailer</h1><!-- Welcome to NeoMail --><!-- Welcome to neoMail -->
-        <p class="login-card-sub">Enter your administrator access token to sign in to your workspace.</p>
+        <h1 class="login-card-title" style="text-align:center">Sign in to neoMailer</h1><!-- Welcome to NeoMail --><!-- Welcome to neoMail -->
+        <p class="login-card-sub" style="text-align:center">Enter your administrator access token to sign in to your workspace.</p>
         <form method="post" action="/login">
           <div class="login-field-group">
             <label class="login-label" for="login-token">Administrator token</label>
@@ -4597,6 +4604,103 @@ export function login(error = '', isDark = false, showRegister = true, footerCre
         </form>
         ${registerModal}
         <span style="display:none" aria-hidden="true">${e(footerCredit)}</span>
+      </div>
+    </div>
+  </div>`, '', isDark);
+}
+
+export function requestAccessPage(error = '', isDark = false, formVals = {}, successNotice = '', footerCredit = 'Developed by SoftLaya Tech', isDisabled = false) {
+  const renderedError = error ? renderNoticeText(error) : '';
+
+  const bodyContent = successNotice ? `
+    <div style="text-align:center;padding:12px 0;">
+      <div style="width:56px;height:56px;border-radius:50%;background:var(--tint);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="width:28px;height:28px;"><polyline points="20 6 9 17 4 12"/></svg>
+      </div>
+      <h2 style="font-size:22px;font-weight:800;margin:0 0 8px;color:var(--text);letter-spacing:-0.4px;">Request Received</h2>
+      <p style="font-size:14px;color:var(--muted);margin:0 0 24px;line-height:1.6;">${e(successNotice)}</p>
+      <div style="background:var(--surface-hover);border:1px solid var(--line);border-radius:var(--radius-sm);padding:14px 16px;text-align:left;margin-bottom:24px;font-size:13px;">
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);">
+          <span style="color:var(--muted)">Applicant:</span>
+          <span style="font-weight:600;color:var(--text)">${e(formVals.name || '')}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);">
+          <span style="color:var(--muted)">Work email:</span>
+          <span style="font-weight:600;color:var(--text)">${e(formVals.email || '')}</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;padding:6px 0;">
+          <span style="color:var(--muted)">Organization:</span>
+          <span style="font-weight:600;color:var(--text)">${e(formVals.organization || 'Individual / Startup')}</span>
+        </div>
+      </div>
+      <a href="/login" class="button" style="width:100%;justify-content:center;padding:11px 16px;box-sizing:border-box;">Return to Sign In</a>
+    </div>
+  ` : isDisabled ? `
+    <div style="text-align:center;padding:16px 0;">
+      <div style="width:52px;height:52px;border-radius:50%;background:rgba(239,68,68,0.1);color:#ef4444;display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
+        ${icon('alert')}
+      </div>
+      <h2 style="font-size:20px;font-weight:800;margin:0 0 8px;color:var(--text);">Registration Unavailable</h2>
+      <p style="font-size:14px;color:var(--muted);margin:0 0 24px;line-height:1.5;">Public registration requests are currently disabled by the workspace administrator.</p>
+      <a href="/login" class="button secondary" style="width:100%;justify-content:center;padding:10px 16px;box-sizing:border-box;">Return to Sign In</a>
+    </div>
+  ` : `
+    <form method="post" action="/request-access">
+      <input type="hidden" name="step" value="register_request">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <label class="field" style="margin:0;">
+          <span>Full name <span style="color:#ef4444">*</span></span>
+          <input type="text" name="name" required maxlength="80" placeholder="Jane Doe" autocomplete="name" value="${e(formVals.name || '')}">
+        </label>
+        <label class="field" style="margin:0;">
+          <span>Work email address <span style="color:#ef4444">*</span></span>
+          <input type="email" name="email" required maxlength="254" placeholder="you@company.com" autocomplete="email" value="${e(formVals.email || '')}">
+        </label>
+        <label class="field" style="margin:0;">
+          <span>Company / Organization <span style="color:#ef4444">*</span></span>
+          <input type="text" name="organization" required maxlength="120" placeholder="e.g. Acme Technologies Inc." autocomplete="organization" value="${e(formVals.organization || '')}">
+        </label>
+        <label class="field" style="margin:0;">
+          <span>Expected monthly sending volume</span>
+          <select name="volume" class="custom-select">
+            <option value="< 25k" ${formVals.volume === '< 25k' ? 'selected' : ''}>&lt; 25,000 emails / month</option>
+            <option value="25k - 100k" ${formVals.volume === '25k - 100k' ? 'selected' : ''}>25,000 – 100,000 emails / month</option>
+            <option value="100k - 500k" ${formVals.volume === '100k - 500k' ? 'selected' : ''}>100,000 – 500,000 emails / month</option>
+            <option value="500k+" ${formVals.volume === '500k+' ? 'selected' : ''}>500,000+ emails / month</option>
+          </select>
+        </label>
+        <label class="field" style="margin:0;">
+          <span>Intended sending use case</span>
+          <textarea name="notes" rows="3" maxlength="500" placeholder="e.g. Transactional alerts, password resets, receipts, notification infrastructure...">${e(formVals.notes || '')}</textarea>
+        </label>
+      </div>
+
+      <div style="margin-top:16px;padding:10px 12px;background:var(--surface-hover);border-radius:var(--radius-sm);border:1px solid var(--line);font-size:11.5px;color:var(--muted);display:flex;align-items:flex-start;gap:8px;line-height:1.45;">
+        ${icon('security')}
+        <span>Verified workspace access includes single-tenant domain isolation, SPF/DKIM validation, API keys, and enterprise dispatch routing.</span>
+      </div>
+
+      <button type="submit" class="button" style="width:100%;justify-content:center;padding:11px 16px;box-sizing:border-box;margin-top:18px;">
+        Submit Access Request ${icon('arrow')}
+      </button>
+
+      <div style="text-align:center;margin-top:18px;">
+        <a href="/login" class="textbutton-link" style="font-size:12.5px;color:var(--muted);">
+          &larr; Already have an account? Sign in
+        </a>
+      </div>
+    </form>
+  `;
+
+  return document('Request Client Access', `<div class="login">
+    <div class="login-card loginform" style="max-width:480px;">
+      <div class="logininner">
+        ${neomailBrandBadge}
+        <h1 class="login-card-title" style="text-align:center">Request Client Access</h1>
+        <p class="login-card-sub" style="text-align:center">Apply for a verified neoMailer transactional email workspace.</p>
+        ${renderedError ? `<div class="notice error" role="alert" style="margin-bottom:16px">${renderedError}</div>` : ''}
+        ${bodyContent}
+        <small class="footnote" style="display:block;text-align:center;margin-top:24px;color:var(--muted)">Private mail infrastructure · ${e(footerCredit)}</small>
       </div>
     </div>
   </div>`, '', isDark);
@@ -6440,21 +6544,21 @@ export function publicDocs(content, isDark = false, footerCredit = 'Developed by
     .docs-brand {
       display: flex;
       align-items: center;
-      gap: 10px;
+      gap: 12px;
       text-decoration: none;
       color: var(--text);
       font-weight: 800;
-      font-size: 18px;
-      letter-spacing: -0.02em;
+      font-size: 21px;
+      letter-spacing: -0.5px;
     }
     .docs-brand .brandmark {
-      width: 32px;
-      height: 32px;
+      width: 44px;
+      height: 44px;
       display: inline-flex;
       align-items: center;
       justify-content: center;
     }
-    .docs-brand .brandmark svg { width: 30px; height: auto; max-height: 22px; display: block; }
+    .docs-brand .brandmark svg { width: 44px; height: 30px; max-width: 44px; max-height: 32px; display: block; }
     .docs-brand .badge {
       font-size: 10px;
       padding: 2px 6px;
@@ -7518,8 +7622,8 @@ export function otpRequest(error = '', isDark = false, emailVal = '', showRegist
     <div class="login-card loginform">
       <div class="logininner">
         ${neomailBrandBadge}
-        <h1 class="login-card-title">Welcome to neoMailer</h1><!-- Welcome to NeoMail --><!-- Welcome to neoMail -->
-        <p class="login-card-sub">Sign in with a one-time verification code sent to your administrator email.</p>
+        <h1 class="login-card-title" style="text-align:center">Welcome to neoMailer</h1><!-- Welcome to NeoMail --><!-- Welcome to neoMail -->
+        <p class="login-card-sub" style="text-align:center">Sign in with a one-time verification code sent to your administrator email.</p>
         ${notice ? `<div class="notice good" role="status" style="margin-bottom:16px">${icon('check')}<span>${e(notice)}</span></div>` : ''}
         <form method="post" action="/login">
           <input type="hidden" name="step" value="request" id="login-step">
@@ -7543,8 +7647,8 @@ export function otpVerify(email, error = '', isDark = false, footerCredit = 'Dev
     <div class="login-card loginform">
       <div class="logininner">
         ${neomailBrandBadge}
-        <h1 class="login-card-title">Enter your code</h1><!-- Welcome to NeoMail --><!-- Welcome to neoMail -->
-        <p class="login-card-sub">A one-time code was sent to <strong>${e(email)}</strong>.</p>
+        <h1 class="login-card-title" style="text-align:center">Enter your code</h1><!-- Welcome to NeoMail --><!-- Welcome to neoMail -->
+        <p class="login-card-sub" style="text-align:center">A one-time code was sent to <strong>${e(email)}</strong>.</p>
         <form method="post" action="/login">
           <input type="hidden" name="step" value="verify">
           <input type="hidden" name="email" value="${e(email)}">
@@ -8080,8 +8184,8 @@ export function accessLogin() {
     <div class="login-card loginform">
       <div class="logininner">
         ${neomailBrandBadge}
-        <h1 class="login-card-title">Verified by Cloudflare Access</h1><!-- Welcome to NeoMail --><!-- Welcome to neoMail -->
-        <p class="login-card-sub">Your identity has been verified through your corporate access policy.</p>
+        <h1 class="login-card-title" style="text-align:center">Verified by Cloudflare Access</h1><!-- Welcome to NeoMail --><!-- Welcome to neoMail -->
+        <p class="login-card-sub" style="text-align:center">Your identity has been verified through your corporate access policy.</p>
         <form method="post" action="/login">
           <button type="submit" class="button login-submit-btn">Continue to workspace ${icon('arrow')}</button>
         </form>
@@ -8289,25 +8393,26 @@ export function healthPage(isDark = false) {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 34px;
-      height: 34px;
+      width: 44px;
+      height: 44px;
       flex-shrink: 0;
     }
     .brandmark svg {
-      width: 32px;
-      height: auto;
-      max-height: 24px;
+      width: 44px;
+      height: 30px;
+      max-width: 44px;
+      max-height: 32px;
       display: block;
     }
     .brand-title {
-      font-size: 18px;
+      font-size: 21px;
       font-weight: 800;
-      letter-spacing: -0.02em;
+      letter-spacing: -0.5px;
       line-height: 1.2;
     }
     .brand-title span { color: var(--accent); }
     .status-badge {
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
@@ -8320,10 +8425,10 @@ export function healthPage(isDark = false) {
       vertical-align: middle;
     }
     .brand-desc {
-      font-size: 12px;
+      font-size: 11.5px;
       color: var(--muted);
-      margin-top: 1px;
-      font-weight: 500;
+      margin-top: 2px;
+      font-weight: 600;
     }
     .header-actions {
       display: flex;

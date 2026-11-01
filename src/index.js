@@ -204,6 +204,65 @@ async function handler(request, env) {
     }
     path = '/admin/login';
   }
+  if (path === '/request-access' || path === '/request-client-access' || path === '/client-access') {
+    requireMethod(request, ['GET', 'POST']);
+    const isDark = cookie(request, 'neomail_theme') === 'dark';
+    const { values: cfg } = await config(env, request.method === 'POST');
+    const showReg = cfg.PUBLIC_REGISTRATION !== 'false';
+
+    if (request.method === 'GET') {
+      const existingSubject = await access(request, env).catch(() => null);
+      if (existingSubject) {
+        return redirect('/dashboard');
+      }
+      return reply(ui.requestAccessPage('', isDark, {}, '', cfg.FOOTER_CREDIT, !showReg));
+    }
+
+    sameOrigin(request);
+    if (!showReg) {
+      return reply(ui.requestAccessPage('', isDark, {}, '', cfg.FOOTER_CREDIT, true), 403);
+    }
+    await rate(env, 'reg-req:ip:' + ip, 5, 3600);
+    const data = await form(request);
+    const clientName = text(data.get('name'), 80);
+    const clientEmail = email(data.get('email'));
+    const organization = text(data.get('organization') || '', 120);
+    const volume = text(data.get('volume') || '', 50);
+    const rawNotes = text(data.get('notes') || '', 500);
+    const notes = volume ? (rawNotes ? `[Volume: ${volume}] ${rawNotes}` : `[Volume: ${volume}]`) : rawNotes;
+
+    if (!clientName || !clientEmail) {
+      return reply(ui.requestAccessPage('Please provide your full name and a valid work email address.', isDark, { name: clientName, email: data.get('email') || '', organization, volume, notes: rawNotes }, '', cfg.FOOTER_CREDIT), 422);
+    }
+
+    try {
+      await env.DB.prepare(`CREATE TABLE IF NOT EXISTS access_requests (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        organization TEXT,
+        notes TEXT,
+        status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'approved', 'rejected')),
+        created_at INTEGER NOT NULL,
+        ip_address TEXT
+      )`).run();
+    } catch {}
+
+    const reqId = crypto.randomUUID();
+    await env.DB.prepare('INSERT INTO access_requests (id, name, email, organization, notes, status, created_at, ip_address) VALUES (?, ?, ?, ?, ?, ?, unixepoch(), ?)')
+      .bind(reqId, clientName, clientEmail, organization, notes, 'pending', ip)
+      .run();
+
+    try {
+      await env.DB.prepare('INSERT INTO admin_alerts (id, owner_subject, domain, type, message, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, unixepoch())')
+        .bind(crypto.randomUUID(), 'local-admin', clientEmail, 'access_request', `New registration request from ${clientName} (${clientEmail}) for ${organization || 'Individual Workspace'}`)
+        .run();
+    } catch {}
+
+    await audit(env, request, 'ACCESS_REQUEST_SUBMITTED', { email: clientEmail, name: clientName, organization });
+
+    return reply(ui.requestAccessPage('', isDark, { name: clientName, email: clientEmail, organization }, 'Thank you! Your access request has been submitted. Our workspace administrator will review it shortly.', cfg.FOOTER_CREDIT));
+  }
   // Public probes do not disclose configuration, secrets, or database details.
   if (path.startsWith('/docs/')) {
     requireMethod(request, ['GET']);
