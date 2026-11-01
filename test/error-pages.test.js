@@ -22,6 +22,10 @@ test('errorPage renders the modern mascot layout and dynamic countdown timer for
   assert.ok(html.includes('error-page-svg'), 'Must render vector illustration SVG');
   assert.ok(html.includes('neomail-rate-timer'), 'Must include dynamic timer container');
   assert.ok(html.includes('test-nonce'), 'Must bind countdown script to CSP nonce');
+  assert.ok(html.includes('clockHourHand'), 'Must include real-time clock hour hand');
+  assert.ok(html.includes('clockMinuteHand'), 'Must include real-time clock minute hand');
+  assert.ok(html.includes('clockSecondHand'), 'Must include real-time clock second hand');
+  assert.ok(html.includes('mascot-blinking-eyes'), 'Must include mascot blinking eyes');
 });
 
 test('errorPage adapts cleanly for 404, 403, and 500 error codes', () => {

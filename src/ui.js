@@ -494,21 +494,30 @@ select:open::picker-icon {
 
 /* Force dropdown picker to ALWAYS open BELOW the input */
 select::picker(select),
-select.custom-select::picker(select) {
-  position-area: bottom span-all;
-  top: anchor(bottom);
-  bottom: auto;
-  left: anchor(left);
-  right: auto;
+select.custom-select::picker(select),
+select:open::picker(select),
+select.custom-select:open::picker(select) {
+  position-area: block-end span-all !important;
+  position-area: bottom span-all !important;
+  inset-block-start: anchor(bottom) !important;
+  inset-block-end: auto !important;
+  top: anchor(bottom) !important;
+  bottom: auto !important;
+  left: anchor(left) !important;
+  right: auto !important;
   min-width: anchor-size(width);
-  margin-top: 6px;
-  margin-bottom: 0;
-  position-try-fallbacks: flip-block;
+  margin-block-start: 6px !important;
+  margin-block-end: 0 !important;
+  margin-top: 6px !important;
+  margin-bottom: 0 !important;
+  position-try-fallbacks: none !important;
+  position-try: none !important;
+  position-try-order: normal !important;
   background: var(--surface);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   padding: 6px;
-  z-index: 999;
+  z-index: 9999;
 }
 
 select option {
@@ -7092,21 +7101,22 @@ export function errorIllustrationSvg() {
       </linearGradient>
     </defs>
     <ellipse cx="270" cy="220" rx="190" ry="170" fill="url(#errBackdropGlow)"/>
-    <ellipse cx="270" cy="375" rx="150" ry="18" fill="var(--text)" opacity="0.06"/>
-    <ellipse cx="140" cy="370" rx="40" ry="10" fill="var(--text)" opacity="0.06"/>
-    <ellipse cx="445" cy="370" rx="30" ry="8" fill="var(--text)" opacity="0.06"/>
-    <g transform="translate(355, 30)">
+    <ellipse cx="270" cy="378" rx="145" ry="16" fill="var(--text)" opacity="0.06"/>
+    <ellipse cx="122" cy="370" rx="38" ry="10" fill="var(--text)" opacity="0.06"/>
+    <ellipse cx="445" cy="372" rx="30" ry="8" fill="var(--text)" opacity="0.06"/>
+    <g transform="translate(355, 30)" id="wallClockGroup">
       <circle cx="45" cy="45" r="38" fill="var(--surface)" stroke="var(--illus-clock-rim)" stroke-width="4"/>
-      <line x1="45" y1="14" x2="45" y2="20" stroke="var(--illus-clock-rim)" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="45" y1="70" x2="45" y2="76" stroke="var(--illus-clock-rim)" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="14" y1="45" x2="20" y2="45" stroke="var(--illus-clock-rim)" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="70" y1="45" x2="76" y2="45" stroke="var(--illus-clock-rim)" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="45" y1="45" x2="30" y2="30" stroke="var(--text)" stroke-width="3" stroke-linecap="round"/>
-      <line x1="45" y1="45" x2="60" y2="28" stroke="var(--text)" stroke-width="2.5" stroke-linecap="round"/>
-      <line x1="45" y1="45" x2="45" y2="18" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" class="error-clock-sweep"/>
-      <circle cx="45" cy="45" r="3" fill="var(--accent)"/>
+      <line x1="45" y1="14" x2="45" y2="21" stroke="var(--illus-clock-rim)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="45" y1="69" x2="45" y2="76" stroke="var(--illus-clock-rim)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="14" y1="45" x2="21" y2="45" stroke="var(--illus-clock-rim)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="69" y1="45" x2="76" y2="45" stroke="var(--illus-clock-rim)" stroke-width="3" stroke-linecap="round"/>
+      <line id="clockHourHand" x1="45" y1="45" x2="45" y2="28" stroke="var(--text)" stroke-width="3.5" stroke-linecap="round"/>
+      <line id="clockMinuteHand" x1="45" y1="45" x2="45" y2="21" stroke="var(--text)" stroke-width="2.5" stroke-linecap="round"/>
+      <line id="clockSecondHand" x1="45" y1="52" x2="45" y2="16" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="45" cy="45" r="3.2" fill="var(--accent)"/>
+      <circle cx="45" cy="45" r="1.2" fill="#ffffff"/>
     </g>
-    <g>
+    <g id="sideTable" transform="translate(-18, 0)">
       <line x1="120" y1="310" x2="105" y2="370" stroke="var(--illus-chair-shadow)" stroke-width="4" stroke-linecap="round"/>
       <line x1="140" y1="310" x2="140" y2="372" stroke="var(--illus-chair-shadow)" stroke-width="4" stroke-linecap="round"/>
       <line x1="160" y1="310" x2="175" y2="370" stroke="var(--illus-chair-shadow)" stroke-width="4" stroke-linecap="round"/>
@@ -7120,46 +7130,51 @@ export function errorIllustrationSvg() {
       <path d="M127 272 C134 262, 140 266, 132 258 C126 266, 127 270, 127 272 Z" fill="var(--illus-plant-dark)"/>
       <path d="M127 272 C127 256, 131 254, 127 250 C123 254, 127 266, 127 272 Z" fill="#10b981"/>
     </g>
-    <g>
-      <line x1="205" y1="340" x2="195" y2="376" stroke="var(--illus-chair-shadow)" stroke-width="6" stroke-linecap="round"/>
-      <line x1="335" y1="340" x2="345" y2="376" stroke="var(--illus-chair-shadow)" stroke-width="6" stroke-linecap="round"/>
-      <line x1="230" y1="335" x2="225" y2="370" stroke="var(--illus-chair-shadow)" stroke-width="5" stroke-linecap="round"/>
-      <line x1="310" y1="335" x2="315" y2="370" stroke="var(--illus-chair-shadow)" stroke-width="5" stroke-linecap="round"/>
-      <path d="M200 280 C185 190, 205 130, 270 130 C335 130, 355 190, 340 280 Z" fill="url(#errChairGrad)"/>
-      <path d="M185 240 C180 240, 175 250, 175 270 C175 305, 195 320, 215 320 C222 320, 226 312, 226 300 C226 265, 205 240, 185 240 Z" fill="url(#errChairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
-      <path d="M355 240 C360 240, 365 250, 365 270 C365 305, 345 320, 325 320 C318 320, 314 312, 314 300 C314 265, 335 240, 355 240 Z" fill="url(#errChairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
+    <g id="armchair">
+      <path d="M200 280 C185 190, 205 130, 270 130 C335 130, 355 190, 340 280 Z" fill="url(#chairGrad)"/>
+      <path d="M185 240 C180 240, 175 250, 175 270 C175 305, 195 320, 215 320 C222 320, 226 312, 226 300 C226 265, 205 240, 185 240 Z" fill="url(#chairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
+      <path d="M355 240 C360 240, 365 250, 365 270 C365 305, 345 320, 325 320 C318 320, 314 312, 314 300 C314 265, 335 240, 355 240 Z" fill="url(#chairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
+      <line x1="234" y1="326" x2="230" y2="368" stroke="var(--illus-chair-shadow)" stroke-width="7" stroke-linecap="round"/>
+      <line x1="306" y1="326" x2="310" y2="368" stroke="var(--illus-chair-shadow)" stroke-width="7" stroke-linecap="round"/>
+      <path d="M198 320 L194 326 L204 336 L336 336 L346 326 L342 320 Z" fill="var(--illus-wood-dark)"/>
+      <path d="M200 322 L194 326 L178 376 C176 382, 184 384, 188 378 L204 336 L336 336 L352 378 C356 384, 364 382, 362 376 L346 326 L340 322 L332 328 L208 328 Z" fill="var(--illus-wood)"/>
     </g>
-    <g>
+    <g id="mascot">
       <path d="M225 300 C210 240, 225 170, 270 170 C315 170, 330 240, 315 300 C305 325, 235 325, 225 300 Z" fill="url(#errMascotGrad)"/>
       <rect x="238" y="212" width="28" height="26" rx="8" fill="var(--surface)" fill-opacity="0.9" stroke="var(--illus-glasses)" stroke-width="3"/>
       <rect x="274" y="212" width="28" height="26" rx="8" fill="var(--surface)" fill-opacity="0.9" stroke="var(--illus-glasses)" stroke-width="3"/>
       <line x1="266" y1="223" x2="274" y2="223" stroke="var(--illus-glasses)" stroke-width="3.5" stroke-linecap="round"/>
       <line x1="238" y1="223" x2="226" y2="228" stroke="var(--illus-glasses)" stroke-width="3" stroke-linecap="round"/>
       <line x1="302" y1="223" x2="314" y2="228" stroke="var(--illus-glasses)" stroke-width="3" stroke-linecap="round"/>
-      <ellipse cx="254" cy="225" rx="5.5" ry="7" fill="var(--illus-glasses)"/>
-      <circle cx="252" cy="222" r="2.2" fill="#ffffff"/>
-      <ellipse cx="286" cy="225" rx="5.5" ry="7" fill="var(--illus-glasses)"/>
-      <circle cx="284" cy="222" r="2.2" fill="#ffffff"/>
+      <g class="mascot-blinking-eyes">
+        <ellipse cx="254" cy="225" rx="5.5" ry="7" fill="var(--illus-glasses)"/>
+        <circle cx="252" cy="222" r="2.2" fill="#ffffff"/>
+        <ellipse cx="286" cy="225" rx="5.5" ry="7" fill="var(--illus-glasses)"/>
+        <circle cx="284" cy="222" r="2.2" fill="#ffffff"/>
+      </g>
       <path d="M266 244 Q272 250 278 244" stroke="var(--illus-glasses)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
       <ellipse cx="236" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
       <ellipse cx="304" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
-      <path d="M225 270 C218 275, 212 285, 230 292" stroke="var(--illus-mascot-dark)" stroke-width="12" stroke-linecap="round" fill="none"/>
-      <g transform="translate(230, 276)">
-        <rect x="0" y="0" width="18" height="22" rx="4" fill="#ffffff" stroke="var(--line-strong)" stroke-width="1.5"/>
-        <path d="M18 5 C24 5, 24 16, 18 16" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
-        <path d="M18 5 C24 5, 24 16, 18 16" fill="none" stroke="var(--line-strong)" stroke-width="1" stroke-linecap="round"/>
-        <path d="M6 -2 Q9 -6 6 -10" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-1"/>
-        <path d="M12 -3 Q15 -8 12 -13" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-2"/>
+      <path d="M225 270 C216 276, 212 284, 222 288" stroke="var(--illus-arms)" stroke-width="12" stroke-linecap="round" fill="none"/>
+      <g transform="translate(228, 274)">
+        <path d="M0 6 C-9 6, -9 18, 0 18" fill="none" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round"/>
+        <path d="M0 6 C-9 6, -9 18, 0 18" fill="none" stroke="var(--line-strong)" stroke-width="1.3" stroke-linecap="round"/>
+        <rect x="0" y="0" width="20" height="24" rx="4" fill="#ffffff" stroke="var(--line-strong)" stroke-width="1.5"/>
+        <path d="M7 -2 Q10 -6 7 -10" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-1"/>
+        <path d="M14 -3 Q17 -8 14 -13" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-2"/>
       </g>
-      <path d="M312 265 C326 270, 334 285, 310 292" stroke="var(--illus-mascot-dark)" stroke-width="12" stroke-linecap="round" fill="none"/>
+      <ellipse cx="224" cy="284" rx="6" ry="7" fill="var(--illus-arms)"/>
+      <path d="M224 278 C220 281, 219 289, 223 293" stroke="var(--illus-arms)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+      <path d="M312 265 C326 270, 334 285, 310 292" stroke="var(--illus-arms)" stroke-width="12" stroke-linecap="round" fill="none"/>
+      <ellipse cx="304" cy="289" rx="6" ry="5" fill="var(--illus-arms)"/>
       <g transform="translate(306, 280)">
         <rect x="0" y="2" width="16" height="12" rx="3" fill="#1e293b"/>
         <circle cx="8" cy="8" r="7" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
         <line x1="8" y1="8" x2="8" y2="4" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
         <line x1="8" y1="8" x2="11" y2="8" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
       </g>
-      <ellipse cx="248" cy="326" rx="12" ry="7" fill="var(--illus-mascot-dark)"/>
-      <ellipse cx="292" cy="326" rx="12" ry="7" fill="var(--illus-mascot-dark)"/>
+      <ellipse cx="248" cy="326" rx="12" ry="7" fill="var(--illus-arms)"/>
+      <ellipse cx="292" cy="326" rx="12" ry="7" fill="var(--illus-arms)"/>
     </g>
     <path d="M192 300 C192 290, 205 285, 270 285 C335 285, 348 290, 348 300 C348 322, 335 336, 270 336 C205 336, 192 322, 192 300 Z" fill="url(#errCushionGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1.5"/>
     <g transform="translate(415, 170)">
@@ -7202,15 +7217,9 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
   const initialTimeStr = `${initialM}:${initialS < 10 ? '0' : ''}${initialS} min`;
 
   const timeBadgeHtml = isRateLimit ? `
-    <div class="error-page-time" id="neomail-rate-container">
-      <span style="color:var(--accent);display:inline-flex;align-items:center;">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"></circle>
-          <polyline points="12 6 12 12 16 14"></polyline>
-        </svg>
-      </span>
-      <span>Try again in <span class="error-page-time-counter" id="neomail-rate-timer">${e(initialTimeStr)}</span></span>
-    </div>
+    <p class="error-page-time" id="neomail-rate-container">
+      Try again in <strong id="neomail-rate-timer">${e(initialTimeStr)}</strong>
+    </p>
   ` : '';
 
   const actionsHtml = isRateLimit ? `
@@ -7232,28 +7241,42 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
     </div>
   `;
 
-  const countdownScript = (isRateLimit && nonce) ? `
+  const pageScript = nonce ? `
     <script nonce="${e(nonce)}">
       (function(){
+        function uClk() {
+          var d = new Date(), s = d.getSeconds(), m = d.getMinutes(), h = d.getHours();
+          var sE = document.getElementById('clockSecondHand');
+          var mE = document.getElementById('clockMinuteHand');
+          var hE = document.getElementById('clockHourHand');
+          if (sE) sE.setAttribute('transform', 'rotate(' + (s * 6) + ' 45 45)');
+          if (mE) mE.setAttribute('transform', 'rotate(' + (m * 6 + s * 0.1) + ' 45 45)');
+          if (hE) hE.setAttribute('transform', 'rotate(' + ((h % 12) * 30 + m * 0.5) + ' 45 45)');
+        }
+        uClk();
+        setInterval(uClk, 1000);
+        ${isRateLimit ? `
         var sec = ${seconds};
         var disp = document.getElementById('neomail-rate-timer');
         var btn = document.getElementById('btn-retry');
-        if (!disp) return;
-        function fmt(s) {
-          var m = Math.floor(s / 60);
-          var rem = s % 60;
-          return m + ':' + (rem < 10 ? '0' : '') + rem + ' min';
-        }
-        var iv = setInterval(function() {
-          sec--;
-          if (sec <= 0) {
-            clearInterval(iv);
-            disp.textContent = 'Ready to retry';
-            if (btn) { btn.disabled = false; btn.focus(); }
-          } else {
-            disp.textContent = fmt(sec);
+        if (disp) {
+          function fmt(s) {
+            var m = Math.floor(s / 60);
+            var rem = s % 60;
+            return m + ':' + (rem < 10 ? '0' : '') + rem + ' min';
           }
-        }, 1000);
+          var iv = setInterval(function() {
+            sec--;
+            if (sec <= 0) {
+              clearInterval(iv);
+              disp.textContent = 'Ready to retry';
+              if (btn) { btn.disabled = false; btn.focus(); }
+            } else {
+              disp.textContent = fmt(sec);
+            }
+          }, 1000);
+        }
+        ` : ''}
       })();
     </script>
   ` : '';
@@ -7282,7 +7305,7 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
         </div>
       </div>
     </div>
-    ${countdownScript}
+    ${pageScript}
   `;
 
   return document(pageTitle, content, nonce, isDark);
