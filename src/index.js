@@ -1,6 +1,6 @@
 import { HttpError, reply, redirect, hash, hashOtp, equal, email, text, hostname, cookie, local, sameOrigin, form, json, readBody, rate, audit, access, session, csrf, sessionCookie, bytes64, headers } from './security.js';
 import { config, redactConfig, saveSettings, saveSecret, PROVIDERS, getAccountProviderKeys, saveAccountProviderKey, deleteAccountProviderKey, toggleAccountProviderKey, resolveAccountProviderSecrets } from './config.js';
-import { dispatch, validateMail, verifyWebhook, applyWebhook, sendSmtp, send } from './providers.js';
+import { dispatch, validateMail, verifyWebhook, applyWebhook, sendSmtp, send, getProviderLimits, getProviderUsage } from './providers.js';
 import { safeFetch } from './security.js';
 import * as ui from './ui.js';
 import { getProfile, saveProfile, profileForm, profileImage } from './profile.js';
@@ -234,7 +234,7 @@ async function handler(request, env) {
   }
   // Tenant workspaces may mutate their own resources via scoped action endpoints and inspect their
   // own messages; every other admin path (global settings, users, providers, docs, views) requires the superadmin role.
-  const tenantForm = (request.method === 'POST' && ['/admin/identities/create','/admin/identities/update','/admin/api-clients/create','/admin/api-clients/revoke','/admin/domains/create','/admin/domains/verify','/admin/domains/auto-check','/dashboard/domains/auto-check','/admin/send-test','/admin/logout','/admin/sessions/revoke','/admin/profile','/admin/account-keys/save','/admin/account-keys/delete','/admin/account-keys/toggle'].includes(path))
+  const tenantForm = (request.method === 'POST' && ['/admin/identities/create','/admin/identities/update','/admin/api-clients/create','/admin/api-clients/revoke','/admin/domains/create','/dashboard/domains/create','/admin/domains/verify','/dashboard/domains/verify','/admin/domains/delete','/dashboard/domains/delete','/admin/domains/auto-check','/dashboard/domains/auto-check','/admin/providers/limit','/dashboard/providers/limit','/admin/send-test','/admin/logout','/admin/sessions/revoke','/admin/profile','/admin/account-keys/save','/admin/account-keys/delete','/admin/account-keys/toggle'].includes(path))
     || (request.method === 'GET' && ['/admin/view-mail','/admin/email','/admin/preview','/admin/profile-image'].includes(path));
   if (!dashboardMode && path.startsWith('/admin') && role !== 'superadmin' && path !== '/admin/login' && !tenantForm) {
     if (request.method === 'GET' && !url.searchParams.has('view')) {
@@ -445,7 +445,11 @@ async function handler(request, env) {
   sess.local_dev = local(request, env);
   sess.theme = cookie(request, 'neomail_theme') || '';
   sess.profile = await getProfile(env, subject);
-  if (path === '/admin/profile-image') { requireMethod(request, ['GET']); return profileImage(env, subject); }
+  if (path === '/admin/profile-image') {
+    requireMethod(request, ['GET']);
+    const targetSubject = ((await isSuperadmin(env, subject)) && url.searchParams.get('subject')) ? url.searchParams.get('subject') : subject;
+    return profileImage(env, targetSubject);
+  }
   const { values: cfg } = await config(env, request.method === 'POST');
   if (request.method === 'POST') {
     const data = path === '/admin/profile' ? await profileForm(request) : await form(request); await csrf(request, data, sess);
@@ -626,7 +630,7 @@ async function handler(request, env) {
       const senderDomain = address.split('@')[1];
       const domainRow = await env.DB.prepare('SELECT is_verified,owner_subject FROM managed_domains WHERE domain=?').bind(senderDomain).first();
       if (!domainRow || !domainRow.is_verified) throw new HttpError(422, 'Add and verify the sending domain before creating an identity for it.');
-      if (!await isSuperadmin(env, subject) && domainRow.owner_subject !== subject) throw new HttpError(422, 'This sending domain belongs to another workspace.');
+      if (domainRow.owner_subject !== subject) throw new HttpError(422, 'This sending domain belongs to another workspace.');
       const result = await env.DB.prepare('INSERT INTO sender_identities (id,email_address,display_name,is_default,is_active,created_at,owner_subject) VALUES (?,?,?,0,1,unixepoch(),?) ON CONFLICT(email_address) DO NOTHING RETURNING id').bind(crypto.randomUUID(), address, displayName, subject).first();
       if (!result) throw new HttpError(409, 'Sender identity already exists.');
       await audit(env, request, 'IDENTITY_CREATED', { address }); return redirect('/admin?view=identities&notice=Identity+created');
@@ -719,7 +723,7 @@ async function handler(request, env) {
       ]);
       await audit(env, request, 'ADMIN_USER_REVOKED', { subject: target }); return redirect('/admin?view=users&notice=' + encodeURIComponent('Administrator revoked.'));
     }
-    if (path === '/admin/domains/create') {
+    if (path === '/admin/domains/create' || path === '/dashboard/domains/create') {
       const domain = hostname(data.get('domain') || '');
       if (!domain) throw new HttpError(422, 'Enter a valid domain such as client.example.com.');
       const name = text(data.get('display_name'), 100, false) || domain;
@@ -727,7 +731,21 @@ async function handler(request, env) {
       if (existing) throw new HttpError(409, existing.owner_subject === subject ? 'This domain is already in your workspace.' : 'This domain is already registered to another workspace.');
       const token = crypto.randomUUID().replace(/-/g, '');
       await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,owner_subject,verification_token) VALUES (?,?,0,unixepoch(),?,?,?)').bind(domain, name, subject, subject, token).run();
-      await audit(env, request, 'DOMAIN_ADDED', { domain }); return redirect('/admin?view=domains&notice=' + encodeURIComponent('Domain added.'));
+      await audit(env, request, 'DOMAIN_ADDED', { domain });
+      const base = (await adminRole(env, subject)) === 'superadmin' ? '/admin' : '/dashboard';
+      return redirect(`${base}/domains?notice=` + encodeURIComponent('Domain added.'));
+    }
+    if (path === '/admin/domains/delete' || path === '/dashboard/domains/delete') {
+      const domain = hostname(data.get('domain') || '');
+      if (!domain) throw new HttpError(422, 'Enter a valid domain.');
+      const admin = await isSuperadmin(env, subject);
+      const row = await env.DB.prepare(admin ? 'SELECT domain,owner_subject FROM managed_domains WHERE domain=?' : 'SELECT domain,owner_subject FROM managed_domains WHERE domain=? AND owner_subject=?').bind(domain, ...(admin ? [] : [subject])).first();
+      if (!row) throw new HttpError(404, 'Domain not found.');
+      await env.DB.prepare('DELETE FROM managed_domains WHERE domain=?').bind(domain).run();
+      await env.DB.prepare('DELETE FROM admin_alerts WHERE domain=?').bind(domain).run().catch(() => {});
+      await audit(env, request, 'DOMAIN_DELETED', { domain, owner: row.owner_subject });
+      const base = (await adminRole(env, subject)) === 'superadmin' ? '/admin' : '/dashboard';
+      return redirect(`${base}/domains?notice=` + encodeURIComponent(`Domain ${domain} removed.`));
     }
     if (path === '/admin/users/role') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
@@ -740,7 +758,7 @@ async function handler(request, env) {
       await env.DB.prepare('UPDATE admin_users SET role=? WHERE subject=?').bind(role, target).run();
       await audit(env, request, 'ADMIN_USER_ROLE_CHANGED', { subject: target, role }); return redirect('/admin?view=users&notice=' + encodeURIComponent('Role updated.'));
     }
-    if (path === '/admin/domains/verify') {
+    if (path === '/admin/domains/verify' || path === '/dashboard/domains/verify') {
       const domain = hostname(data.get('domain') || '');
       if (!domain) throw new HttpError(422, 'Enter a valid domain such as client.example.com.');
       const admin = await isSuperadmin(env, subject);
@@ -784,6 +802,28 @@ async function handler(request, env) {
       }
       const base = (await adminRole(env, subject)) === 'superadmin' ? '/admin' : '/dashboard';
       return redirect(`${base}/domains?notice=` + encodeURIComponent(failed > 0 ? `DNS auto-check complete: ${failed} domain(s) failed verification and outbound sending was paused.` : 'DNS auto-check complete: all domains verified successfully.'));
+    }
+    if (path === '/admin/providers/limit' || path === '/dashboard/providers/limit') {
+      const provider = (data.get('provider') || '').toLowerCase().trim();
+      if (!PROVIDERS.includes(provider)) throw new HttpError(422, 'Invalid provider.');
+      const limitVal = parseInt(data.get('limit'), 10);
+      if (!Number.isInteger(limitVal) || limitVal < 1 || limitVal > 10000000) {
+        throw new HttpError(422, 'Limit must be a positive integer between 1 and 10,000,000.');
+      }
+      const isSuper = await isSuperadmin(env, subject);
+      let targetUser = subject;
+      if (isSuper && data.get('target_user')) {
+        targetUser = text(data.get('target_user'), 254);
+      }
+      await env.DB.prepare(`
+        INSERT INTO provider_limits (owner_subject, provider_name, send_limit, updated_at)
+        VALUES (?, ?, ?, unixepoch())
+        ON CONFLICT(owner_subject, provider_name) DO UPDATE SET send_limit=excluded.send_limit, updated_at=unixepoch()
+      `).bind(targetUser, provider, limitVal).run();
+      await audit(env, request, 'PROVIDER_LIMIT_UPDATED', { provider, limit: limitVal, target_user: targetUser });
+      const base = isSuper ? '/admin' : '/dashboard';
+      const fromView = data.get('from_view') === 'settings' ? 'settings' : 'providers';
+      return redirect(`${base}/${fromView}?notice=` + encodeURIComponent(`Sending limit for ${provider.toUpperCase()} (${targetUser}) updated to ${limitVal.toLocaleString()} emails.`));
     }
     if (path === '/admin/docs/save') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
@@ -890,26 +930,42 @@ async function handler(request, env) {
     const superadmin = role === 'superadmin';
     title='Settings'; subtitle=superadmin?'Configure your workspace credentials and routing without redeploying.':'Your profile and encrypted workspace provider credentials.';
     const accountKeys = await getAccountProviderKeys(env, subject);
-    content=ui.settings(redactConfig(cfg),sess,superadmin,accountKeys);
+    const limits = await getProviderLimits(env, subject);
+    const usage = await getProviderUsage(env, subject);
+    content=ui.settings(redactConfig(cfg),sess,superadmin,accountKeys,limits,usage);
   } else if (view === 'identities' || view === 'compose') {
     const senders = await identities(env, subject);
-    const superadmin = await isSuperadmin(env, subject);
-    const verifiedDomains = view === 'identities' ? (await rows(env, superadmin ? 'SELECT domain FROM managed_domains WHERE is_verified=1 ORDER BY domain' : 'SELECT domain FROM managed_domains WHERE is_verified=1 AND owner_subject=? ORDER BY domain', ...(superadmin?[]:[subject]))).map(r=>r.domain) : [];
+    const verifiedDomains = view === 'identities' ? (await rows(env, 'SELECT domain FROM managed_domains WHERE is_verified=1 AND owner_subject=? ORDER BY domain', subject)).map(r=>r.domain) : [];
     title=view==='compose'?'Send a test':'Sender identities'; subtitle=view==='compose'?'Verify your email delivery setup.':'Manage approved addresses for outbound mail.';
     content=view==='compose'?ui.compose(senders,sess):ui.identities(senders,sess,verifiedDomains);
   } else if (view === 'providers') {
     title='Delivery providers'; subtitle='Priority failover routing, health monitoring, and credential management.';
     const safeCfg = redactConfig(cfg);
     const healthRows = await rows(env,"SELECT * FROM provider_health WHERE owner_subject='local-admin'");
-    content = ui.providersView(healthRows, safeCfg, sess);
+    const limits = await getProviderLimits(env, 'local-admin');
+    const usage = await getProviderUsage(env, 'ALL');
+    const userLimits = await rows(env, "SELECT owner_subject, provider_name, send_limit, updated_at FROM provider_limits ORDER BY owner_subject, provider_name");
+    const users = await rows(env, "SELECT subject, role FROM admin_users WHERE is_active=1 ORDER BY role DESC, subject");
+    content = ui.providersView(healthRows, safeCfg, sess, limits, usage, userLimits, users);
   } else if (view === 'security') {
     title='Security events'; subtitle='Review sign-ins, configuration changes, and access controls.';
-    content=ui.security(await rows(env,'SELECT * FROM security_audit_logs ORDER BY unix_timestamp DESC LIMIT 100'),{
+    const page = Math.min(10000, Math.max(1, Number(url.searchParams.get('page')) || 1));
+    const pageSize = 10;
+    const totalRow = await env.DB.prepare('SELECT COUNT(*) AS total FROM security_audit_logs').first();
+    const totalCount = totalRow?.total || 0;
+    const totalPages = Math.max(1, Math.ceil(totalCount / pageSize));
+    const events = await rows(env, 'SELECT * FROM security_audit_logs ORDER BY unix_timestamp DESC LIMIT ? OFFSET ?', pageSize, (page - 1) * pageSize);
+    content=ui.security(events, {
       ACCESS_TEAM_DOMAIN: env.ACCESS_TEAM_DOMAIN,
       ACCESS_AUD: env.ACCESS_AUD,
       LOCAL_DEV: env.LOCAL_DEV,
       CONFIG_ENCRYPTION_KEY: env.CONFIG_ENCRYPTION_KEY ? 'configured' : '',
       csrf: sess.csrf_token,
+      page,
+      pageSize,
+      totalCount,
+      totalPages,
+      base: (await isSuperadmin(env, subject)) ? '/admin' : '/dashboard',
     });
   } else if (view === 'setup') {
     title='Integration guide'; subtitle='Prepare your Worker and connect the Nepathshala backend.'; content=ui.setup(url.origin,redactConfig(cfg));
@@ -925,7 +981,21 @@ async function handler(request, env) {
   } else if (view === 'domains') {
     title='Domains'; subtitle='Track client sending domains and DNS onboarding.';
     sess.script_nonce=crypto.randomUUID();
-    const domains = await rows(env, await isSuperadmin(env, subject) ? 'SELECT domain,display_name,is_verified,created_at,verification_token,owner_subject FROM managed_domains ORDER BY created_at DESC' : 'SELECT domain,display_name,is_verified,created_at,verification_token,owner_subject FROM managed_domains WHERE owner_subject=? ORDER BY created_at DESC', ...(await isSuperadmin(env, subject)?[]:[subject]));
+    const domains = await rows(env, await isSuperadmin(env, subject)
+      ? `SELECT d.domain, d.display_name, d.is_verified, d.created_at, d.verification_token, d.owner_subject,
+                COALESCE(p.display_name, u.subject, d.owner_subject) AS owner_name,
+                p.avatar_mime, p.updated_at AS profile_updated_at
+         FROM managed_domains d
+         LEFT JOIN admin_profiles p ON p.access_subject = d.owner_subject
+         LEFT JOIN admin_users u ON u.subject = d.owner_subject
+         ORDER BY d.created_at DESC`
+      : `SELECT d.domain, d.display_name, d.is_verified, d.created_at, d.verification_token, d.owner_subject,
+                d.owner_subject AS owner_name, NULL AS avatar_mime, NULL AS profile_updated_at
+         FROM managed_domains d
+         WHERE d.owner_subject=?
+         ORDER BY d.created_at DESC`,
+      ...(await isSuperadmin(env, subject) ? [] : [subject])
+    );
     content = ui.domains(domains, sess);
   } else if (view === 'docs') {
     if (await adminRole(env, sess.access_subject || subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');

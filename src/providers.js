@@ -194,6 +194,8 @@ export async function dispatch(env, cfg, mail, idempotencyKey, ownerSubject = nu
         .bind(owner, provider).run();
     } catch { console.error(JSON.stringify({ event: 'PROVIDER_HEALTH_WRITE_FAILED', provider })); }
   };
+  const limits = await getProviderLimits(env, owner);
+  const usage = await getProviderUsage(env, owner);
   const order = String(effectiveEnv.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend,smtp').split(',').map(p => p.trim()).filter(p => PROVIDERS.includes(p));
   for (const provider of order) {
     if (provider === 'smtp') {
@@ -201,6 +203,12 @@ export async function dispatch(env, cfg, mail, idempotencyKey, ownerSubject = nu
     } else if (!effectiveEnv[provider.toUpperCase() + '_API_KEY'] || (provider === 'mailgun' && !effectiveEnv.MAILGUN_DOMAIN)) continue;
     const state = stateFor(provider);
     if (state && (!state.is_active || (state.consecutive_failures >= 5 && state.updated_at > Math.floor(Date.now() / 1000) - 300))) continue;
+    const provLimit = limits[provider] ?? 100;
+    const provUsed = usage[provider] ?? 0;
+    if (provUsed >= provLimit) {
+      attempts.push({ provider, success: false, latencyMs: 0, error: `Provider limit reached (${provUsed}/${provLimit}). Skipping to next fallback.`, errorCode: 'LimitExceeded' });
+      continue;
+    }
     const started = Date.now();
     // Record intent before the external side effect. A crash leaves a Queued log requiring reconciliation.
     await env.DB.prepare('UPDATE email_logs SET provider_used=?,updated_at=unixepoch() WHERE id=?').bind(provider, logId).run();
@@ -271,4 +279,51 @@ export async function applyWebhook(env, provider, event) {
       .bind(event.status, provider, event.messageId, event.eventId, event.status),
     env.DB.prepare('INSERT INTO webhook_events (event_key,created_at) VALUES (?,unixepoch()) ON CONFLICT(event_key) DO NOTHING').bind(event.eventId),
   ]);
+}
+
+export async function getProviderLimits(env, owner = 'local-admin') {
+  try {
+    const rows = await env.DB.prepare("SELECT provider_name, send_limit FROM provider_limits WHERE owner_subject IN (?, 'local-admin') ORDER BY (owner_subject = ?) DESC").bind(owner, owner).all();
+    const limits = {};
+    for (const r of rows.results || []) {
+      if (limits[r.provider_name] === undefined) {
+        limits[r.provider_name] = r.send_limit;
+      }
+    }
+    for (const p of PROVIDERS) {
+      if (limits[p] === undefined) limits[p] = 100;
+    }
+    return limits;
+  } catch {
+    const limits = {};
+    for (const p of PROVIDERS) limits[p] = 100;
+    return limits;
+  }
+}
+
+export async function getProviderUsage(env, owner = null) {
+  try {
+    let sql = "SELECT provider_used, COUNT(*) AS count FROM email_logs WHERE transmission_status IN ('Sent', 'Delivered', 'Queued')";
+    const params = [];
+    if (owner && owner !== 'ALL') {
+      sql += " AND owner_subject = ?";
+      params.push(owner);
+    }
+    sql += " GROUP BY provider_used";
+    const res = await env.DB.prepare(sql).bind(...params).all();
+    const usage = {};
+    for (const r of res.results || []) {
+      if (r.provider_used && r.provider_used !== 'unassigned') {
+        usage[r.provider_used] = r.count;
+      }
+    }
+    for (const p of PROVIDERS) {
+      if (usage[p] === undefined) usage[p] = 0;
+    }
+    return usage;
+  } catch {
+    const usage = {};
+    for (const p of PROVIDERS) usage[p] = 0;
+    return usage;
+  }
 }

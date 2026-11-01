@@ -171,4 +171,86 @@ test('neoMail enhancements: clean slugs, dark mode hover, SPA encrypted cache, D
   assert.ok(settingsHtml.includes('btn-camera-trigger'), 'Must render camera badge overlay trigger');
   assert.ok(settingsHtml.includes('Change photo'), 'Must render Change photo button');
   assert.ok(settingsHtml.includes('JPG, PNG, or WebP · Up to 3 MB'), 'Must render 3 MB WebP hint');
+
+  // 12. Verify Deleting domains (both superadmin and tenant)
+  await db.prepare("INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,owner_subject,verification_token) VALUES ('unused-domain.com','Unused',0,unixepoch(),'super','super@neomail.internal','token-del')").run();
+  const delRes = await superPost('/admin/domains/delete', { domain: 'unused-domain.com' });
+  assert.equal(delRes.status, 303, 'Delete domain should redirect');
+  const checkDeleted = await db.prepare("SELECT 1 FROM managed_domains WHERE domain='unused-domain.com'").first();
+  assert.ok(!checkDeleted, 'Domain must be removed from managed_domains');
+
+  // 13. Verify Superadmin cannot create identities on another admin's verified domain
+  await db.prepare("INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,owner_subject,verification_token) VALUES ('tenant-verified.com','Tenant Verified',1,unixepoch(),'other','tenant@neomail.internal','token-tv')").run();
+  const identityHijackRes = await superPost('/admin/identities/create', {
+    email_address: 'admin@tenant-verified.com',
+    display_name: 'Hijacked Identity'
+  });
+  assert.equal(identityHijackRes.status, 422, 'Superadmin must NOT be able to create identities on other admins verified domains');
+
+  // 14. Verify Security Events pagination (10 per page limit)
+  for (let i = 0; i < 25; i++) {
+    await db.prepare("INSERT INTO security_audit_logs (id, unix_timestamp, ip_address, user_agent, event_type, details) VALUES (?, unixepoch() - ?, '127.0.0.1', 'Node/Test', 'TEST_EVENT', ?)").bind(crypto.randomUUID(), i, `Audit event #${i}`).run();
+  }
+  const secPage1Res = await call('super@neomail.internal', '/admin/security?page=1', { headers: { cookie: superCookie } });
+  const secPage1Html = await secPage1Res.text();
+  assert.ok(secPage1Html.includes('Page 1 of'), 'Must render pagination page info');
+  assert.ok(secPage1Html.includes('Showing 1–10 of'), 'Must limit to 10 events per page');
+  assert.ok(secPage1Html.includes('Next'), 'Must have Next button');
+
+  // 15. Verify Provider Sending Limits and Usage
+  // Set limit via POST
+  const limitRes = await superPost('/admin/providers/limit', {
+    provider: 'resend',
+    limit: '250',
+    from_view: 'providers'
+  });
+  assert.equal(limitRes.status, 303, 'Setting provider limit should redirect');
+  const storedLimit = await db.prepare("SELECT send_limit FROM provider_limits WHERE owner_subject='super@neomail.internal' AND provider_name='resend'").first('send_limit');
+  assert.equal(storedLimit, 250, 'Stored limit in provider_limits table must match');
+
+  // Superadmin setting limit for another user workspace
+  const userLimitRes = await superPost('/admin/providers/limit', {
+    target_user: 'tenant@neomail.internal',
+    provider: 'resend',
+    limit: '50',
+    from_view: 'providers'
+  });
+  assert.equal(userLimitRes.status, 303);
+  const tenantLimit = await db.prepare("SELECT send_limit FROM provider_limits WHERE owner_subject='tenant@neomail.internal' AND provider_name='resend'").first('send_limit');
+  assert.equal(tenantLimit, 50, 'Tenant limit set by superadmin must be stored');
+
+  // Verify Provider limits UI rendering
+  const provPageRes = await call('super@neomail.internal', '/admin/providers', { headers: { cookie: superCookie } });
+  const provPageHtml = await provPageRes.text();
+  assert.ok(provPageHtml.includes('Provider Usage & Sending Limits'), 'Must render provider limits section');
+  assert.ok(provPageHtml.includes('limit'), 'Must render limit count');
+  assert.ok(provPageHtml.includes('Set Provider Limit Per User Workspace'), 'Must render per-user limits section');
+  assert.ok(provPageHtml.includes('tenant@neomail.internal'), 'Must list configured tenant in per-user limits');
+
+  // 16. Verify Tenant updating limit from Settings and deleting own domain
+  const tenantCsrf = await getCsrf('tenant@neomail.internal');
+  const tenantLimitRes = await call('tenant@neomail.internal', '/dashboard/providers/limit', {
+    method: 'POST',
+    headers: { cookie: tenantCookie, origin: 'http://localhost', 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ csrf: tenantCsrf, provider: 'brevo', limit: '75', from_view: 'settings' })
+  });
+  assert.equal(tenantLimitRes.status, 303);
+  assert.ok(tenantLimitRes.headers.get('location').includes('/dashboard/settings'), 'Should redirect back to dashboard settings');
+
+  // Verify settings page renders provider limits for tenant
+  const tenantSettingsRes = await call('tenant@neomail.internal', '/dashboard/settings', { headers: { cookie: tenantCookie } });
+  const tenantSettingsHtml = await tenantSettingsRes.text();
+  assert.ok(tenantSettingsHtml.includes('Provider Sending Limits (Your Workspace)'), 'Settings must render provider limits panel');
+  assert.ok(tenantSettingsHtml.includes('BREVO'), 'Must display configured provider in limits panel');
+
+  // Tenant deletes own domain
+  await db.prepare("INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,owner_subject,verification_token) VALUES ('tenant-to-delete.com','To Delete',0,unixepoch(),'tenant@neomail.internal','tenant@neomail.internal','del-tok')").run();
+  const tenantDelRes = await call('tenant@neomail.internal', '/dashboard/domains/delete', {
+    method: 'POST',
+    headers: { cookie: tenantCookie, origin: 'http://localhost', 'content-type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({ csrf: tenantCsrf, domain: 'tenant-to-delete.com' })
+  });
+  assert.equal(tenantDelRes.status, 303);
+  const checkTenantDel = await db.prepare("SELECT 1 FROM managed_domains WHERE domain='tenant-to-delete.com'").first();
+  assert.ok(!checkTenantDel, 'Tenant domain must be deleted');
 });

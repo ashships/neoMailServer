@@ -1677,6 +1677,19 @@ details form {
   margin-top: 16px;
 }
 
+.collapsible-domains-panel {
+  padding: 0 !important;
+  border-top: none !important;
+}
+
+.collapsible-domains-panel > summary {
+  list-style: none;
+}
+
+.collapsible-domains-panel > summary::-webkit-details-marker {
+  display: none;
+}
+
 dl {
   display: grid;
   grid-template-columns: 140px minmax(0, 1fr);
@@ -3110,10 +3123,55 @@ function accountProviderCredentials(accountKeys = [], sess) {
   </section>`;
 }
 
-export function settings(cfg, sess, canEditGlobal = true, accountKeys = []) {
+function providerLimitsPanel(sess, limits = {}, usage = {}) {
+  const base = sess?.role === 'superadmin' ? '/admin' : '/dashboard';
+  return `
+    <section class="panel" id="provider-limits">
+      <div class="panelhead">
+        <div>
+          <h2>Provider Sending Limits (Your Workspace)</h2>
+          <p>Configurable per-provider dispatch limits. When usage reaches the limit, neoMail fails over to the next provider.</p>
+        </div>
+      </div>
+      <div class="panelbody">
+        <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr))">
+          ${PROVIDERS.map(p => {
+            const provLimit = limits && limits[p] !== undefined ? limits[p] : 100;
+            const provUsed = usage && usage[p] !== undefined ? usage[p] : 0;
+            const pct = Math.min(100, Math.round((provUsed / provLimit) * 100));
+            const isExceeded = provUsed >= provLimit;
+            return `
+              <div style="padding:14px;background:var(--bg);border:1px solid var(--line);border-radius:8px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                  <strong style="font-size:13px">${p.toUpperCase()}</strong>
+                  <span class="tag ${isExceeded ? 'danger' : 'good'}" style="font-size:11px;font-weight:600">
+                    ${provUsed} / ${provLimit} limit
+                  </span>
+                </div>
+                <div style="width:100%;height:6px;background:var(--surface-hover);border-radius:3px;overflow:hidden;margin-bottom:12px">
+                  <div style="width:${pct}%;height:100%;background:${isExceeded ? 'var(--danger)' : 'var(--accent)'};transition:width 0.3s"></div>
+                </div>
+                <form method="post" action="${base}/providers/limit" style="display:flex;gap:8px;align-items:center">
+                  ${hidden(sess.csrf_token)}
+                  <input type="hidden" name="provider" value="${p}">
+                  <input type="hidden" name="from_view" value="settings">
+                  <input type="number" name="limit" min="1" max="10000000" value="${provLimit}" required style="flex:1;padding:5px 8px;font-size:12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text)" title="Set sending limit for ${p}">
+                  <button class="button secondary small" type="submit">Update</button>
+                </form>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+export function settings(cfg, sess, canEditGlobal = true, accountKeys = [], limits = {}, usage = {}) {
   const accountCredentialsSection = accountProviderCredentials(accountKeys, sess);
-  if (!canEditGlobal) return `${profileSettings(sess)}${accountCredentialsSection}`;
-  return `${profileSettings(sess)}${accountCredentialsSection}${bimiSettings(cfg)}<div class="notice">Global settings apply to new requests without account-specific overrides. Global credentials are encrypted with your Worker’s encryption key.</div><div class="grid2"><section class="panel"><div class="panelhead"><div><h2>Global Workspace settings</h2><p>Mail routing, limits, and retention.</p></div></div><div class="panelbody"><form method="post" action="/admin/settings">${hidden(sess.csrf_token)}<div class="settingsgrid">${Object.entries(SETTINGS).map(([name, spec]) => `<label class="field">${e(spec[0])}${spec[1] === 'boolean' ? `<select name="${name}" class="custom-select"><option value="false" ${cfg[name] === 'false' ? 'selected' : ''}>False</option><option value="true" ${cfg[name] === 'true' ? 'selected' : ''}>True</option></select>` : `<input name="${name}" value="${e(cfg[name])}" type="${spec[1] === 'number' ? 'number' : spec[1] === 'email' ? 'email' : 'text'}" ${spec[1] === 'number' ? `min="${spec[3]}" max="${spec[4]}"` : ''} ${['https-url', 'optional-domain', 'sandbox-domain'].includes(spec[1]) ? '' : 'required'} maxlength="255">`}</label>`).join('')}</div><button class="button">Save settings</button></form></div></section><div><section class="panel"><div class="panelhead"><div><h2>Global Fallback Credentials</h2><p>Blank values keep your current credential. Values are never displayed.</p></div></div>${SECRETS.map(name => `<details><summary>${e(name)} &nbsp; ${badge(cfg[name] ? 'Configured' : 'Not set')}</summary><form method="post" action="/admin/credentials">${hidden(sess.csrf_token)}<input type="hidden" name="name" value="${name}"><label class="field">New credential<input type="password" name="value" autocomplete="new-password" required minlength="${name === 'API_SECRET_KEY' ? 43 : 16}" maxlength="4096" placeholder="Paste a new credential"></label>${sess.local_dev ? '<label class="field">Confirm local administrator token<input type="password" name="admin_token" autocomplete="current-password" required minlength="43" maxlength="128"></label>' : '<p class="footnote">Credential changes require a Cloudflare Access token issued within the last five minutes. Sign out of Access and sign in again if requested. This checks token age; identity-provider policy controls fresh user verification.</p>'}<button class="button">Save credential</button></form></details>`).join('')}</section><div class="notice warn">Access policy, local development token, encryption key, database binding, and domain routes stay in Cloudflare. They cannot be changed through this panel. Rotate credentials by replacing their values here.</div></div></div>`;
+  const limitsSection = providerLimitsPanel(sess, limits, usage);
+  if (!canEditGlobal) return `${profileSettings(sess)}${limitsSection}${accountCredentialsSection}`;
+  return `${profileSettings(sess)}${limitsSection}${accountCredentialsSection}${bimiSettings(cfg)}<div class="notice">Global settings apply to new requests without account-specific overrides. Global credentials are encrypted with your Worker’s encryption key.</div><div class="grid2"><section class="panel"><div class="panelhead"><div><h2>Global Workspace settings</h2><p>Mail routing, limits, and retention.</p></div></div><div class="panelbody"><form method="post" action="/admin/settings">${hidden(sess.csrf_token)}<div class="settingsgrid">${Object.entries(SETTINGS).map(([name, spec]) => `<label class="field">${e(spec[0])}${spec[1] === 'boolean' ? `<select name="${name}" class="custom-select"><option value="false" ${cfg[name] === 'false' ? 'selected' : ''}>False</option><option value="true" ${cfg[name] === 'true' ? 'selected' : ''}>True</option></select>` : `<input name="${name}" value="${e(cfg[name])}" type="${spec[1] === 'number' ? 'number' : spec[1] === 'email' ? 'email' : 'text'}" ${spec[1] === 'number' ? `min="${spec[3]}" max="${spec[4]}"` : ''} ${['https-url', 'optional-domain', 'sandbox-domain'].includes(spec[1]) ? '' : 'required'} maxlength="255">`}</label>`).join('')}</div><button class="button">Save settings</button></form></div></section><div><section class="panel"><div class="panelhead"><div><h2>Global Fallback Credentials</h2><p>Blank values keep your current credential. Values are never displayed.</p></div></div>${SECRETS.map(name => `<details><summary>${e(name)} &nbsp; ${badge(cfg[name] ? 'Configured' : 'Not set')}</summary><form method="post" action="/admin/credentials">${hidden(sess.csrf_token)}<input type="hidden" name="name" value="${name}"><label class="field">New credential<input type="password" name="value" autocomplete="new-password" required minlength="${name === 'API_SECRET_KEY' ? 43 : 16}" maxlength="4096" placeholder="Paste a new credential"></label>${sess.local_dev ? '<label class="field">Confirm local administrator token<input type="password" name="admin_token" autocomplete="current-password" required minlength="43" maxlength="128"></label>' : '<p class="footnote">Credential changes require a Cloudflare Access token issued within the last five minutes. Sign out of Access and sign in again if requested. This checks token age; identity-provider policy controls fresh user verification.</p>'}<button class="button">Save credential</button></form></details>`).join('')}</section><div class="notice warn">Access policy, local development token, encryption key, database binding, and domain routes stay in Cloudflare. They cannot be changed through this panel. Rotate credentials by replacing their values here.</div></div></div>`;
 }
 
 export function identities(rows, sess, domains = []) {
@@ -3240,7 +3298,75 @@ export function compose(rows, sess) {
 }
 
 export function security(rows, env) {
-  return `<section class="panel"><div class="panelhead"><h2>Protection status</h2></div><div class="panelbody">${[['Cloudflare Access', env.ACCESS_TEAM_DOMAIN && env.ACCESS_AUD ? 'Configured; JWT checked per admin request' : 'Requires production configuration'], ['Local development bypass', env.LOCAL_DEV === 'true' ? 'Enabled only for loopback HTTP' : 'Disabled'], ['Admin sessions', 'Revocable · 1 hour maximum · Secure / HttpOnly'], ['Request protection', 'Same-origin forms · Session CSRF tokens · Size limits'], ['Credentials', env.CONFIG_ENCRYPTION_KEY ? 'Encryption key configured' : 'Encryption key required for panel credentials'], ['API access', 'Separate bearer credential · Idempotency required']].map(([k, v]) => `<div class="checkrow"><strong>${e(k)}</strong><span class="muted">${e(v)}</span></div>`).join('')}</div></section><section class="panel"><div class="panelhead"><h2>Recent security events</h2><form method="post" action="/admin/sessions/revoke">${hidden(env.csrf)}<button class="button secondary small">Sign out all sessions</button></form></div>${!rows.length ? empty('No security events yet', 'Sign-ins and configuration changes will be recorded here.') : `<div class="tablewrap"><table><thead><tr><th>Event</th><th>IP address</th><th>Details</th><th>Time (UTC)</th></tr></thead><tbody>${rows.map(r => `<tr><td>${e(r.event_type)}</td><td>${e(r.ip_address)}</td><td>${e(r.details)}</td><td>${e(new Date(r.unix_timestamp * 1000).toISOString().slice(0, 16))}</td></tr>`).join('')}</tbody></table></div>`}</section>`;
+  const page = env?.page || 1;
+  const pageSize = env?.pageSize || 10;
+  const totalCount = env?.totalCount !== undefined ? env.totalCount : rows.length;
+  const totalPages = env?.totalPages || Math.max(1, Math.ceil(totalCount / pageSize));
+  const base = env?.base || '/admin';
+
+  const startIdx = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
+  const endIdx = Math.min(page * pageSize, totalCount);
+
+  const pageBtns = [];
+  const maxButtons = 5;
+  let startPage = Math.max(1, page - Math.floor(maxButtons / 2));
+  let endPage = Math.min(totalPages, startPage + maxButtons - 1);
+  if (endPage - startPage + 1 < maxButtons) {
+    startPage = Math.max(1, endPage - maxButtons + 1);
+  }
+  for (let pNum = startPage; pNum <= endPage; pNum++) {
+    pageBtns.push(`<a class="button small ${pNum === page ? '' : 'secondary'}" href="${base}/security?page=${pNum}" style="${pNum === page ? 'font-weight:700;border-color:var(--accent);' : ''}">${pNum}</a>`);
+  }
+
+  const paginationHtml = totalCount > 0 ? `
+    <div class="pagination">
+      <span>Showing ${startIdx}–${endIdx} of ${totalCount.toLocaleString()} events · Page ${page} of ${totalPages}</span>
+      <div class="actions" style="display:flex;gap:6px;align-items:center">
+        ${page > 1 ? `<a class="button secondary small" href="${base}/security?page=${page - 1}">Previous</a>` : `<span class="button secondary small" style="opacity:0.4;pointer-events:none">Previous</span>`}
+        ${pageBtns.join('')}
+        ${page < totalPages ? `<a class="button secondary small" href="${base}/security?page=${page + 1}">Next</a>` : `<span class="button secondary small" style="opacity:0.4;pointer-events:none">Next</span>`}
+      </div>
+    </div>
+  ` : '';
+
+  return `
+    <section class="panel">
+      <div class="panelhead"><h2>Protection status</h2></div>
+      <div class="panelbody">
+        ${[['Cloudflare Access', env.ACCESS_TEAM_DOMAIN && env.ACCESS_AUD ? 'Configured; JWT checked per admin request' : 'Requires production configuration'], ['Local development bypass', env.LOCAL_DEV === 'true' ? 'Enabled only for loopback HTTP' : 'Disabled'], ['Admin sessions', 'Revocable · 1 hour maximum · Secure / HttpOnly'], ['Request protection', 'Same-origin forms · Session CSRF tokens · Size limits'], ['Credentials', env.CONFIG_ENCRYPTION_KEY ? 'Encryption key configured' : 'Encryption key required for panel credentials'], ['API access', 'Separate bearer credential · Idempotency required']].map(([k, v]) => `<div class="checkrow"><strong>${e(k)}</strong><span class="muted">${e(v)}</span></div>`).join('')}
+      </div>
+    </section>
+    <section class="panel">
+      <div class="panelhead">
+        <div>
+          <h2>Recent security events</h2>
+          <p>Review sign-ins, configuration changes, and access controls (10 events per page).</p>
+        </div>
+        <form method="post" action="/admin/sessions/revoke">
+          ${hidden(env.csrf)}
+          <button class="button secondary small">Sign out all sessions</button>
+        </form>
+      </div>
+      ${!rows.length ? empty('No security events yet', 'Sign-ins and configuration changes will be recorded here.') : `
+        <div class="tablewrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Event</th>
+                <th>IP address</th>
+                <th>Details</th>
+                <th>Time (UTC)</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows.map(r => `<tr><td><strong>${e(r.event_type)}</strong></td><td><code style="font-size:11px">${e(r.ip_address)}</code></td><td>${e(r.details)}</td><td>${e(new Date(r.unix_timestamp * 1000).toISOString().slice(0, 16))}</td></tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+        ${paginationHtml}
+      `}
+    </section>
+  `;
 }
 
 export function inspector(mail) {
@@ -3492,7 +3618,7 @@ export function docsViewer(content, sess) {
   </section>`;
 }
 
-export function providersView(rows, cfg, sess) {
+export function providersView(rows, cfg, sess, limits = {}, usage = {}, userLimits = [], users = []) {
   const currentOrder = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',').map(p => p.trim()).filter(Boolean);
   const unassigned = PROVIDERS.filter(p => !currentOrder.includes(p));
 
@@ -3593,6 +3719,113 @@ export function providersView(rows, cfg, sess) {
             ✓ All supported providers (${PROVIDERS.join(', ')}) are enrolled in the fallback routing chain.
           </div>
         `}
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panelhead">
+        <div>
+          <h2>Provider Usage & Sending Limits (Global)</h2>
+          <p>Monitor outbound email counts per delivery provider and configure global sending quotas.</p>
+        </div>
+      </div>
+      <div class="panelbody">
+        <div style="display:grid;gap:14px;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr))">
+          ${PROVIDERS.map(p => {
+            const provLimit = limits && limits[p] !== undefined ? limits[p] : 100;
+            const provUsed = usage && usage[p] !== undefined ? usage[p] : 0;
+            const pct = Math.min(100, Math.round((provUsed / provLimit) * 100));
+            const isExceeded = provUsed >= provLimit;
+            return `
+              <div style="padding:14px;background:var(--bg);border:1px solid var(--line);border-radius:8px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                  <span style="font-weight:700;font-size:13px">${p.toUpperCase()}</span>
+                  <span class="tag ${isExceeded ? 'danger' : 'good'}" style="font-size:11px;font-weight:600">
+                    ${provUsed} / ${provLimit} limit
+                  </span>
+                </div>
+                <div style="width:100%;height:6px;background:var(--surface-hover);border-radius:3px;overflow:hidden;margin-bottom:12px">
+                  <div style="width:${pct}%;height:100%;background:${isExceeded ? 'var(--danger)' : 'var(--accent)'};transition:width 0.3s"></div>
+                </div>
+                <form method="post" action="/admin/providers/limit" style="display:flex;gap:8px;align-items:center">
+                  ${hidden(sess.csrf_token)}
+                  <input type="hidden" name="provider" value="${p}">
+                  <input type="hidden" name="from_view" value="providers">
+                  <input type="number" name="limit" min="1" max="10000000" value="${provLimit}" required style="flex:1;padding:5px 8px;font-size:12px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--text)" title="Set default limit for ${p}">
+                  <button class="button secondary small" type="submit">Update</button>
+                </form>
+              </div>
+            `;
+          }).join('')}
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panelhead">
+        <div>
+          <h2>Set Provider Limit Per User Workspace</h2>
+          <p>Superadmins can assign custom sending limits to specific tenant administrators and user workspaces.</p>
+        </div>
+      </div>
+      <div class="panelbody">
+        <form method="post" action="/admin/providers/limit" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:20px">
+          ${hidden(sess.csrf_token)}
+          <input type="hidden" name="from_view" value="providers">
+          <label class="field" style="margin:0;min-width:220px;flex:1">
+            <span>Target User Workspace</span>
+            <select name="target_user" class="custom-select" required>
+              ${users.map(u => `<option value="${e(u.subject)}">${e(u.subject)} (${e(u.role)})</option>`).join('')}
+            </select>
+          </label>
+          <label class="field" style="margin:0;min-width:140px">
+            <span>Provider</span>
+            <select name="provider" class="custom-select" required>
+              ${PROVIDERS.map(p => `<option value="${p}">${p.toUpperCase()}</option>`).join('')}
+            </select>
+          </label>
+          <label class="field" style="margin:0;min-width:140px">
+            <span>Sending Limit</span>
+            <input type="number" name="limit" min="1" max="10000000" value="100" required>
+          </label>
+          <button class="button" type="submit" style="margin-bottom:1px">${icon('check')} Save User Limit</button>
+        </form>
+
+        ${userLimits && userLimits.length ? `
+          <div class="tablewrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>User Workspace</th>
+                  <th>Provider</th>
+                  <th>Sending Limit</th>
+                  <th>Last Updated</th>
+                  <th style="text-align:right">Quick Adjust</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${userLimits.map(ul => `
+                  <tr>
+                    <td><code style="font-size:12px">${e(ul.owner_subject)}</code></td>
+                    <td><strong>${e(ul.provider_name.toUpperCase())}</strong></td>
+                    <td><span class="tag good" style="font-weight:600">${Number(ul.send_limit).toLocaleString()} emails</span></td>
+                    <td class="muted">${e(new Date(ul.updated_at * 1000).toISOString().slice(0, 16))}</td>
+                    <td style="text-align:right">
+                      <form method="post" action="/admin/providers/limit" style="display:inline-flex;align-items:center;gap:6px">
+                        ${hidden(sess.csrf_token)}
+                        <input type="hidden" name="target_user" value="${e(ul.owner_subject)}">
+                        <input type="hidden" name="provider" value="${e(ul.provider_name)}">
+                        <input type="hidden" name="from_view" value="providers">
+                        <input type="number" name="limit" min="1" max="10000000" value="${ul.send_limit}" style="width:80px;padding:3px 6px;font-size:11px">
+                        <button class="button secondary small" type="submit">Update</button>
+                      </form>
+                    </td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        ` : '<p class="sub" style="margin:0">No custom per-user limits configured yet. All tenant workspaces inherit default limits.</p>'}
       </div>
     </section>
 
@@ -3716,46 +3949,169 @@ export function domains(rows, sess) {
   const dnsField = (label, value, title) => `<div class="dnsfield"><span class="dnstype">${label}</span><code title="${e(title)}">${e(value)}</code><button type="button" class="button secondary small iconb" data-copy="${e(value)}" aria-label="Copy ${label}" title="Copy">${icon('copy')}</button></div>`;
   const record = r => r.verification_token ? `${dnsField('Name', '_neomail-verification.' + r.domain, 'TXT record host — paste this into the Host/Name field of your DNS provider')}${dnsField('Value', r.verification_token, 'TXT record content — paste this into the Value/Content field of your DNS provider')}` : '<p class="sub">Verification token missing — remove and re-add the domain.</p>';
 
+  const deleteDomainForm = (d) => `
+    <form method="post" action="${base}/domains/delete" onsubmit="return confirm('Permanently delete sending domain ${e(d)}? Outbound sending from this domain will stop.');" style="display:inline">
+      ${hidden(sess.csrf_token)}
+      <input type="hidden" name="domain" value="${e(d)}">
+      <button class="button danger small iconb" type="submit" title="Delete domain" aria-label="Delete domain">${icon('trash')}</button>
+    </form>
+  `;
+
   const otherDomainsPanel = otherRows.length > 0 ? `
-    <section class="panel" style="margin-top:24px">
+    <details class="collapsible-domains-panel panel" open style="margin-top:24px;border:1px solid var(--line);border-radius:12px;overflow:hidden">
+      <summary style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;user-select:none;background:var(--surface)">
+        <div style="display:flex;align-items:center;gap:12px">
+          <span class="tag" style="background:var(--tint);color:var(--accent);font-weight:600">${otherRows.length} ${otherRows.length === 1 ? 'domain' : 'domains'}</span>
+          <div>
+            <h2 style="font-size:16px;margin:0;display:flex;align-items:center;gap:8px">Tenant domains · Other admin workspaces</h2>
+            <p style="margin:2px 0 0;font-size:12px;color:var(--muted)">Multi-tenant oversight: Domains configured and verified by other administrator workspaces.</p>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="tag" style="font-size:11px">Show / Hide Details</span>
+          <span class="button secondary small" style="pointer-events:none;padding:4px 8px">${icon('chevron')}</span>
+        </div>
+      </summary>
+      <div style="border-top:1px solid var(--line);background:var(--bg);padding:14px 20px">
+        <div class="notice" style="margin:0 0 16px;border-left:4px solid var(--accent)">
+          <strong>🔒 Zero-Trust Tenant Domain Isolation:</strong> These domains belong to other administrator workspaces.
+          Superadmins can monitor DNS health and delete unused domains, but <strong>cannot use other admins' domains to create sender identities or dispatch outbound emails</strong>.
+        </div>
+        <div class="tablewrap" style="background:var(--surface);border-radius:8px;border:1px solid var(--line)">
+          <table>
+            <thead>
+              <tr>
+                <th>Admin Workspace</th>
+                <th>Domain</th>
+                <th>Status</th>
+                <th>Verification TXT Record</th>
+                <th style="text-align:right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${otherRows.map(r => {
+                const ownerName = r.owner_name || r.owner_subject || 'Admin';
+                const ownerEmail = r.owner_subject || '';
+                const avatar = r.avatar_mime
+                  ? `<img src="/admin/profile-image?subject=${encodeURIComponent(r.owner_subject)}" alt="${e(ownerName)}" style="width:34px;height:34px;border-radius:8px;object-fit:cover;border:1px solid var(--line);flex-shrink:0">`
+                  : `<span style="width:34px;height:34px;border-radius:8px;background:var(--surface-hover);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:var(--text);flex-shrink:0">${e(initial(ownerName))}</span>`;
+
+                return `
+                  <tr>
+                    <td>
+                      <div style="display:flex;align-items:center;gap:10px">
+                        ${avatar}
+                        <div style="min-width:0">
+                          <strong style="display:block;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e(ownerName)}</strong>
+                          <span class="muted" style="font-family:var(--mono);font-size:11px;display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" title="${e(ownerEmail)}">${e(ownerEmail)}</span>
+                        </div>
+                      </div>
+                    </td>
+                    <td>
+                      <div class="subject" style="font-weight:600;font-size:13px">${e(r.domain)}</div>
+                      <span class="muted" style="font-size:11px">${e(r.display_name || r.domain)}</span>
+                    </td>
+                    <td>${r.is_verified ? '<span class="tag good">' + icon('check') + ' Active · Verified</span>' : '<span class="tag danger">' + icon('security') + ' Paused · DNS Failed</span>'}</td>
+                    <td>${record(r)}</td>
+                    <td style="text-align:right">
+                      <div style="display:inline-flex;align-items:center;gap:6px">
+                        <form method="post" action="${base}/domains/verify" style="display:inline">
+                          ${hidden(sess.csrf_token)}
+                          <input type="hidden" name="domain" value="${e(r.domain)}">
+                          <button class="button secondary small" type="submit" title="Re-check DNS propagation">${r.is_verified ? 'Re-check' : 'Verify'}</button>
+                        </form>
+                        ${deleteDomainForm(r.domain)}
+                      </div>
+                    </td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+  ` : '';
+
+  return `
+    <div class="notice">
+      Add a <strong>TXT record</strong> at your DNS provider (Cloudflare, GoDaddy, Namecheap…), then click <strong>Verify</strong>.
+      Continuous background verification protects your sender reputation: if a domain's DNS fails, outbound sending from that domain is immediately paused and you are alerted.
+    </div>
+    <div class="notice warn">
+      In your DNS panel: choose <code>TXT</code> as the record type, paste <strong>Name</strong> in the host/name box and <strong>Value</strong> in the content box, save, wait a few minutes for propagation, then verify below.
+    </div>
+
+    <section class="panel">
       <div class="panelhead" style="display:flex;align-items:center;justify-content:space-between">
         <div>
-          <h2>Tenant domains · Other admin workspaces</h2>
-          <p>Sending domains configured by other administrators. Monitored for continuous DNS verification and scam protection.</p>
+          <h2>${isSuper ? 'Domains Created by You (Superadmin)' : 'Your Workspace Domains'}</h2>
+          <p>Verified domains for sending outbound mail from your workspace. All unverified domains automatically pause outbound email dispatch.</p>
         </div>
+        <form method="post" action="${base}/domains/auto-check">
+          ${hidden(sess.csrf_token)}
+          <button class="button secondary small" type="submit">${icon('refresh')} Auto-Check All DNS</button>
+        </form>
       </div>
       <div class="tablewrap">
         <table>
           <thead>
             <tr>
               <th>Domain</th>
-              <th>Admin workspace</th>
               <th>Status</th>
-              <th>Action</th>
+              <th>Verification TXT record</th>
+              <th style="text-align:right">Actions</th>
             </tr>
           </thead>
           <tbody>
-            ${otherRows.map(r => `
+            ${ownRows.map(r => `
               <tr>
-                <td><div class="subject">${e(r.domain)}</div><span class="muted">${e(r.display_name)}</span></td>
-                <td><span class="tag" style="font-family:var(--mono);font-size:11px">${e(r.owner_subject)}</span></td>
-                <td>${r.is_verified ? '<span class="tag good">' + icon('check') + ' Active · Verified</span>' : '<span class="tag danger">' + icon('security') + ' Paused · DNS Failed</span>'}</td>
                 <td>
-                  <form method="post" action="${base}/domains/verify">
-                    ${hidden(sess.csrf_token)}
-                    <input type="hidden" name="domain" value="${e(r.domain)}">
-                    <button class="button secondary small">${r.is_verified ? 'Re-check' : 'Verify'}</button>
-                  </form>
+                  <div class="subject" style="font-weight:600">${e(r.domain)}</div>
+                  <span class="muted" style="font-size:11px">${e(r.display_name || r.domain)}</span>
+                </td>
+                <td>${r.is_verified ? '<span class="tag good">' + icon('check') + ' Active · Verified</span>' : '<span class="tag danger">' + icon('security') + ' Paused · DNS Failed</span>'}</td>
+                <td>${record(r)}</td>
+                <td style="text-align:right">
+                  <div style="display:inline-flex;align-items:center;gap:6px">
+                    <form method="post" action="${base}/domains/verify" style="display:inline">
+                      ${hidden(sess.csrf_token)}
+                      <input type="hidden" name="domain" value="${e(r.domain)}">
+                      <button class="button secondary small" type="submit">${r.is_verified ? 'Re-check' : 'Verify'}</button>
+                    </form>
+                    ${deleteDomainForm(r.domain)}
+                  </div>
                 </td>
               </tr>
-            `).join('')}
+            `).join('') || '<tr><td colspan="4">No domains created in your workspace yet.</td></tr>'}
           </tbody>
         </table>
       </div>
     </section>
-  ` : '';
 
-  return `<div class="notice">Add a <strong>TXT record</strong> at your DNS provider (Cloudflare, GoDaddy, Namecheap…), then click <strong>Verify</strong>. Continuous background verification protects your sender reputation: if a domain\'s DNS fails, outbound sending from that domain is immediately paused and you are alerted.</div><div class="notice warn">In your DNS panel: choose <code>TXT</code> as the record type, paste <strong>Name</strong> in the host/name box and <strong>Value</strong> in the content box, save, wait a few minutes for propagation, then verify below.</div><section class="panel"><div class="panelhead" style="display:flex;align-items:center;justify-content:space-between"><div><h2>${isSuper ? 'Your workspace domains' : 'Client domains'}</h2><p>Track domains clients send from. All unverified domains automatically pause outbound email dispatch.</p></div><form method="post" action="${base}/domains/auto-check">${hidden(sess.csrf_token)}<button class="button secondary small" type="submit">${icon('refresh')} Auto-Check All DNS</button></form></div><div class="tablewrap"><table><thead><tr><th>Domain</th><th>Status</th><th>Verification TXT record</th><th>Action</th></tr></thead><tbody>${ownRows.map(r => `<tr><td><div class="subject">${e(r.domain)}</div><span class="muted">${e(r.display_name)}</span></td><td>${r.is_verified ? '<span class="tag good">' + icon('check') + ' Active · Verified</span>' : '<span class="tag danger">' + icon('security') + ' Paused · DNS Failed</span>'}</td><td>${record(r)}</td><td><form method="post" action="${base}/domains/verify">${hidden(sess.csrf_token)}<input type="hidden" name="domain" value="${e(r.domain)}"><button class="button secondary small">${r.is_verified ? 'Re-check' : 'Verify'}</button></form></td></tr>`).join('') || '<tr><td colspan="4">No domains yet.</td></tr>'}</tbody></table></div></section>${otherDomainsPanel}<section class="panel"><div class="panelhead"><h2>Add domain</h2></div><div class="panelbody"><form method="post" action="${base}/domains/create">${hidden(sess.csrf_token)}<div class="settingsgrid"><label class="field">Domain<input name="domain" required maxlength="253" pattern="[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?" title="Letters, digits, dots and hyphens only (e.g. client.example.com)" autocomplete="off" spellcheck="false" placeholder="client.example.com"></label><label class="field">Display name<input name="display_name" required maxlength="100" placeholder="Client name"></label></div><button class="button">Add domain</button></form></div></section>${copyScript}`;
+    ${otherDomainsPanel}
+
+    <section class="panel">
+      <div class="panelhead">
+        <h2>Add domain</h2>
+      </div>
+      <div class="panelbody">
+        <form method="post" action="${base}/domains/create">
+          ${hidden(sess.csrf_token)}
+          <div class="settingsgrid">
+            <label class="field">Domain
+              <input name="domain" required maxlength="253" pattern="[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?" title="Letters, digits, dots and hyphens only (e.g. client.example.com)" autocomplete="off" spellcheck="false" placeholder="client.example.com">
+            </label>
+            <label class="field">Display name
+              <input name="display_name" required maxlength="100" placeholder="Client name">
+            </label>
+          </div>
+          <button class="button">Add domain</button>
+        </form>
+      </div>
+    </section>
+    ${copyScript}
+  `;
 }
 
 export function errorPage(message, status) {
