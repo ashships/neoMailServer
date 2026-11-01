@@ -7496,8 +7496,10 @@ export function errorIllustrationSvg() {
       <path d="M200 280 C185 190, 205 130, 270 130 C335 130, 355 190, 340 280 Z" fill="url(#chairGrad)"/>
       <path d="M185 240 C180 240, 175 250, 175 270 C175 305, 195 320, 215 320 C222 320, 226 312, 226 300 C226 265, 205 240, 185 240 Z" fill="url(#chairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
       <path d="M355 240 C360 240, 365 250, 365 270 C365 305, 345 320, 325 320 C318 320, 314 312, 314 300 C314 265, 335 240, 355 240 Z" fill="url(#chairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
-      <path d="M198 320 L194 326 L204 336 L336 336 L346 326 L342 320 Z" fill="var(--illus-wood-dark)"/>
-      <path d="M200 322 L194 326 L178 376 C176 382, 184 384, 188 378 L204 336 L336 336 L352 378 C356 384, 364 382, 362 376 L346 326 L340 322 L332 328 L208 328 Z" fill="var(--illus-wood)"/>
+      <line x1="228" y1="330" x2="220" y2="368" stroke="var(--illus-chair-shadow)" stroke-width="4.5" stroke-linecap="round"/>
+      <line x1="312" y1="330" x2="320" y2="368" stroke="var(--illus-chair-shadow)" stroke-width="4.5" stroke-linecap="round"/>
+      <line x1="206" y1="334" x2="192" y2="374" stroke="var(--illus-chair-shadow)" stroke-width="5" stroke-linecap="round"/>
+      <line x1="334" y1="334" x2="348" y2="374" stroke="var(--illus-chair-shadow)" stroke-width="5" stroke-linecap="round"/>
     </g>
     <g id="mascot">
       <path d="M225 300 C210 240, 225 170, 270 170 C315 170, 330 240, 315 300 C305 325, 235 325, 225 300 Z" fill="url(#errMascotGrad)"/>
@@ -7838,8 +7840,7 @@ export function healthPage(isDark = false) {
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--line);
+      padding-bottom: 2px;
       flex-wrap: wrap;
     }
     .brand-wrap {
@@ -8327,8 +8328,6 @@ export function healthPage(isDark = false) {
         <span>neoMailer · Private Transactional Email Gateway</span>
       </div>
       <div class="footer-mono">
-        <span>Cloudflare Workers</span>
-        <span>•</span>
         <span>mail.neopathshala.com</span>
       </div>
     </footer>
