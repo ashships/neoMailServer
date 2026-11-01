@@ -48,11 +48,11 @@ test('superadmin provider order, adding, credentials, circuit breaker reset and 
     body: new URLSearchParams({ csrf: await getCsrf('tenant@example.com'), ...data })
   });
 
-  // 1. Initial view checks: Steady UI, neoPathshala brand, dark mode toggle, favicon
+  // 1. Initial view checks: Steady UI, NeoMail brand, dark mode toggle, favicon
   const providersPage = await call('local-admin', '/admin?view=providers', { headers: { cookie: superCookie } });
   assert.equal(providersPage.status, 200);
   const providersHtml = await providersPage.text();
-  assert.ok(providersHtml.includes('neoPathshala'));
+  assert.ok(providersHtml.includes('Neo<span>Mail</span>'));
   assert.ok(providersHtml.includes('theme-toggle'));
   assert.ok(providersHtml.includes('image/svg+xml'));
   assert.ok(providersHtml.includes('compose-quickbtn'));
@@ -142,7 +142,7 @@ test('superadmin provider order, adding, credentials, circuit breaker reset and 
   const publicDocs = await worker.fetch(new Request('http://localhost/docs'), env);
   assert.equal(publicDocs.status, 200);
   const publicDocsHtml = await publicDocs.text();
-  assert.ok(publicDocsHtml.includes('neoPathshala Documentation'));
+  assert.ok(publicDocsHtml.includes('NeoMail Documentation'));
   assert.ok(publicDocsHtml.includes('System Guide'));
 
   // 9. Verify GET /admin (default overview view) renders 200 OK without errors
