@@ -1594,9 +1594,6 @@ textarea {
 }
 
 .notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
   background: var(--tint);
   border: 1px solid var(--tint-strong);
   color: var(--tint-text);
@@ -1605,6 +1602,12 @@ textarea {
   margin-bottom: 20px;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.notice:has(svg) {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
 }
 
 .notice svg {
@@ -1763,7 +1766,8 @@ details form {
 
 .collapsible-domains-panel {
   padding: 0 !important;
-  border-top: none !important;
+  border: 1px solid var(--line) !important;
+  border-radius: 12px !important;
 }
 
 .collapsible-domains-panel > summary {
@@ -1879,24 +1883,88 @@ input[aria-invalid="true"]:focus {
   margin-top: 8px;
 }
 
+@keyframes orbFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
+  }
+}
+
+@keyframes orbSpin1 {
+  0% {
+    transform: rotate(-25deg) scale(1);
+    opacity: 0.55;
+  }
+  50% {
+    transform: rotate(155deg) scale(1.04);
+    opacity: 0.85;
+  }
+  100% {
+    transform: rotate(335deg) scale(1);
+    opacity: 0.55;
+  }
+}
+
+@keyframes orbSpin2 {
+  0% {
+    transform: rotate(25deg) scale(1.02);
+    opacity: 0.75;
+  }
+  50% {
+    transform: rotate(-155deg) scale(0.98);
+    opacity: 0.5;
+  }
+  100% {
+    transform: rotate(-335deg) scale(1.02);
+    opacity: 0.75;
+  }
+}
+
+@keyframes orbSpin3 {
+  0% {
+    transform: rotate(75deg) scale(0.98);
+    opacity: 0.65;
+  }
+  50% {
+    transform: rotate(255deg) scale(1.04);
+    opacity: 0.9;
+  }
+  100% {
+    transform: rotate(435deg) scale(0.98);
+    opacity: 0.65;
+  }
+}
+
 .orb {
   width: 200px;
   height: 140px;
   margin: 48px 0;
   position: relative;
+  animation: orbFloat 6s ease-in-out infinite;
 }
 
 .orb div {
-  border: 1px solid rgba(167, 243, 208, 0.25);
+  border: 1px solid rgba(167, 243, 208, 0.35);
+  box-shadow: 0 0 16px rgba(167, 243, 208, 0.1);
   border-radius: 50%;
   width: 200px;
   height: 110px;
   position: absolute;
-  transform: rotate(-25deg);
+  transform-origin: center center;
+  animation: orbSpin1 16s ease-in-out infinite;
 }
 
-.orb div:nth-child(2) { transform: rotate(25deg); }
-.orb div:nth-child(3) { transform: rotate(75deg); }
+.orb div:nth-child(2) {
+  transform: rotate(25deg);
+  animation: orbSpin2 22s ease-in-out infinite;
+}
+
+.orb div:nth-child(3) {
+  transform: rotate(75deg);
+  animation: orbSpin3 18s ease-in-out infinite;
+}
 
 .footnote {
   font-size: 11px;
@@ -1923,13 +1991,15 @@ input[aria-invalid="true"]:focus {
   font-family: inherit;
   font-size: inherit;
   padding: 0;
-  text-decoration: underline;
-  text-underline-offset: 3px;
+  text-decoration: none;
   font-weight: 600;
+  transition: text-decoration 0.12s ease;
 }
 
 .textbutton-link:hover {
-  color: var(--accent-hover);
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 dialog.login-modal {
@@ -4098,7 +4168,7 @@ export function login(error = '', isDark = false, showRegister = true) {
       </div>
     </dialog>
   ` : '';
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p><form method="post" action="/login"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${icon('alert')}<span>${renderedError}</span></div>` : ''}<button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p>${registerModal}</div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p><form method="post" action="/login"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p>${registerModal}</div></div></div>`, '', isDark);
 }
 
 function empty(message = 'Your mail activity will appear here', help = 'Configure a provider and sender identity, then send your first test email.') {
@@ -6599,12 +6669,12 @@ export function otpRequest(error = '', isDark = false, emailVal = '', showRegist
     </dialog>
   ` : '';
 
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Request a one-time code sent to your administrator email.</p>${notice ? `<div class="notice" role="status" style="border-color:var(--accent);color:var(--accent);margin-bottom:16px">${icon('check')}<span>${e(notice)}</span></div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com" value="${e(emailVal)}" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${icon('alert')}<span>${renderedError}</span></div>` : ''}<button class="button">Send login code ${icon('arrow')}</button></form>${registerModal}</div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Request a one-time code sent to your administrator email.</p>${notice ? `<div class="notice" role="status" style="border-color:var(--accent);color:var(--accent);margin-bottom:16px">${icon('check')}<span>${e(notice)}</span></div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com" value="${e(emailVal)}" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Send login code ${icon('arrow')}</button></form>${registerModal}</div></div></div>`, '', isDark);
 }
 
 export function otpVerify(email, error = '', isDark = false) {
   const renderedError = error ? renderNoticeText(error) : '';
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p><form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${icon('alert')}<span>${renderedError}</span></div>` : ''}<button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p><form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`, '', isDark);
 }
 
 export function domains(rows, sess) {
@@ -6628,7 +6698,7 @@ export function domains(rows, sess) {
   `;
 
   const otherDomainsPanel = otherRows.length > 0 ? `
-    <details class="collapsible-domains-panel panel" open style="margin-top:24px;border:1px solid var(--line);border-radius:12px;overflow:hidden">
+    <details class="collapsible-domains-panel panel" open style="margin-top:24px;border:1px solid var(--line) !important;border-radius:12px;overflow:hidden">
       <summary style="display:flex;align-items:center;justify-content:space-between;padding:16px 20px;cursor:pointer;user-select:none;background:var(--surface)">
         <div style="display:flex;align-items:center;gap:12px">
           <span class="tag" style="background:var(--tint);color:var(--accent);font-weight:600">${otherRows.length} ${otherRows.length === 1 ? 'domain' : 'domains'}</span>
@@ -7078,4 +7148,558 @@ function bimiSettings(cfg) {
   const ready = !!cfg.BIMI_LOGO_URL && !!cfg.BIMI_CERTIFICATE_URL;
   const record = ready ? `v=BIMI1; l=${cfg.BIMI_LOGO_URL}; a=${cfg.BIMI_CERTIFICATE_URL};` : '';
   return `<section class="panel"><div class="panelhead"><div><h2>Inbox sender logo · BIMI</h2><p>For your-sender@your-verified-domain.com and other senders on the same domain.</p></div>${badge(ready ? 'URLs configured · Unverified' : 'Setup required')}</div><div class="panelbody"><p>Add your public SVG Tiny-PS logo URL and certificate URL in Workspace settings below. These URLs are public, not secret.</p><dl><dt>DNS type</dt><dd>TXT</dd><dt>Cloudflare DNS name</dt><dd><code>default._bimi.mail</code></dd><dt>Full DNS hostname</dt><dd><code>default._bimi.your-worker-domain.com</code></dd></dl>${record ? `<label class="field">DNS record value<textarea readonly rows="3">${e(record)}</textarea></label>` : '<div class="notice warn">No publishable record yet. Supply a real logo URL and a CA-issued VMC/CMC certificate URL first.</div>'}<p class="sub">Requires passing domain authentication and enforced DMARC. Gmail requires a VMC or CMC. A configured URL does not verify the certificate, DNS, logo compliance, or guarantee inbox display. Your private profile upload is not the public BIMI logo.</p></div></section>`;
+}
+
+export function healthPage(isDark = false) {
+  return `<!doctype html>
+<html lang="en" ${isDark ? 'data-theme="dark" class="dark"' : ''}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="neoMailer · System Status & Live Telemetry">
+  <meta name="theme-color" content="#063b2c">
+  <link rel="icon" type="image/svg+xml" href="${faviconUri}">
+  <title>neoMailer · System Status</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0c100e;
+      --surface: #121815;
+      --surface-hover: #18221d;
+      --text: #f0ede6;
+      --text-muted: #84968d;
+      --text-dim: #6e8077;
+      --border: #202c25;
+      --border-subtle: #1e2621;
+      --emerald: #10b981;
+      --emerald-dark: #059669;
+      --emerald-tint: rgba(16, 185, 129, 0.1);
+      --emerald-border: rgba(16, 185, 129, 0.2);
+      --font: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 32px 16px;
+      -webkit-font-smoothing: antialiased;
+    }
+    @media (max-width: 640px) {
+      body { padding: 20px 14px; }
+    }
+    .wrapper {
+      max-width: 768px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+    a { color: inherit; text-decoration: none; }
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-bottom: 24px;
+      border-bottom: 1px solid var(--border-subtle);
+      flex-wrap: wrap;
+    }
+    .brand-wrap {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: var(--emerald-tint);
+      border: 1px solid var(--emerald-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--emerald);
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+    .brand-icon svg { width: 18px; height: 18px; }
+    .brand-title {
+      font-size: 19px;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+    }
+    .brand-title span { color: var(--emerald); }
+    .status-badge {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 2px 7px;
+      border-radius: 9999px;
+      background: var(--emerald-tint);
+      color: var(--emerald);
+      border: 1px solid var(--emerald-border);
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+    .brand-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .btn-secondary {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .btn-secondary:hover {
+      background: var(--surface);
+      color: var(--text);
+    }
+    .btn-console {
+      font-size: 12px;
+      font-weight: 600;
+      padding: 6px 14px;
+      border-radius: 8px;
+      background: var(--emerald-dark);
+      color: #fff;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+      transition: all 0.15s ease;
+    }
+    .btn-console:hover {
+      background: var(--emerald);
+      color: #fff;
+    }
+    .hero-banner {
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid var(--emerald-border);
+      background: linear-gradient(90deg, rgba(6, 78, 59, 0.35) 0%, rgba(6, 78, 59, 0.08) 50%, transparent 100%);
+      padding: 22px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .hero-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .hero-icon-pulse {
+      position: relative;
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--emerald);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .hero-icon-pulse svg { width: 18px; height: 18px; }
+    .hero-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: var(--emerald);
+      letter-spacing: -0.02em;
+    }
+    .hero-sub {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+    .hero-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .live-chip {
+      font-family: var(--mono);
+      font-size: 12px;
+      color: var(--text-muted);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 6px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+    }
+    .dot-green {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald);
+      box-shadow: 0 0 8px var(--emerald);
+      display: inline-block;
+    }
+    .btn-refresh {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 6px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+    .btn-refresh:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+    }
+    .btn-refresh svg { width: 15px; height: 15px; }
+    .services-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    .service-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      gap: 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background 0.15s ease;
+    }
+    .service-row:last-child { border-bottom: none; }
+    .service-row:hover {
+      background: rgba(24, 34, 29, 0.4);
+    }
+    .service-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .service-icon-sm {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      background: var(--emerald-tint);
+      border: 1px solid var(--emerald-border);
+      color: var(--emerald);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .service-icon-sm svg { width: 14px; height: 14px; }
+    .service-name {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.01em;
+    }
+    .service-detail {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+    .service-detail code {
+      font-family: var(--mono);
+      color: var(--emerald);
+      background: rgba(16, 185, 129, 0.08);
+      padding: 1px 5px;
+      border-radius: 4px;
+      font-size: 11px;
+    }
+    .service-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--emerald);
+      flex-shrink: 0;
+    }
+    .curl-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .curl-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .curl-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+    }
+    .curl-copy-btn {
+      background: transparent;
+      border: none;
+      color: var(--emerald);
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      transition: color 0.15s ease;
+    }
+    .curl-copy-btn:hover { color: #34d399; }
+    .curl-copy-btn svg { width: 14px; height: 14px; }
+    .curl-box {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 12px 14px;
+      font-family: var(--mono);
+      font-size: 12px;
+      color: #6ee7b7;
+      overflow-x: auto;
+      white-space: nowrap;
+    }
+    .curl-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .curl-desc code {
+      font-family: var(--mono);
+      color: var(--emerald);
+      font-size: 11.5px;
+    }
+    .footer {
+      border-top: 1px solid var(--border-subtle);
+      padding-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-dim);
+      font-weight: 500;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .footer-mono {
+      font-family: var(--mono);
+      font-size: 11px;
+      display: flex;
+      gap: 8px;
+    }
+    @keyframes spin {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .rotating { animation: spin 0.6s linear infinite; }
+  </style>
+</head>
+<body>
+  <div class="wrapper">
+    <header class="header">
+      <div class="brand-wrap">
+        <div class="brand-icon">
+          <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+          </svg>
+        </div>
+        <div>
+          <div style="display: flex; align-items: center;">
+            <span class="brand-title">neo<span>Mailer</span></span>
+            <span class="status-badge">System Status</span>
+          </div>
+          <p class="brand-desc">Transactional email gateway & dispatch infrastructure</p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <a href="/docs" target="_blank" class="btn-secondary">
+          <span>Documentation</span>
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        </a>
+        <a href="/login" class="btn-console">
+          <span>Console</span>
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+        </a>
+      </div>
+    </header>
+
+    <div class="hero-banner">
+      <div class="hero-left">
+        <div class="hero-icon-pulse">
+          <svg fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        <div>
+          <h1 class="hero-title">All Systems Operational</h1>
+          <p class="hero-sub">The dispatch gateway, database ledger, and API ingress are operating with 100% availability.</p>
+        </div>
+      </div>
+
+      <div class="hero-right">
+        <span class="live-chip">
+          <span class="dot-green"></span>
+          <span id="live-timer">Live · Just now</span>
+        </span>
+        <button id="btn-refresh" onclick="simulateRefresh()" class="btn-refresh" title="Refresh health telemetry">
+          <svg id="refresh-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="services-card">
+      <div class="service-row">
+        <div class="service-left">
+          <div class="service-icon-sm">
+            <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+          </div>
+          <div>
+            <div class="service-name">Dispatch API Gateway</div>
+            <div class="service-detail">Accepting authenticated <code>/api/v1/send</code> transactional payloads</div>
+          </div>
+        </div>
+        <div class="service-status">
+          <span class="dot-green"></span>
+          <span>Operational</span>
+        </div>
+      </div>
+
+      <div class="service-row">
+        <div class="service-left">
+          <div class="service-icon-sm">
+            <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+          </div>
+          <div>
+            <div class="service-name">Global Edge Network</div>
+            <div class="service-detail">Anycast edge nodes with sub-5ms cold startup & low-latency routing</div>
+          </div>
+        </div>
+        <div class="service-status">
+          <span class="dot-green"></span>
+          <span>Operational</span>
+        </div>
+      </div>
+
+      <div class="service-row">
+        <div class="service-left">
+          <div class="service-icon-sm">
+            <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 7v10c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3V7M4 7c0-2 1.5-3 3.5-3h9c2 0 3.5 1 3.5 3M4 7c0 2 1.5 3 3.5 3h9c2 0 3.5-1 3.5-3"/></svg>
+          </div>
+          <div>
+            <div class="service-name">Encrypted Storage & Ledger</div>
+            <div class="service-detail">Distributed SQLite database with zero-trust authenticated encryption</div>
+          </div>
+        </div>
+        <div class="service-status">
+          <span class="dot-green"></span>
+          <span>Operational</span>
+        </div>
+      </div>
+
+      <div class="service-row">
+        <div class="service-left">
+          <div class="service-icon-sm">
+            <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg>
+          </div>
+          <div>
+            <div class="service-name">Zero-Trust Security & Rate Limiting</div>
+            <div class="service-detail">Replay defense, brute-force mitigation, and verified token validation</div>
+          </div>
+        </div>
+        <div class="service-status">
+          <span class="dot-green"></span>
+          <span>Active</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="curl-card">
+      <div class="curl-head">
+        <h3 class="curl-title">Automated Health Check Endpoint</h3>
+        <button onclick="copyEndpoint()" class="curl-copy-btn">
+          <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          <span id="copy-label">Copy JSON curl</span>
+        </button>
+      </div>
+
+      <div class="curl-box">
+        <code>curl -sS -H "Accept: application/json" https://mail.neopathshala.com/health</code>
+      </div>
+      <p class="curl-desc">
+        Uptime monitors (BetterStack, Datadog, UptimeRobot) requesting <code>application/json</code> receive a clean JSON payload <code>{"status":"ok","service":"neoMailer"}</code> with HTTP 200.
+      </p>
+    </div>
+
+    <footer class="footer">
+      <div>
+        <span>neoMailer · Private Transactional Email Gateway</span>
+      </div>
+      <div class="footer-mono">
+        <span>Cloudflare Workers</span>
+        <span>•</span>
+        <span>mail.neopathshala.com</span>
+      </div>
+    </footer>
+  </div>
+
+  <script>
+    function simulateRefresh() {
+      const icon = document.getElementById('refresh-icon');
+      const timer = document.getElementById('live-timer');
+      icon.classList.add('rotating');
+      timer.textContent = 'Checking...';
+      setTimeout(() => {
+        icon.classList.remove('rotating');
+        timer.textContent = 'Live · ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      }, 350);
+    }
+
+    function copyEndpoint() {
+      const cmd = 'curl -sS -H "Accept: application/json" https://mail.neopathshala.com/health';
+      navigator.clipboard.writeText(cmd).then(() => {
+        const lbl = document.getElementById('copy-label');
+        lbl.textContent = 'Copied to clipboard!';
+        setTimeout(() => { lbl.textContent = 'Copy JSON curl'; }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>`;
 }

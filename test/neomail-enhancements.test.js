@@ -290,4 +290,27 @@ test('neoMail enhancements: clean slugs, dark mode hover, SPA encrypted cache, D
   assert.ok(profSettingsHtml.includes('<circle cx="9" cy="9" r="2"/>'), 'Upload button must render Lucide Image icon');
   // Confirm Camera badge uses Camera icon (<path d="M13.997 4a2 2 0 0 1 1.76 1.05)
   assert.ok(profSettingsHtml.includes('13.997'), 'Camera badge must render Lucide Camera icon');
+
+  // 22. Verify /health endpoint (JSON for bots, HTML for browsers, small icons, Console link to /login, no provider leaks)
+  const healthJsonRes = await call('anon', '/health', { headers: { accept: 'application/json' } });
+  assert.equal(healthJsonRes.status, 200);
+  const healthJson = await healthJsonRes.json();
+  assert.deepEqual(healthJson, { status: 'ok', service: 'neoMailer' });
+
+  const healthHtmlRes = await call('anon', '/health', { headers: { accept: 'text/html,application/xhtml+xml' } });
+  assert.equal(healthHtmlRes.status, 200);
+  const healthHtml = await healthHtmlRes.text();
+  assert.ok(healthHtml.includes('neo<span>Mailer</span>'), 'Must display neoMailer brand');
+  assert.ok(healthHtml.includes('System Status'), 'Must display System Status badge');
+  assert.ok(healthHtml.includes('All Systems Operational'), 'Must display All Systems Operational hero');
+  assert.ok(healthHtml.includes('href="/login"'), 'Console button must link directly to /login page');
+  assert.ok(healthHtml.includes('service-icon-sm'), 'Must use small small icons for telemetry');
+  assert.ok(healthHtml.includes('Plus Jakarta Sans'), 'Must load Plus Jakarta Sans');
+  assert.ok(healthHtml.includes('JetBrains Mono'), 'Must load JetBrains Mono');
+  // Strict Privacy: Verify zero upstream provider names on the public page
+  assert.ok(!healthHtml.includes('Resend'), 'Must NOT leak Resend provider name');
+  assert.ok(!healthHtml.includes('Brevo'), 'Must NOT leak Brevo provider name');
+  assert.ok(!healthHtml.includes('Mailgun'), 'Must NOT leak Mailgun provider name');
+  assert.ok(!healthHtml.includes('Mailtrap'), 'Must NOT leak Mailtrap provider name');
+  assert.ok(!healthHtml.includes('MailerSend'), 'Must NOT leak MailerSend provider name');
 });

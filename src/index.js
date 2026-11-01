@@ -139,7 +139,15 @@ async function handler(request, env) {
     const isDark = cookie(request, 'neomail_theme') === 'dark';
     return reply(ui.publicDocs(content, isDark), 200, { 'Content-Type': 'text/html; charset=utf-8' });
   }
-  if (path === '/health') { requireMethod(request, ['GET']); return reply({ status: 'ok', service: 'neoMailer' }); }
+  if (path === '/health') {
+    requireMethod(request, ['GET']);
+    const accept = request.headers.get('accept') || '';
+    if (accept.includes('text/html')) {
+      const isDark = cookie(request, 'neomail_theme') === 'dark';
+      return reply(ui.healthPage(isDark), 200, { 'Content-Type': 'text/html; charset=utf-8' });
+    }
+    return reply({ status: 'ok', service: 'neoMailer' });
+  }
   if (path === '/favicon.ico' || path === '/favicon.svg') {
     requireMethod(request, ['GET']);
     return new Response(ui.faviconSvg, {
