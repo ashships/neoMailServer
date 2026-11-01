@@ -31,6 +31,80 @@ async function verifyDomainDns(domain, token) {
   } catch { return false; }
 }
 
+async function dispatchOtpEmail(env, cfg, recipientEmail, code, subjectLine, heading, description, failureReason = 'login code') {
+  const masterCfg = {
+    SMTP_HOST: env.OTP_SMTP_HOST || env.SMTP_HOST || cfg.SMTP_HOST,
+    SMTP_PORT: env.OTP_SMTP_PORT || env.SMTP_PORT || cfg.SMTP_PORT || '465',
+    SMTP_USER: env.OTP_SMTP_USER || env.OTP_SMTP_USERNAME || env.SMTP_USER || env.SMTP_USERNAME || cfg.SMTP_USER || cfg.SMTP_USERNAME,
+    SMTP_PASS: env.OTP_SMTP_PASS || env.OTP_SMTP_PASSWORD || env.SMTP_PASS || env.OTP_SMTP_PASSWORD || cfg.SMTP_PASS || cfg.SMTP_PASSWORD,
+    DEFAULT_SENDER: cfg.DEFAULT_SENDER,
+    DEFAULT_SENDER_NAME: 'neoMailer',
+  };
+  const defaultSender = email(cfg.DEFAULT_SENDER) || email(env.DEFAULT_SENDER) || 'no-reply@mail.neopathshala.com';
+  const isGmail = (masterCfg.SMTP_HOST || '').toLowerCase().includes('gmail') || (masterCfg.SMTP_HOST || '').toLowerCase().includes('google');
+  const smtpUserEmail = email(masterCfg.SMTP_USER);
+  const smtpSender = (isGmail && smtpUserEmail) ? smtpUserEmail : (defaultSender || smtpUserEmail || 'no-reply@mail.neopathshala.com');
+  masterCfg.DEFAULT_SENDER = smtpSender;
+
+  const mailText = `Your neoMailer verification code is: ${code}\n\nIt expires in 5 minutes.\nIf you did not request this code, you can safely ignore this email.`;
+  const mailHtml = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:24px auto;padding:32px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;color:#0f172a;">
+  <div style="font-size:20px;font-weight:700;color:#087d54;margin-bottom:16px;">neoMailer</div>
+  <h2 style="font-size:18px;font-weight:600;margin:0 0 12px 0;">${heading || 'Sign-in verification code'}</h2>
+  <p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 24px 0;">${description || 'Enter the following 6-digit verification code to complete your login to the neoMailer administration panel. This code is valid for 5 minutes.'}</p>
+  <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:20px;text-align:center;font-size:32px;font-weight:700;letter-spacing:6px;color:#0f172a;font-family:monospace;margin:0 0 24px 0;">${code}</div>
+  <p style="font-size:12px;line-height:1.5;color:#94a3b8;margin:0;">If you did not request this code, you can safely ignore this email. Do not share this code with anyone.</p>
+</div>`;
+
+  const mail = validateMail({
+    to: recipientEmail,
+    from: smtpSender,
+    from_name: masterCfg.DEFAULT_SENDER_NAME || 'neoMailer',
+    subject: subjectLine || 'neoMailer verification code',
+    text: mailText,
+    html: mailHtml,
+  }, masterCfg);
+
+  let sent = false;
+  let dispatchErr = null;
+
+  // 1. Try master SMTP first if configured
+  if (masterCfg.SMTP_HOST && masterCfg.SMTP_USER && masterCfg.SMTP_PASS) {
+    try {
+      await sendSmtp(masterCfg, mail);
+      sent = true;
+    } catch (err) {
+      dispatchErr = err;
+      console.error('Master SMTP failed during OTP dispatch:', err.message || err);
+    }
+  }
+
+  // 2. Fallback across active system providers if SMTP failed or was not configured
+  if (!sent) {
+    const providers = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',');
+    const adminSecrets = await resolveAccountProviderSecrets(env, 'local-admin').catch(() => ({}));
+    const mergedEnv = { REQUEST_TIMEOUT_MS: '6000', ...env, ...cfg, ...adminSecrets };
+    for (const p of providers) {
+      if (p === 'smtp' || !PROVIDERS.includes(p)) continue;
+      if (!mergedEnv[p.toUpperCase() + '_API_KEY']) continue;
+      if (p === 'mailgun' && !mergedEnv.MAILGUN_DOMAIN) continue;
+      try {
+        const providerMail = { ...mail, from: defaultSender };
+        await send(p, mergedEnv, providerMail, 'otp-' + crypto.randomUUID());
+        sent = true;
+        break;
+      } catch (provErr) {
+        dispatchErr = provErr;
+        console.error(`Provider ${p} failed during OTP dispatch:`, provErr.message || provErr);
+      }
+    }
+  }
+
+  if (!sent) {
+    const reason = dispatchErr?.message ? `: ${dispatchErr.message}` : '';
+    throw new Error(`Unable to deliver ${failureReason}` + reason);
+  }
+}
+
 async function isSuperadmin(env, subject) {
   if (subject === 'local-admin') return true;
   const role = await adminRole(env, subject);
@@ -259,7 +333,7 @@ async function handler(request, env) {
   }
   // Tenant workspaces may mutate their own resources via scoped action endpoints and inspect their
   // own messages; every other admin path (global settings, users, providers, docs, views) requires the superadmin role.
-  const tenantForm = (request.method === 'POST' && ['/admin/identities/create','/admin/identities/update','/admin/api-clients/create','/admin/api-clients/revoke','/admin/domains/create','/dashboard/domains/create','/admin/domains/verify','/dashboard/domains/verify','/admin/domains/delete','/dashboard/domains/delete','/admin/domains/auto-check','/dashboard/domains/auto-check','/admin/providers/limit','/dashboard/providers/limit','/admin/send-test','/admin/logout','/admin/sessions/revoke','/admin/profile','/dashboard/profile','/admin/account-keys/save','/admin/account-keys/delete','/admin/account-keys/toggle'].includes(path))
+  const tenantForm = (request.method === 'POST' && ['/admin/identities/create','/admin/identities/update','/admin/identities/request-otp','/dashboard/identities/request-otp','/admin/api-clients/create','/admin/api-clients/revoke','/admin/domains/create','/dashboard/domains/create','/admin/domains/verify','/dashboard/domains/verify','/admin/domains/delete','/dashboard/domains/delete','/admin/domains/auto-check','/dashboard/domains/auto-check','/admin/providers/limit','/dashboard/providers/limit','/admin/send-test','/admin/logout','/admin/sessions/revoke','/admin/profile','/dashboard/profile','/admin/account-keys/save','/admin/account-keys/delete','/admin/account-keys/toggle'].includes(path))
     || (request.method === 'GET' && ['/admin/view-mail','/admin/email','/admin/preview','/admin/profile-image','/dashboard/profile-image'].includes(path));
   if (!dashboardMode && path.startsWith('/admin') && role !== 'superadmin' && path !== '/admin/login' && !tenantForm) {
     if (request.method === 'GET' && !url.searchParams.has('view')) {
@@ -724,9 +798,79 @@ async function handler(request, env) {
       if (!result) throw new HttpError(409, 'Sender identity already exists.');
       await audit(env, request, 'IDENTITY_CREATED', { address }); return redirect('/admin?view=identities&notice=Identity+created');
     }
+    if (path === '/admin/identities/request-otp' || path === '/dashboard/identities/request-otp') {
+      sameOrigin(request);
+      const data = await form(request);
+      const { values: cfg } = await config(env);
+      const currentAddress = email(data.get('email_address'));
+      const newAddress = email(data.get('new_email_address'));
+      if (!currentAddress || !newAddress) throw new HttpError(422, 'Valid current and new email addresses are required.');
+      if (currentAddress === newAddress) throw new HttpError(422, 'New email address must be different from current address.');
+
+      const identity = await env.DB.prepare('SELECT * FROM sender_identities WHERE email_address=?').bind(currentAddress).first();
+      if (!identity) throw new HttpError(404, 'Sender identity not found.');
+      const admin = await isSuperadmin(env, subject);
+      if (!admin && identity.owner_subject !== subject) throw new HttpError(403, 'This identity belongs to another workspace.');
+
+      const newDomain = newAddress.split('@')[1];
+      const domainRow = await env.DB.prepare('SELECT is_verified,owner_subject FROM managed_domains WHERE domain=?').bind(newDomain).first();
+      if (!domainRow || !domainRow.is_verified) throw new HttpError(422, 'Add and verify the sending domain before creating an identity for it.');
+      if (!admin && domainRow.owner_subject !== subject) throw new HttpError(422, 'This sending domain belongs to another workspace.');
+
+      const duplicate = await env.DB.prepare('SELECT 1 FROM sender_identities WHERE email_address=?').bind(newAddress).first();
+      if (duplicate) throw new HttpError(409, 'A sender identity with this email address already exists.');
+
+      const adminEmail = email(subject) || email(cfg.DEFAULT_SENDER) || currentAddress;
+      const otpKey = 'identity-edit:' + subject + ':' + currentAddress;
+      const nowSec = now();
+      const existingOtp = await env.DB.prepare('SELECT created_at FROM admin_otps WHERE subject=?').bind(otpKey).first().catch(() => null);
+      if (existingOtp && nowSec - existingOtp.created_at < 30) {
+        return reply({ success: true, message: `Verification code already sent to ${adminEmail}. Please check your inbox.` });
+      }
+
+      const otpBytes = new Uint32Array(1); crypto.getRandomValues(otpBytes); const code = String(100000 + (otpBytes[0] % 900000));
+      const saltBytes = new Uint8Array(16); crypto.getRandomValues(saltBytes);
+      const salt = [...saltBytes].map(b => b.toString(16).padStart(2, '0')).join('');
+      const expires = nowSec + 300;
+
+      try {
+        await env.DB.prepare('INSERT INTO admin_otps (subject,salt,code_hash,expires_at,attempts,created_at) VALUES (?,?,?,?,0,unixepoch()) ON CONFLICT(subject) DO UPDATE SET salt=excluded.salt,code_hash=excluded.code_hash,expires_at=excluded.expires_at,attempts=0,created_at=unixepoch()').bind(otpKey, salt, await hashOtp(salt, code), expires).run();
+      } catch {
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS admin_otps (
+          subject TEXT PRIMARY KEY,
+          salt TEXT,
+          code_hash TEXT NOT NULL,
+          expires_at INTEGER NOT NULL,
+          attempts INTEGER NOT NULL DEFAULT 0,
+          created_at INTEGER NOT NULL
+        )`).run().catch(() => {});
+        await env.DB.prepare('ALTER TABLE admin_otps ADD COLUMN salt TEXT').run().catch(() => {});
+        await env.DB.prepare('INSERT INTO admin_otps (subject,salt,code_hash,expires_at,attempts,created_at) VALUES (?,?,?,?,0,unixepoch()) ON CONFLICT(subject) DO UPDATE SET salt=excluded.salt,code_hash=excluded.code_hash,expires_at=excluded.expires_at,attempts=0,created_at=unixepoch()').bind(otpKey, salt, await hashOtp(salt, code), expires).run();
+      }
+
+      try {
+        await dispatchOtpEmail(
+          env,
+          cfg,
+          adminEmail,
+          code,
+          'neoMailer: Confirm sender address change',
+          'Confirm sender address change',
+          `A request was made to update the sender address for "${identity.display_name}" from ${currentAddress} to ${newAddress}. Enter this 6-digit verification code to confirm:`,
+          'confirmation code'
+        );
+      } catch (err) {
+        await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(otpKey).run().catch(() => {});
+        console.error(JSON.stringify({ event: 'IDENTITY_OTP_FAILED', error: err?.message || String(err) }));
+        throw new HttpError(503, 'Unable to deliver confirmation code right now. Check email provider configuration.');
+      }
+
+      await audit(env, request, 'IDENTITY_OTP_REQUESTED', { address: currentAddress, newAddress, recipient: adminEmail });
+      return reply({ success: true, message: `Verification code sent to ${adminEmail}` });
+    }
     if (path === '/admin/identities/update') {
       const address = email(data.get('email_address')), action = data.get('action');
-      if (!address || !['default','toggle','rename','delete'].includes(action)) throw new HttpError(422, 'Invalid identity action.');
+      if (!address || !['default','toggle','rename','edit','delete'].includes(action)) throw new HttpError(422, 'Invalid identity action.');
       const identity = await env.DB.prepare('SELECT * FROM sender_identities WHERE email_address=?').bind(address).first();
       if (!identity) throw new HttpError(404, 'Identity not found.');
       const admin = await isSuperadmin(env, subject);
@@ -739,11 +883,57 @@ async function handler(request, env) {
         await env.DB.prepare(`DELETE FROM sender_identities WHERE email_address=?${ownClause}`).bind(address,...ownParams).run();
         await audit(env, request, 'IDENTITY_DELETED', { address }); return redirect('/admin?view=identities&notice=Identity+deleted');
       }
-      if (action === 'rename') {
-        const displayName=text(data.get('display_name'),100);
-        const changes=[env.DB.prepare(`UPDATE sender_identities SET display_name=? WHERE email_address=?${ownClause}`).bind(displayName,address,...ownParams)];
-        if (admin && address===cfg.DEFAULT_SENDER) changes.push(env.DB.prepare('INSERT INTO app_settings(name,value,is_secret,updated_at) VALUES (?,?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,updated_at=unixepoch()').bind('DEFAULT_SENDER_NAME',displayName));
+      if (action === 'rename' || action === 'edit') {
+        const displayName = text(data.get('display_name'), 100);
+        const newAddressRaw = data.get('new_email_address');
+        const newAddress = newAddressRaw ? email(newAddressRaw) : null;
+
+        if (newAddress && newAddress !== address) {
+          const newDomain = newAddress.split('@')[1];
+          const domainRow = await env.DB.prepare('SELECT is_verified,owner_subject FROM managed_domains WHERE domain=?').bind(newDomain).first();
+          if (!domainRow || !domainRow.is_verified) throw new HttpError(422, 'Add and verify the sending domain before creating an identity for it.');
+          if (!admin && domainRow.owner_subject !== subject) throw new HttpError(422, 'This sending domain belongs to another workspace.');
+
+          const duplicate = await env.DB.prepare('SELECT 1 FROM sender_identities WHERE email_address=?').bind(newAddress).first();
+          if (duplicate) throw new HttpError(409, 'A sender identity with this email address already exists.');
+
+          const code = String(data.get('otp_code') || '').trim();
+          if (!/^[0-9]{6}$/.test(code)) throw new HttpError(422, 'A 6-digit confirmation code is required to change the sender address.');
+
+          const otpKey = 'identity-edit:' + subject + ':' + address;
+          const row = await env.DB.prepare('SELECT * FROM admin_otps WHERE subject=?').bind(otpKey).first();
+          if (!row || row.expires_at <= now() || row.attempts >= 5) {
+            await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(otpKey).run().catch(() => {});
+            throw new HttpError(403, 'Confirmation code expired or invalid. Please request a new code.');
+          }
+          if (!await equal(await hashOtp(row.salt, code), row.code_hash)) {
+            await env.DB.prepare('UPDATE admin_otps SET attempts=attempts+1 WHERE subject=?').bind(otpKey).run();
+            throw new HttpError(403, 'Invalid confirmation code.');
+          }
+          await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(otpKey).run();
+
+          const changes = [
+            env.DB.prepare(`UPDATE sender_identities SET email_address=?, display_name=? WHERE email_address=?${ownClause}`).bind(newAddress, displayName, address, ...ownParams),
+            env.DB.prepare('UPDATE api_clients SET sender_address=? WHERE sender_address=?').bind(newAddress, address),
+          ];
+          if (admin && address === cfg.DEFAULT_SENDER) {
+            changes.push(
+              env.DB.prepare('INSERT INTO app_settings(name,value,is_secret,updated_at) VALUES (?,?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,updated_at=unixepoch()').bind('DEFAULT_SENDER', newAddress),
+              env.DB.prepare('INSERT INTO app_settings(name,value,is_secret,updated_at) VALUES (?,?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,updated_at=unixepoch()').bind('DEFAULT_SENDER_NAME', displayName)
+            );
+          } else if (admin && identity.is_default) {
+            changes.push(env.DB.prepare('INSERT INTO app_settings(name,value,is_secret,updated_at) VALUES (?,?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,updated_at=unixepoch()').bind('DEFAULT_SENDER_NAME', displayName));
+          }
+          await env.DB.batch(changes);
+          await audit(env, request, 'IDENTITY_TRANSFERRED', { oldAddress: address, newAddress, displayName });
+          return redirect('/admin?view=identities&notice=' + encodeURIComponent('Sender identity address updated successfully'));
+        }
+
+        const changes = [env.DB.prepare(`UPDATE sender_identities SET display_name=? WHERE email_address=?${ownClause}`).bind(displayName, address, ...ownParams)];
+        if (admin && address === cfg.DEFAULT_SENDER) changes.push(env.DB.prepare('INSERT INTO app_settings(name,value,is_secret,updated_at) VALUES (?,?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,updated_at=unixepoch()').bind('DEFAULT_SENDER_NAME', displayName));
         await env.DB.batch(changes);
+        await audit(env, request, 'IDENTITY_RENAMED', { address, displayName });
+        return redirect('/admin?view=identities&notice=Identity+updated');
       } else if (action === 'toggle') {
         if (identity.is_default || address === cfg.DEFAULT_SENDER) throw new HttpError(409, 'Choose another default sender before pausing this identity.');
         await env.DB.prepare(`UPDATE sender_identities SET is_active=1-is_active WHERE email_address=?${ownClause}`).bind(address,...ownParams).run();

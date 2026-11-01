@@ -314,4 +314,25 @@ test('neoMail enhancements: clean slugs, dark mode hover, SPA encrypted cache, D
   assert.ok(!healthHtml.includes('Mailtrap'), 'Must NOT leak Mailtrap provider name');
   assert.ok(!healthHtml.includes('MailerSend'), 'Must NOT leak MailerSend provider name');
   assert.ok(!healthHtml.includes('Cloudflare Workers'), 'Must NOT display Cloudflare Workers on public health page');
+
+  // 23. Verify Sender Identities: Rename in Actions column, edit modal, and address edit requiring OTP
+  const idPageRes = await call('super@neomail.internal', '/admin/identities', { headers: { cookie: superCookie } });
+  const idPageHtml = await idPageRes.text();
+  assert.ok(idPageHtml.includes('data-action="rename-identity"'), 'Must have rename action button in actions column');
+  assert.ok(idPageHtml.includes('id="editIdentityModal"'), 'Must render editIdentityModal dialog');
+  assert.ok(idPageHtml.includes('id="edit-id-otp-section"'), 'Must render OTP confirmation section in modal');
+
+  // Verify API Clients: Info icon beside Create API client
+  const clientsPageRes = await call('super@neomail.internal', '/admin/clients', { headers: { cookie: superCookie } });
+  const clientsPageHtml = await clientsPageRes.text();
+  assert.ok(clientsPageHtml.includes('Create API client'), 'Must render Create API client panel');
+  assert.ok(clientsPageHtml.includes('info-help-btn'), 'Must render info icon beside Create API client');
+  assert.ok(clientsPageHtml.includes('Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender.'), 'Must contain the required sender help text');
+
+  // 24. Verify Provider Logos render official site vector icons and mail icon for SMTP
+  const provHtmlRes = await call('super@neomail.internal', '/admin/providers', { headers: { cookie: superCookie } });
+  const provHtml = await provHtmlRes.text();
+  assert.ok(provHtml.includes('class="providerlogo"'), 'Must render providerlogo containers');
+  // Check that providerlogo contains SVG markup
+  assert.ok(provHtml.includes('<svg viewBox="0 0 24 24"'), 'Must render vector SVGs for provider logos');
 });

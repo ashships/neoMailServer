@@ -47,6 +47,7 @@ import {
   Upload,
   Quote,
   AlertCircle,
+  Info,
 } from 'lucide';
 
 const icons = {
@@ -94,6 +95,7 @@ const icons = {
   Upload,
   Quote,
   AlertCircle,
+  Info,
 };
 
 const iconMap = {
@@ -142,12 +144,36 @@ const iconMap = {
   quote: 'Quote',
   alert: 'AlertCircle',
   alertCircle: 'AlertCircle',
+  info: 'Info',
 };
 
 function initial(name) {
   if (!name || typeof name !== 'string') return 'S';
   const trimmed = name.trim();
   return trimmed ? Array.from(trimmed)[0].toUpperCase() : 'S';
+}
+
+export function providerLogo(p) {
+  const norm = String(p || '').toLowerCase();
+  if (norm === 'smtp') {
+    return icon('mail');
+  }
+  if (norm === 'resend') {
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M14.679 0c4.648 0 7.413 2.765 7.413 6.434s-2.765 6.434-7.413 6.434H12.33L24 24h-8.245l-8.88-8.44c-.636-.588-.93-1.273-.93-1.86c0-.831.587-1.565 1.713-1.883l4.574-1.224c1.737-.465 2.936-1.81 2.936-3.572c0-2.153-1.761-3.4-3.939-3.4H0V0z"/></svg>`;
+  }
+  if (norm === 'brevo') {
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0zm0 4.138a7.862 7.862 0 0 1 7.862 7.862A7.862 7.862 0 0 1 12 19.862a7.862 7.862 0 0 1-7.862-7.862A7.862 7.862 0 0 1 12 4.138zm0 3.724a4.138 4.138 0 0 0-4.138 4.138A4.138 4.138 0 0 0 12 16.138a4.138 4.138 0 0 0 4.138-4.138A4.138 4.138 0 0 0 12 7.862z"/></svg>`;
+  }
+  if (norm === 'mailgun') {
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.179 8.019l-4.156 5.867-2.61-3.682-4.155 5.867h13.844z"/></svg>`;
+  }
+  if (norm === 'mailtrap') {
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="m5.371 17.607-2.036 1.208a.32.32 0 0 0 0 .557l7.91 4.432a1.55 1.55 0 0 0 1.51 0l8.014-4.491c.243-.144.203-.436 0-.535l-2.153-1.163c-.182-.12-.587-.08-.73.017l-5.131 2.875a1.55 1.55 0 0 1-1.51 0l-5.176-2.9c-.145-.094-.548-.135-.73-.016zm13.258-6.195-5.132-2.875a1.55 1.55 0 0 0-1.51 0l-5.176 2.9c-.182.119-.587.078-.73-.016L3.335 13.16a.32.32 0 0 1 0-.557l7.91-4.432a1.55 1.55 0 0 1 1.51 0l8.014 4.491c.243.144.203.436 0 .535l-2.153 1.163c-.182.12-.587.08-.73-.016zM12 .988a1.55 1.55 0 0 0-1.51 0L2.476 5.48c-.243.144-.203.436 0 .535l2.153 1.163c.182.12.587.08.73-.017l5.131-2.875a1.55 1.55 0 0 1 1.51 0l5.176 2.9c.145.094.548.135.73.016l2.153-1.163c.243-.1-.203-.391 0-.535L13.51 .988a1.55 1.55 0 0 0-1.51 0z"/></svg>`;
+  }
+  if (norm === 'mailersend') {
+    return `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2L11 13"/><path d="M22 2L15 22L11 13L2 9L22 2Z"/></svg>`;
+  }
+  return e(norm ? norm[0].toUpperCase() : 'M');
 }
 
 function icon(name) {
@@ -1343,9 +1369,16 @@ p {
 }
 
 .button.small {
-  padding: 5px 12px;
+  height: 28px;
+  box-sizing: border-box;
+  padding: 0 10px;
   font-size: 11.5px;
   border-radius: var(--radius-xs);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  vertical-align: middle;
 }
 
 .button svg {
@@ -1774,6 +1807,70 @@ textarea {
   font-size: 14px;
   background: var(--surface-hover);
   color: var(--accent);
+  flex-shrink: 0;
+}
+
+.providerlogo svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.info-help-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  color: var(--muted);
+  cursor: help;
+  position: relative;
+  transition: all 0.15s ease;
+  vertical-align: middle;
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+}
+
+.info-help-btn:hover,
+.info-help-btn:focus-visible {
+  color: var(--accent);
+  background: var(--tint);
+  outline: none;
+}
+
+.info-help-btn svg {
+  width: 15px;
+  height: 15px;
+  display: block;
+}
+
+.info-help-btn .info-tooltip-box {
+  display: none;
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 280px;
+  padding: 10px 12px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text);
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.45;
+  z-index: 100;
+  box-shadow: none !important;
+  text-align: left;
+  pointer-events: none;
+}
+
+.info-help-btn:hover .info-tooltip-box,
+.info-help-btn:focus-visible .info-tooltip-box {
+  display: block;
+  animation: dropMenuIn 0.15s ease;
 }
 
 .provider strong {
@@ -2264,19 +2361,38 @@ input[type=checkbox] {
   flex-shrink: 0;
 }
 
+.button.small.iconb,
 .iconb {
-  padding: 6px 8px !important;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  padding: 0 !important;
+  box-sizing: border-box;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-xs);
+  vertical-align: middle;
 }
 
 .iconb svg {
-  width: 15px;
-  height: 15px;
+  width: 14px;
+  height: 14px;
+  display: block;
 }
 
+.button.copied,
 .iconb.copied {
-  background: var(--tint);
-  border-color: var(--accent);
-  color: var(--accent);
+  background: var(--tint) !important;
+  border-color: var(--accent) !important;
+  color: var(--accent) !important;
+}
+
+.button.copied svg,
+.iconb.copied svg {
+  stroke: var(--accent) !important;
+  color: var(--accent) !important;
+  stroke-width: 2.5 !important;
 }
 
 .profileeditor {
@@ -4168,6 +4284,21 @@ main.docs-main-studio {
   animation: neomailSteamFloat 2.8s ease-out infinite 1.4s;
 }
 
+/* Server Activity LEDs */
+@keyframes serverLedBlink {
+  0%, 100% { opacity: 1; }
+  25% { opacity: 0.3; }
+  50% { opacity: 0.9; }
+  75% { opacity: 0.2; }
+}
+@keyframes serverLedPulse {
+  0%, 100% { opacity: 0.9; }
+  50% { opacity: 0.35; }
+}
+.server-led-1 { animation: serverLedBlink 1.9s infinite; }
+.server-led-2 { animation: serverLedBlink 2.4s infinite 0.5s; }
+.server-led-3 { animation: serverLedPulse 3.1s infinite 0.9s; }
+
 /* Subtle natural plant breeze animation - gentle air movement at top, leaves stay fully attached at base */
 @keyframes plantGentleAir {
   0%, 100% { transform: rotate(0deg); }
@@ -4424,7 +4555,7 @@ export function providerList(rows = [], cfg = {}, csrf) {
     } else {
       configured = !!cfg[p.toUpperCase() + '_API_KEY'];
     }
-    return `<div class="provider"><div class="providerleft"><div class="providerlogo">${e(p[0].toUpperCase())}</div><div><strong>${e(p)}</strong><p>${configured ? 'Credential configured' : 'Add a credential in Settings'}${row?.consecutive_failures ? ' · ' + e(row.consecutive_failures) + ' recent failures' : ''}</p></div></div><div class="actions">${badge(!configured ? 'Not configured' : row?.is_active === 0 ? 'Paused' : row?.consecutive_failures >= 5 ? 'Cooling down' : 'Ready')}<a class="button secondary small" href="/admin/settings" aria-label="Configure">${icon('settings')}</a>${csrf ? `<form method="post" action="/admin/providers/toggle">${hidden(csrf)}<input type="hidden" name="provider" value="${p}"><button class="button secondary small">${row?.is_active === 0 ? 'Enable' : 'Pause'}</button></form>` : ''}</div></div>`;
+    return `<div class="provider"><div class="providerleft"><div class="providerlogo">${providerLogo(p)}</div><div><strong>${e(p)}</strong><p>${configured ? 'Credential configured' : 'Add a credential in Settings'}${row?.consecutive_failures ? ' · ' + e(row.consecutive_failures) + ' recent failures' : ''}</p></div></div><div class="actions">${badge(!configured ? 'Not configured' : row?.is_active === 0 ? 'Paused' : row?.consecutive_failures >= 5 ? 'Cooling down' : 'Ready')}<a class="button secondary small" href="/admin/settings" aria-label="Configure">${icon('settings')}</a>${csrf ? `<form method="post" action="/admin/providers/toggle">${hidden(csrf)}<input type="hidden" name="provider" value="${p}"><button class="button secondary small">${row?.is_active === 0 ? 'Enable' : 'Pause'}</button></form>` : ''}</div></div>`;
   }).join('');
 }
 
@@ -6700,7 +6831,7 @@ export function providersView(rows, cfg, sess, limits = {}, usage = {}, userLimi
                     </form>
                   </div>
                   <span class="routing-rank ${i === 0 ? 'primary' : ''}">#${i + 1} ${i === 0 ? 'Primary' : 'Failover'}</span>
-                  <div class="providerlogo">${e(p[0].toUpperCase())}</div>
+                  <div class="providerlogo">${providerLogo(p)}</div>
                   <div class="routing-meta">
                     <strong>${e(p)}</strong>
                     <p>${configured ? 'Credential configured' : 'Add credentials below'}${failures ? ' · ' + failures + ' recent failures' : ''}</p>
@@ -6954,8 +7085,12 @@ export function apiClients(clients, sess, createdKey = '') {
   const keyNotice = createdKey ? `<div class="notice">New API key (shown once): <code>${e(createdKey)}</code>. Store it securely; it will not be displayed again.</div>` : '';
   const createPanel = `
     <section class="panel">
-      <div class="panelhead">
-        <h2>Create API client</h2>
+      <div class="panelhead" style="display:flex;align-items:center;gap:8px">
+        <h2 style="margin:0">Create API client</h2>
+        <span class="info-help-btn" tabindex="0" role="tooltip" title="Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender." aria-label="Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender.">
+          ${icon('info')}
+          <span class="info-tooltip-box">Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender.</span>
+        </span>
       </div>
       <div class="panelbody">
         <form method="post" action="/admin/api-clients/create">
@@ -7271,7 +7406,7 @@ export function domains(rows, sess) {
   const ownRows = isSuper ? rows.filter(r => !r.owner_subject || r.owner_subject === currentSubject || r.owner_subject === 'local-admin') : rows;
   const otherRows = isSuper ? rows.filter(r => r.owner_subject && r.owner_subject !== currentSubject && r.owner_subject !== 'local-admin') : [];
 
-  const copyScript = sess.script_nonce ? `<script nonce="${e(sess.script_nonce)}">const copyIcon=${JSON.stringify(icon('copy'))};const check=${JSON.stringify(icon('check'))};document.addEventListener('click',async ev=>{const b=ev.target.closest('button[data-copy]');if(!b||b.disabled)return;ev.preventDefault();const value=b.getAttribute('data-copy');try{await navigator.clipboard.writeText(value);}catch{const ta=document.createElement('textarea');ta.value=value;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}finally{ta.remove();}}b.classList.add('copied');b.innerHTML=check;b.disabled=true;setTimeout(()=>{b.classList.remove('copied');b.innerHTML=copyIcon;b.disabled=false;},1600);});</script>` : '';
+  const copyScript = sess.script_nonce ? `<script nonce="${e(sess.script_nonce)}">const copyIcon=${JSON.stringify(icon('copy'))};const check='<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;display:block"><polyline points="20 6 9 17 4 12"/></svg>';document.addEventListener('click',async ev=>{const b=ev.target.closest('button[data-copy]');if(!b||b.dataset.copying)return;ev.preventDefault();const value=b.getAttribute('data-copy');if(!value)return;b.dataset.copying='1';try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(value);}else{throw new Error('exec');}}catch{const ta=document.createElement('textarea');ta.value=value;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}finally{ta.remove();}}b.classList.add('copied');b.innerHTML=check;setTimeout(()=>{b.classList.remove('copied');b.innerHTML=copyIcon;delete b.dataset.copying;},1600);});</script>` : '';
   const dnsField = (label, value, title) => `<div class="dnsfield"><span class="dnstype">${label}</span><code title="${e(title)}">${e(value)}</code><button type="button" class="button secondary small iconb" data-copy="${e(value)}" aria-label="Copy ${label}" title="Copy">${icon('copy')}</button></div>`;
   const record = r => r.verification_token ? `${dnsField('Name', '_neomailer-verification.' + r.domain, 'TXT record host — paste this into the Host/Name field of your DNS provider')}${dnsField('Value', r.verification_token, 'TXT record content — paste this into the Value/Content field of your DNS provider')}` : '<p class="sub">Verification token missing — remove and re-add the domain.</p>';
 
@@ -7462,7 +7597,8 @@ export function errorIllustrationSvg() {
     </defs>
     <ellipse cx="270" cy="220" rx="190" ry="170" fill="url(#errBackdropGlow)"/>
     <ellipse cx="270" cy="378" rx="145" ry="16" fill="var(--text)" opacity="0.06"/>
-    <ellipse cx="122" cy="370" rx="38" ry="10" fill="var(--text)" opacity="0.06"/>
+    <ellipse cx="68" cy="374" rx="26" ry="7" fill="var(--text)" opacity="0.06"/>
+    <ellipse cx="145" cy="370" rx="36" ry="9" fill="var(--text)" opacity="0.06"/>
     <ellipse cx="445" cy="372" rx="30" ry="8" fill="var(--text)" opacity="0.06"/>
     <g transform="translate(355, 30)" id="wallClockGroup">
       <circle cx="45" cy="45" r="38" fill="var(--surface)" stroke="var(--illus-clock-rim)" stroke-width="4"/>
@@ -7476,7 +7612,33 @@ export function errorIllustrationSvg() {
       <circle cx="45" cy="45" r="3.2" fill="var(--accent)"/>
       <circle cx="45" cy="45" r="1.2" fill="#ffffff"/>
     </g>
-    <g id="sideTable" transform="translate(-18, 0)">
+    <g id="serverRack">
+      <rect x="46" y="282" width="44" height="90" rx="6" fill="var(--illus-chair-shadow)" stroke="var(--line-strong)" stroke-width="1.2"/>
+      <rect x="49" y="285" width="38" height="11" rx="2" fill="var(--surface)" fill-opacity="0.12"/>
+      <rect x="52" y="289" width="12" height="3" rx="1" fill="var(--accent)"/>
+      <circle cx="81" cy="290.5" r="1.8" fill="var(--accent)" class="server-led-1"/>
+      <rect x="49" y="299" width="38" height="20" rx="2" fill="var(--surface)" fill-opacity="0.06" stroke="var(--line)" stroke-width="0.8"/>
+      <line x1="53" y1="306" x2="69" y2="306" stroke="var(--text)" stroke-width="1" opacity="0.25"/>
+      <line x1="53" y1="312" x2="69" y2="312" stroke="var(--text)" stroke-width="1" opacity="0.25"/>
+      <circle cx="75" cy="306" r="1.5" fill="var(--accent)" class="server-led-1"/>
+      <circle cx="80" cy="306" r="1.5" fill="#3b82f6" class="server-led-2"/>
+      <circle cx="75" cy="312" r="1.2" fill="var(--accent)" class="server-led-3"/>
+      <rect x="49" y="322" width="38" height="20" rx="2" fill="var(--surface)" fill-opacity="0.06" stroke="var(--line)" stroke-width="0.8"/>
+      <line x1="53" y1="329" x2="69" y2="329" stroke="var(--text)" stroke-width="1" opacity="0.25"/>
+      <line x1="53" y1="335" x2="69" y2="335" stroke="var(--text)" stroke-width="1" opacity="0.25"/>
+      <circle cx="75" cy="329" r="1.5" fill="var(--accent)" class="server-led-2"/>
+      <circle cx="80" cy="329" r="1.5" fill="var(--accent)" class="server-led-1"/>
+      <circle cx="75" cy="335" r="1.2" fill="#10b981" class="server-led-3"/>
+      <rect x="49" y="345" width="38" height="20" rx="2" fill="var(--surface)" fill-opacity="0.06" stroke="var(--line)" stroke-width="0.8"/>
+      <line x1="53" y1="352" x2="69" y2="352" stroke="var(--text)" stroke-width="1" opacity="0.25"/>
+      <line x1="53" y1="358" x2="69" y2="358" stroke="var(--text)" stroke-width="1" opacity="0.25"/>
+      <circle cx="75" cy="352" r="1.5" fill="var(--accent)" class="server-led-3"/>
+      <circle cx="80" cy="352" r="1.5" fill="var(--accent)" class="server-led-1"/>
+      <circle cx="75" cy="358" r="1.2" fill="var(--accent)" class="server-led-2"/>
+      <rect x="49" y="371" width="8" height="3" rx="1" fill="var(--illus-chair-shadow)"/>
+      <rect x="79" y="371" width="8" height="3" rx="1" fill="var(--illus-chair-shadow)"/>
+    </g>
+    <g id="sideTable" transform="translate(5, 0)">
       <line x1="120" y1="310" x2="105" y2="370" stroke="var(--illus-chair-shadow)" stroke-width="4" stroke-linecap="round"/>
       <line x1="140" y1="310" x2="140" y2="372" stroke="var(--illus-chair-shadow)" stroke-width="4" stroke-linecap="round"/>
       <line x1="160" y1="310" x2="175" y2="370" stroke="var(--illus-chair-shadow)" stroke-width="4" stroke-linecap="round"/>

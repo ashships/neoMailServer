@@ -419,6 +419,39 @@ export const SPA_CLIENT_SCRIPT = String.raw`
     initProfileUploader();
   }
 
+  // Global one-click clipboard copy with verified check/tick feedback
+  document.addEventListener('click', async ev => {
+    const b = ev.target.closest('button[data-copy]');
+    if (!b || b.dataset.copying) return;
+    ev.preventDefault();
+    const value = b.getAttribute('data-copy');
+    if (!value) return;
+    b.dataset.copying = '1';
+    try {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(value);
+      } else {
+        throw new Error('execCommand');
+      }
+    } catch {
+      const ta = document.createElement('textarea');
+      ta.value = value;
+      ta.style.position = 'fixed';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } finally { ta.remove(); }
+    }
+    const origHtml = b.innerHTML;
+    b.classList.add('copied');
+    b.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="width:14px;height:14px;display:block"><polyline points="20 6 9 17 4 12"/></svg>';
+    setTimeout(() => {
+      b.classList.remove('copied');
+      b.innerHTML = origHtml;
+      delete b.dataset.copying;
+    }, 1600);
+  });
+
   // Cache current view immediately on initial render
   const initialMain = document.getElementById('app-main') || document.querySelector('main');
   const initialCrumb = document.querySelector('.crumb');
