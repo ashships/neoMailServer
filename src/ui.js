@@ -6833,7 +6833,6 @@ document.addEventListener('click', function(ev) {
       <div class="panelhead" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <div>
           <h2>Administrator accounts</h2>
-          <p>Cloudflare Access identities authorized to use this console.</p>
         </div>
         <span class="tag" style="font-size:11px">${rows.length} ${rows.length === 1 ? 'account' : 'accounts'}</span>
       </div>
@@ -7466,23 +7465,50 @@ export function healthPage(isDark = false) {
   <title>neoMailer · System Status</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" media="print" onload="this.media='all'">
+  <noscript>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap">
+  </noscript>
   <style>
     :root {
-      --bg: #0c100e;
-      --surface: #121815;
-      --surface-hover: #18221d;
+      color-scheme: dark;
+      --bg: #131514;
+      --surface: #1a1e1c;
+      --surface-hover: #222825;
+      --surface-active: #2a312d;
       --text: #f0ede6;
-      --text-muted: #84968d;
-      --text-dim: #6e8077;
-      --border: #202c25;
-      --border-subtle: #1e2621;
-      --emerald: #10b981;
-      --emerald-dark: #059669;
-      --emerald-tint: rgba(16, 185, 129, 0.1);
-      --emerald-border: rgba(16, 185, 129, 0.2);
-      --font: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      --mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      --text-secondary: #c5cbc7;
+      --muted: #8d9a92;
+      --line: #2b332f;
+      --line-strong: #3d4842;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --accent-active: #047857;
+      --tint: rgba(16, 185, 129, 0.12);
+      --tint-strong: rgba(16, 185, 129, 0.22);
+      --brand-dark: #063b2c;
+      --radius-xs: 4px;
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+      --font: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    }
+    :root[data-theme="light"], :root.light {
+      color-scheme: light;
+      --bg: #fbfaf8;
+      --surface: #ffffff;
+      --surface-hover: #f5f4f0;
+      --text: #212624;
+      --text-secondary: #4a544f;
+      --muted: #69746e;
+      --line: #dfddd7;
+      --line-strong: #d2d0c8;
+      --accent: #087d54;
+      --accent-hover: #066b47;
+      --tint: rgba(8, 125, 84, 0.08);
+      --tint-strong: rgba(8, 125, 84, 0.16);
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -7497,15 +7523,15 @@ export function healthPage(isDark = false) {
       -webkit-font-smoothing: antialiased;
     }
     @media (max-width: 640px) {
-      body { padding: 20px 14px; }
+      body { padding: 20px 12px; }
     }
     .wrapper {
-      max-width: 768px;
+      max-width: 760px;
       width: 100%;
       margin: 0 auto;
       display: flex;
       flex-direction: column;
-      gap: 24px;
+      gap: 20px;
     }
     a { color: inherit; text-decoration: none; }
     .header {
@@ -7513,8 +7539,8 @@ export function healthPage(isDark = false) {
       align-items: center;
       justify-content: space-between;
       gap: 16px;
-      padding-bottom: 24px;
-      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--line);
       flex-wrap: wrap;
     }
     .brand-wrap {
@@ -7522,27 +7548,25 @@ export function healthPage(isDark = false) {
       align-items: center;
       gap: 12px;
     }
-    .brand-icon {
+    .brandmark {
       width: 36px;
       height: 36px;
-      border-radius: 10px;
-      background: var(--emerald-tint);
-      border: 1px solid var(--emerald-border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--emerald);
+      border-radius: var(--radius-sm);
+      background: var(--brand-dark);
+      border: 1px solid var(--line-strong);
+      display: grid;
+      place-items: center;
+      color: #34d399;
       flex-shrink: 0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
-    .brand-icon svg { width: 18px; height: 18px; }
+    .brandmark svg { width: 18px; height: 18px; }
     .brand-title {
-      font-size: 19px;
+      font-size: 18px;
       font-weight: 800;
       letter-spacing: -0.02em;
       line-height: 1.2;
     }
-    .brand-title span { color: var(--emerald); }
+    .brand-title span { color: var(--accent); }
     .status-badge {
       font-size: 10px;
       font-weight: 700;
@@ -7550,16 +7574,16 @@ export function healthPage(isDark = false) {
       letter-spacing: 0.05em;
       padding: 2px 7px;
       border-radius: 9999px;
-      background: var(--emerald-tint);
-      color: var(--emerald);
-      border: 1px solid var(--emerald-border);
+      background: var(--tint);
+      color: var(--accent);
+      border: 1px solid var(--line);
       margin-left: 8px;
       vertical-align: middle;
     }
     .brand-desc {
       font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
+      color: var(--muted);
+      margin-top: 1px;
       font-weight: 500;
     }
     .header-actions {
@@ -7567,145 +7591,145 @@ export function healthPage(isDark = false) {
       align-items: center;
       gap: 8px;
     }
-    .btn-secondary {
-      font-size: 12px;
-      font-weight: 600;
-      padding: 6px 12px;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      transition: all 0.15s ease;
-    }
-    .btn-secondary:hover {
-      background: var(--surface);
-      color: var(--text);
-    }
-    .btn-console {
+    .button {
       font-size: 12.5px;
       font-weight: 600;
-      padding: 6.5px 15px;
-      border-radius: 9px;
-      background: #10b981;
-      color: #fff;
+      padding: 6.5px 14px;
+      border-radius: var(--radius-sm);
+      background: var(--accent);
+      color: #ffffff;
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-      transition: background-color 0.15s ease, transform 0.1s ease;
+      border: none;
       cursor: pointer;
+      transition: background-color 0.15s ease, transform 0.1s ease;
+      font-family: inherit;
     }
-    .btn-console:hover {
-      background: #059669; /* little dark green on hover */
-      color: #fff;
+    .button:hover {
+      background: var(--accent-hover);
+      color: #ffffff;
     }
-    .hero-banner {
+    .button.secondary {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--text-secondary);
+    }
+    .button.secondary:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+      border-color: var(--line-strong);
+    }
+    .button svg { width: 13px; height: 13px; }
+    .hero-panel {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 20px 22px;
       position: relative;
-      overflow: hidden;
-      border-radius: 16px;
-      border: 1px solid var(--emerald-border);
-      background: linear-gradient(90deg, rgba(6, 78, 59, 0.35) 0%, rgba(6, 78, 59, 0.08) 50%, transparent 100%);
-      padding: 22px 24px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 16px;
-      flex-wrap: wrap;
     }
-    .hero-left {
+    .hero-top-row {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 14px;
     }
     .hero-icon-badge {
-      width: 44px;
-      height: 44px;
-      border-radius: 13px;
-      background: #12281f;
-      border: 1px solid rgba(16, 185, 129, 0.35);
-      color: var(--emerald);
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-sm);
+      background: var(--tint);
+      border: 1px solid var(--line);
+      color: var(--accent);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
     .hero-icon-badge svg { width: 22px; height: 22px; }
-    .hero-title {
-      font-size: 20px;
-      font-weight: 800;
-      color: var(--emerald);
-      letter-spacing: -0.02em;
+    .hero-text-wrap {
+      flex: 1;
+      min-width: 0;
     }
-    .hero-sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
-      font-weight: 500;
-    }
-    .hero-right {
+    .hero-title-row {
       display: flex;
       align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
+    }
+    .hero-title {
+      font-size: 19px;
+      font-weight: 800;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      line-height: 1.25;
     }
     .live-chip {
       font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text-muted);
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 6px 12px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 9999px;
+      padding: 3px 9px;
       display: inline-flex;
       align-items: center;
-      gap: 7px;
+      gap: 6px;
+      white-space: nowrap;
     }
     .dot-green {
-      width: 7px;
-      height: 7px;
+      width: 6.5px;
+      height: 6.5px;
       border-radius: 50%;
-      background: var(--emerald);
-      box-shadow: 0 0 8px var(--emerald);
+      background: var(--accent);
+      box-shadow: 0 0 6px var(--accent);
       display: inline-block;
     }
+    .hero-sub {
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-top: 4px;
+      font-weight: 400;
+      line-height: 1.5;
+    }
     .btn-refresh {
-      background: transparent;
-      border: 1px solid var(--border);
-      color: var(--text-muted);
-      padding: 6px 8px;
-      border-radius: 8px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
       cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       transition: all 0.15s ease;
+      flex-shrink: 0;
     }
     .btn-refresh:hover {
       background: var(--surface-hover);
       color: var(--text);
+      border-color: var(--line-strong);
     }
-    .btn-refresh svg { width: 15px; height: 15px; }
-    .services-card {
+    .btn-refresh svg { width: 14px; height: 14px; }
+    .services-panel {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
       overflow: hidden;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
     }
     .service-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 16px 20px;
+      padding: 14px 20px;
       gap: 14px;
-      border-bottom: 1px solid var(--border-subtle);
-      transition: background 0.15s ease;
+      border-bottom: 1px solid var(--line);
+      transition: background 0.12s ease;
     }
     .service-row:last-child { border-bottom: none; }
     .service-row:hover {
-      background: rgba(24, 34, 29, 0.4);
+      background: var(--surface-hover);
     }
     .service-left {
       display: flex;
@@ -7715,10 +7739,10 @@ export function healthPage(isDark = false) {
     .service-icon-sm {
       width: 28px;
       height: 28px;
-      border-radius: 8px;
-      background: var(--emerald-tint);
-      border: 1px solid var(--emerald-border);
-      color: var(--emerald);
+      border-radius: var(--radius-sm);
+      background: var(--bg);
+      border: 1px solid var(--line);
+      color: var(--accent);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -7733,15 +7757,16 @@ export function healthPage(isDark = false) {
     }
     .service-detail {
       font-size: 12px;
-      color: var(--text-muted);
+      color: var(--muted);
       margin-top: 1px;
     }
     .service-detail code {
       font-family: var(--mono);
-      color: var(--emerald);
-      background: rgba(16, 185, 129, 0.08);
+      color: var(--accent);
+      background: var(--bg);
       padding: 1px 5px;
       border-radius: 4px;
+      border: 1px solid var(--line);
       font-size: 11px;
     }
     .service-status {
@@ -7750,17 +7775,17 @@ export function healthPage(isDark = false) {
       gap: 6px;
       font-size: 12px;
       font-weight: 600;
-      color: var(--emerald);
+      color: var(--accent);
       flex-shrink: 0;
     }
     .curl-card {
       background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 20px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      padding: 18px 20px;
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 10px;
     }
     .curl-head {
       display: flex;
@@ -7772,53 +7797,62 @@ export function healthPage(isDark = false) {
       font-weight: 700;
       text-transform: uppercase;
       letter-spacing: 0.05em;
-      color: var(--text-muted);
+      color: var(--muted);
     }
     .curl-copy-btn {
       background: transparent;
-      border: none;
-      color: var(--emerald);
+      border: 1px solid transparent;
+      color: var(--accent);
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 5px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      transition: color 0.15s ease;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      transition: all 0.15s ease;
+      font-family: inherit;
     }
-    .curl-copy-btn:hover { color: #34d399; }
-    .curl-copy-btn svg { width: 14px; height: 14px; }
+    .curl-copy-btn:hover {
+      background: var(--tint);
+      color: var(--accent-hover);
+    }
+    .curl-copy-btn.copied {
+      color: var(--accent);
+      background: var(--tint);
+      border-color: var(--line-strong);
+    }
+    .curl-copy-btn svg { width: 14px; height: 14px; flex-shrink: 0; }
     .curl-box {
-      background: rgba(0, 0, 0, 0.5);
-      border: 1px solid var(--border-subtle);
-      border-radius: 10px;
-      padding: 12px 14px;
+      background: #0d100e;
+      border: 1px solid var(--line);
+      border-radius: var(--radius-sm);
+      padding: 11px 13px;
       font-family: var(--mono);
       font-size: 12px;
-      color: #6ee7b7;
+      color: #a7f3d0;
       overflow-x: auto;
       white-space: nowrap;
     }
     .curl-desc {
       font-size: 12px;
-      color: var(--text-muted);
+      color: var(--muted);
       line-height: 1.5;
     }
     .curl-desc code {
       font-family: var(--mono);
-      color: var(--emerald);
+      color: var(--accent);
       font-size: 11.5px;
     }
     .footer {
-      border-top: 1px solid var(--border-subtle);
-      padding-top: 24px;
+      border-top: 1px solid var(--line);
+      padding-top: 20px;
       display: flex;
       align-items: center;
       justify-content: space-between;
       font-size: 12px;
-      color: var(--text-dim);
+      color: var(--muted);
       font-weight: 500;
       flex-wrap: wrap;
       gap: 12px;
@@ -7840,7 +7874,7 @@ export function healthPage(isDark = false) {
   <div class="wrapper">
     <header class="header">
       <div class="brand-wrap">
-        <div class="brand-icon">
+        <div class="brandmark">
           <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
             <path d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
           </svg>
@@ -7855,43 +7889,42 @@ export function healthPage(isDark = false) {
       </div>
 
       <div class="header-actions">
-        <a href="/docs" target="_blank" class="btn-secondary">
+        <a href="/docs" target="_blank" class="button secondary">
           <span>Documentation</span>
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+          <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
         </a>
-        <a href="/login" class="btn-console">
+        <a href="/login" class="button">
           <span>Console</span>
-          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+          <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
         </a>
       </div>
     </header>
 
-    <div class="hero-banner">
-      <div class="hero-left">
+    <div class="hero-panel">
+      <div class="hero-top-row">
         <div class="hero-icon-badge">
           <svg fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
             <path d="M9 12l2 2 4-4"/>
           </svg>
         </div>
-        <div>
-          <h1 class="hero-title">All Systems Operational</h1>
+        <div class="hero-text-wrap">
+          <div class="hero-title-row">
+            <h1 class="hero-title">All Systems Operational</h1>
+            <span class="live-chip">
+              <span class="dot-green"></span>
+              <span id="live-timer">Live · Just now</span>
+            </span>
+          </div>
           <p class="hero-sub">The dispatch gateway, database ledger, and API ingress are operating with 100% availability.</p>
         </div>
-      </div>
-
-      <div class="hero-right">
-        <span class="live-chip">
-          <span class="dot-green"></span>
-          <span id="live-timer">Live · Just now</span>
-        </span>
-        <button id="btn-refresh" onclick="simulateRefresh()" class="btn-refresh" title="Refresh health telemetry">
+        <button id="btn-refresh" onclick="simulateRefresh()" class="btn-refresh" title="Refresh health telemetry" aria-label="Refresh health telemetry">
           <svg id="refresh-icon" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
         </button>
       </div>
     </div>
 
-    <div class="services-card">
+    <div class="services-panel">
       <div class="service-row">
         <div class="service-left">
           <div class="service-icon-sm">
@@ -7959,9 +7992,11 @@ export function healthPage(isDark = false) {
 
     <div class="curl-card">
       <div class="curl-head">
-        <h3 class="curl-title">Automated Health Check Endpoint</h3>
-        <button onclick="copyEndpoint()" class="curl-copy-btn">
-          <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+        <span class="curl-title">Automated Health Check Endpoint</span>
+        <button id="btn-copy-curl" onclick="copyEndpoint()" class="curl-copy-btn" title="Copy curl command">
+          <span id="copy-icon">
+            <svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>
+          </span>
           <span id="copy-label">Copy JSON curl</span>
         </button>
       </div>
@@ -7988,23 +8023,61 @@ export function healthPage(isDark = false) {
 
   <script>
     function simulateRefresh() {
-      const icon = document.getElementById('refresh-icon');
-      const timer = document.getElementById('live-timer');
-      icon.classList.add('rotating');
-      timer.textContent = 'Checking...';
-      setTimeout(() => {
-        icon.classList.remove('rotating');
-        timer.textContent = 'Live · ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      var icon = document.getElementById('refresh-icon');
+      var timer = document.getElementById('live-timer');
+      if (icon) icon.classList.add('rotating');
+      if (timer) timer.textContent = 'Checking...';
+      setTimeout(function() {
+        if (icon) icon.classList.remove('rotating');
+        if (timer) timer.textContent = 'Live · ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
       }, 350);
     }
 
     function copyEndpoint() {
-      const cmd = 'curl -sS -H "Accept: application/json" https://mail.neopathshala.com/health';
-      navigator.clipboard.writeText(cmd).then(() => {
-        const lbl = document.getElementById('copy-label');
-        lbl.textContent = 'Copied to clipboard!';
-        setTimeout(() => { lbl.textContent = 'Copy JSON curl'; }, 2000);
-      });
+      var cmd = 'curl -sS -H "Accept: application/json" https://mail.neopathshala.com/health';
+      var lbl = document.getElementById('copy-label');
+      var iconWrap = document.getElementById('copy-icon');
+      var btn = document.getElementById('btn-copy-curl');
+
+      function success() {
+        if (lbl) lbl.textContent = 'Copied';
+        if (iconWrap) {
+          iconWrap.innerHTML = '<svg fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>';
+        }
+        if (btn) btn.classList.add('copied');
+        setTimeout(function() {
+          if (lbl) lbl.textContent = 'Copy JSON curl';
+          if (iconWrap) {
+            iconWrap.innerHTML = '<svg fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/></svg>';
+          }
+          if (btn) btn.classList.remove('copied');
+        }, 2200);
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(cmd).then(success).catch(function() {
+          fallbackCopy(cmd, success);
+        });
+      } else {
+        fallbackCopy(cmd, success);
+      }
+    }
+
+    function fallbackCopy(text, cb) {
+      try {
+        var el = document.createElement('textarea');
+        el.value = text;
+        el.setAttribute('readonly', '');
+        el.style.position = 'absolute';
+        el.style.left = '-9999px';
+        document.body.appendChild(el);
+        el.select();
+        document.execCommand('copy');
+        document.body.removeChild(el);
+        cb();
+      } catch (err) {
+        cb();
+      }
     }
   </script>
 </body>

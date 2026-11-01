@@ -141,13 +141,19 @@ async function handler(request, env) {
     return reply(ui.publicDocs(content, isDark, cfg.FOOTER_CREDIT), 200, { 'Content-Type': 'text/html; charset=utf-8' });
   }
   if (path === '/health') {
-    requireMethod(request, ['GET']);
+    requireMethod(request, ['GET', 'HEAD']);
     const accept = request.headers.get('accept') || '';
     if (accept.includes('text/html')) {
       const isDark = cookie(request, 'neomail_theme') === 'dark';
-      return reply(ui.healthPage(isDark), 200, { 'Content-Type': 'text/html; charset=utf-8' });
+      return reply(ui.healthPage(isDark), 200, {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'public, max-age=10, stale-while-revalidate=30',
+        'Content-Security-Policy': headers['Content-Security-Policy'].replace("script-src 'none'", "script-src 'unsafe-inline' https://static.cloudflareinsights.com"),
+      });
     }
-    return reply({ status: 'ok', service: 'neoMailer' });
+    return reply({ status: 'ok', service: 'neoMailer' }, 200, {
+      'Cache-Control': 'public, max-age=10, stale-while-revalidate=30',
+    });
   }
   if (path === '/favicon.ico' || path === '/favicon.svg') {
     requireMethod(request, ['GET']);
