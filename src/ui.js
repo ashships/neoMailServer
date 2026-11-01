@@ -408,9 +408,9 @@ const css = `
     --illus-table: #b45309;
     --illus-blob: rgba(16, 185, 129, 0.09);
     --illus-clock-rim: #9ca3af;
-    --illus-server: #05080c;
-    --illus-frame-border: #05080c;
-    --illus-chair-legs: #05080c;
+    --illus-server: #131514;
+    --illus-frame-border: #131514;
+    --illus-chair-legs: #131514;
     --shadow-xs: none;
     --shadow-sm: none;
     --shadow-md: none;
