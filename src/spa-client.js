@@ -155,7 +155,7 @@ export const SPA_CLIENT_SCRIPT = String.raw`
     // 2. Fetch fresh content from server
     try {
       const res = await fetch(url.href, {
-        headers: { 'X-Requested-With': 'neoMail-SPA' },
+        headers: { 'X-Requested-With': 'neoMailer-SPA' },
         cache: 'no-cache'
       });
       if (res.redirected) {

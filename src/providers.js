@@ -1,5 +1,5 @@
 import { HttpError, hash, email, text, escape, hmac, base64, equal, hostname, isPrivateHost } from './security.js';
-import { PROVIDERS, resolveAccountProviderSecrets } from './config.js';
+import { PROVIDERS, resolveAccountProviderSecrets, resolveSingleProviderCredentials, resolveSingleAppSecret } from './config.js';
 import { safeFetch } from './security.js';
 
 // Only two ports are accepted: 465 uses implicit TLS, 587 requires STARTTLS.
@@ -53,7 +53,7 @@ export async function sendSmtp(cfg, mail) {
   function expect(response, codes, message) { if (!codes.includes(response.code)) throw new Error(message); }
   try {
     expect(await readResponse(), [220], 'SMTP server did not greet.');
-    await write('EHLO neomail');
+    await write('EHLO neomailer');
     expect(await readResponse(), [250], 'SMTP EHLO failed.');
     await write('AUTH LOGIN');
     expect(await readResponse(), [334], 'SMTP AUTH LOGIN was rejected.');
@@ -134,7 +134,7 @@ export async function send(provider, env, mail, requestId) {
   if (typeof id !== 'string' || id.length > 512 || !id) throw new Error('Provider accepted request without a usable message identifier');
   return id;
 }
-export async function dispatch(env, cfg, mail, idempotencyKey, ownerSubject = null) {
+export async function dispatch(env, cfg, mail, idempotencyKey, ownerSubject = null, clientDomain = null) {
   if (!env?.DB) throw new HttpError(503, 'Database binding unavailable.');
   if (!/^[a-zA-Z0-9_:.\-]{8,128}$/.test(idempotencyKey || '')) throw new HttpError(422, 'Idempotency-Key must contain 8–128 letters, digits, dots, colons, underscores or hyphens.');
   const settings = cfg && typeof cfg === 'object' ? cfg : {};
@@ -153,6 +153,9 @@ export async function dispatch(env, cfg, mail, idempotencyKey, ownerSubject = nu
     const domainRow = await env.DB.prepare('SELECT is_verified,owner_subject FROM managed_domains WHERE domain=?').bind(senderDomain).first();
     if (!domainRow || !domainRow.is_verified) throw new HttpError(422, 'Sender domain is not verified. Add and verify the domain before sending.');
     if ((domainRow.owner_subject || 'local-admin') !== owner) throw new HttpError(403, 'Sender domain belongs to another workspace.');
+    if (clientDomain && senderDomain.toLowerCase() !== clientDomain.toLowerCase()) {
+      throw new HttpError(403, `This API key is strictly isolated to domain ${clientDomain}. Cannot send from ${mail.from}.`);
+    }
   }
   if (mail.useIdentityName) mail = { ...mail, fromName: identity.display_name };
   delete mail.useIdentityName;
@@ -175,8 +178,7 @@ export async function dispatch(env, cfg, mail, idempotencyKey, ownerSubject = nu
   const health = (await env.DB.prepare("SELECT * FROM provider_health WHERE owner_subject IN (?, 'local-admin')").bind(owner).all()).results || [];
   const stateFor = provider => health.find(h => h.owner_subject === owner && h.provider_name === provider)
     || health.find(h => h.owner_subject === 'local-admin' && h.provider_name === provider);
-  const accountSecrets = await resolveAccountProviderSecrets(env, owner);
-  const effectiveEnv = { ...env, ...settings, ...accountSecrets };
+  const effectiveEnv = { ...env, ...settings };
   effectiveEnv.REQUEST_TIMEOUT_MS = String(Math.min(15000, Math.max(1000, Number(effectiveEnv.REQUEST_TIMEOUT_MS) || 6000)));
   const recordFailure = async (provider, reason) => {
     try {
@@ -198,9 +200,6 @@ export async function dispatch(env, cfg, mail, idempotencyKey, ownerSubject = nu
   const usage = await getProviderUsage(env, owner);
   const order = String(effectiveEnv.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend,smtp').split(',').map(p => p.trim()).filter(p => PROVIDERS.includes(p));
   for (const provider of order) {
-    if (provider === 'smtp') {
-      if (!(effectiveEnv.SMTP_HOST && effectiveEnv.SMTP_USER && effectiveEnv.SMTP_PASS)) continue;
-    } else if (!effectiveEnv[provider.toUpperCase() + '_API_KEY'] || (provider === 'mailgun' && !effectiveEnv.MAILGUN_DOMAIN)) continue;
     const state = stateFor(provider);
     if (state && (!state.is_active || (state.consecutive_failures >= 5 && state.updated_at > Math.floor(Date.now() / 1000) - 300))) continue;
     const provLimit = limits[provider] ?? 100;
@@ -209,11 +208,15 @@ export async function dispatch(env, cfg, mail, idempotencyKey, ownerSubject = nu
       attempts.push({ provider, success: false, latencyMs: 0, error: `Provider limit reached (${provUsed}/${provLimit}). Skipping to next fallback.`, errorCode: 'LimitExceeded' });
       continue;
     }
+    // Just-in-time: Decrypt credential ONLY for this single provider immediately before dispatch
+    const creds = await resolveSingleProviderCredentials(env, owner, provider, settings);
+    if (!creds) continue;
+    const attemptEnv = { ...effectiveEnv, ...creds };
     const started = Date.now();
     // Record intent before the external side effect. A crash leaves a Queued log requiring reconciliation.
     await env.DB.prepare('UPDATE email_logs SET provider_used=?,updated_at=unixepoch() WHERE id=?').bind(provider, logId).run();
     try {
-      messageId = await send(provider, effectiveEnv, mail, key); providerUsed = provider; status = 'Sent';
+      messageId = await send(provider, attemptEnv, mail, key); providerUsed = provider; status = 'Sent';
     } catch (error) {
       uncertain = !error.definitive;
       const reason = uncertain ? 'Outcome uncertain; automatic fallback stopped to avoid duplicates.' : error.message;
@@ -249,16 +252,18 @@ export async function verifyWebhook(provider, request, raw, env) {
   let eventId, messageId, status;
   if (provider === 'resend') {
     const id = request.headers.get('svix-id'), ts = request.headers.get('svix-timestamp'), signature = request.headers.get('svix-signature');
-    if (!env.RESEND_WEBHOOK_SECRET || !id || !/^\d+$/.test(ts || '') || !signature || Math.abs(Date.now() / 1000 - +ts) > 300) throw new HttpError(403, 'Invalid webhook authentication.');
-    const expected = base64(await hmac(env.RESEND_WEBHOOK_SECRET.replace(/^whsec_/, ''), `${id}.${ts}.${raw}`, true));
+    const secret = await resolveSingleAppSecret(env, 'RESEND_WEBHOOK_SECRET');
+    if (!secret || !id || !/^\d+$/.test(ts || '') || !signature || Math.abs(Date.now() / 1000 - +ts) > 300) throw new HttpError(403, 'Invalid webhook authentication.');
+    const expected = base64(await hmac(secret.replace(/^whsec_/, ''), `${id}.${ts}.${raw}`, true));
     let ok = false; for (const item of signature.split(' ')) if (item.startsWith('v1,') && await equal(item.slice(3), expected)) ok = true;
     if (!ok) throw new HttpError(403, 'Invalid webhook signature.');
     eventId = id; messageId = body.data?.email_id;
     status = ({ 'email.sent': 'Sent', 'email.delivered': 'Delivered', 'email.bounced': 'Bounced', 'email.complained': 'Bounced', 'email.failed': 'Failed' })[body.type];
   } else if (provider === 'mailgun') {
     const sig = body.signature;
-    if (!env.MAILGUN_WEBHOOK_SIGNING_KEY || !sig || !/^\d+$/.test(String(sig.timestamp)) || typeof sig.token !== 'string' || sig.token.length > 256 || Math.abs(Date.now() / 1000 - +sig.timestamp) > 300) throw new HttpError(403, 'Invalid webhook authentication.');
-    const expected = Array.from(await hmac(env.MAILGUN_WEBHOOK_SIGNING_KEY, `${sig.timestamp}${sig.token}`), b => b.toString(16).padStart(2, '0')).join('');
+    const signingKey = await resolveSingleAppSecret(env, 'MAILGUN_WEBHOOK_SIGNING_KEY');
+    if (!signingKey || !sig || !/^\d+$/.test(String(sig.timestamp)) || typeof sig.token !== 'string' || sig.token.length > 256 || Math.abs(Date.now() / 1000 - +sig.timestamp) > 300) throw new HttpError(403, 'Invalid webhook authentication.');
+    const expected = Array.from(await hmac(signingKey, `${sig.timestamp}${sig.token}`), b => b.toString(16).padStart(2, '0')).join('');
     if (!await equal(sig.signature, expected)) throw new HttpError(403, 'Invalid webhook signature.');
     const event = body['event-data']; eventId = sig.token; messageId = event?.message?.headers?.['message-id'];
     status = ({ accepted: 'Sent', delivered: 'Delivered', failed: 'Bounced' })[event?.event];

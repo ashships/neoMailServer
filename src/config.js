@@ -56,7 +56,7 @@ export function redactConfig(values = {}) {
   for (const name of SECRETS) if (out[name]) out[name] = '[configured]';
   return out;
 }
-export async function config(env, decryptSecrets = true) {
+export async function config(env, decryptSecrets = false) {
   const result = { ...env }; const configured = new Set();
   for (const [name, spec] of Object.entries(SETTINGS)) result[name] = env[name] ?? spec[2];
   let rows = [];
@@ -108,7 +108,7 @@ export async function saveSettings(env, data) {
     statements.push(env.DB.prepare("UPDATE sender_identities SET display_name=? WHERE email_address=? AND owner_subject='local-admin'").bind(data.get('DEFAULT_SENDER_NAME').trim(), data.get('DEFAULT_SENDER').trim()));
   }
   const sandbox=data.get('MAILGUN_SANDBOX_DOMAIN');
-  if (sandbox?.trim()) statements.push(env.DB.prepare("INSERT INTO sender_identities(id,email_address,display_name,is_default,is_active,created_at,owner_subject) VALUES (?,?,?,0,1,unixepoch(),'local-admin') ON CONFLICT(email_address) DO NOTHING").bind(crypto.randomUUID(),'postmaster@'+sandbox.trim(),'NeoMail Mailgun Sandbox'));
+  if (sandbox?.trim()) statements.push(env.DB.prepare("INSERT INTO sender_identities(id,email_address,display_name,is_default,is_active,created_at,owner_subject) VALUES (?,?,?,0,1,unixepoch(),'local-admin') ON CONFLICT(email_address) DO NOTHING").bind(crypto.randomUUID(),'postmaster@'+sandbox.trim(),'neoMailer Mailgun Sandbox'));
   if (statements.length) await env.DB.batch(statements);
   return changed;
 }
@@ -247,5 +247,95 @@ export async function resolveAccountProviderSecrets(env, ownerSubject) {
   } catch {
     return {};
   }
+}
+
+export async function resolveSingleAppSecret(env, name) {
+  if (!SECRETS.includes(name)) return null;
+  if (env[name] && typeof env[name] === 'string' && env[name] !== '[configured]') {
+    return env[name];
+  }
+  if (!env.DB || !env.CONFIG_ENCRYPTION_KEY) return null;
+  try {
+    const row = await env.DB.prepare('SELECT value FROM app_settings WHERE name=? AND is_secret=1').bind(name).first();
+    if (!row?.value) return null;
+    return await decrypt(env.CONFIG_ENCRYPTION_KEY, row.value, name);
+  } catch (err) {
+    console.error(JSON.stringify({ event: 'SETTING_DECRYPT_FAILED', setting: name, error: err?.message || String(err) }));
+    return null;
+  }
+}
+
+export async function resolveSingleProviderCredentials(env, ownerSubject, providerName, settings = {}) {
+  if (!PROVIDERS.includes(providerName)) return null;
+  const owner = typeof ownerSubject === 'string' && ownerSubject ? ownerSubject.trim() : 'local-admin';
+  const cfgTimeout = settings.REQUEST_TIMEOUT_MS || env.REQUEST_TIMEOUT_MS || '6000';
+
+  // 1. Check tenant account_provider_keys first
+  if (env.DB && env.CONFIG_ENCRYPTION_KEY) {
+    try {
+      const row = await env.DB.prepare(
+        'SELECT encrypted_key, extra_config FROM account_provider_keys WHERE owner_subject=? AND provider_name=? AND is_active=1'
+      ).bind(owner, providerName).first();
+      if (row) {
+        const decrypted = await decrypt(env.CONFIG_ENCRYPTION_KEY, row.encrypted_key, owner + ':' + providerName);
+        let extra = {};
+        if (row.extra_config) { try { extra = JSON.parse(row.extra_config) || {}; } catch { extra = {}; } }
+        if (providerName === 'smtp') {
+          const host = hostname(extra.smtp_host || '');
+          const port = String(extra.smtp_port || '465');
+          if (!host || isPrivateHost(host) || !['465', '587'].includes(port)) throw new Error('Invalid SMTP metadata.');
+          return {
+            SMTP_HOST: host,
+            SMTP_PORT: port,
+            SMTP_USER: String(extra.smtp_user || '').slice(0, 255),
+            SMTP_PASS: decrypted,
+            REQUEST_TIMEOUT_MS: cfgTimeout,
+          };
+        }
+        const res = {
+          [providerName.toUpperCase() + '_API_KEY']: decrypted,
+          REQUEST_TIMEOUT_MS: cfgTimeout,
+        };
+        if (providerName === 'mailgun') {
+          const domain = hostname(extra.domain || '') || settings.MAILGUN_DOMAIN || env.MAILGUN_DOMAIN;
+          if (domain && !domain.startsWith('sandbox')) res.MAILGUN_DOMAIN = domain;
+        }
+        return res;
+      }
+    } catch (err) {
+      console.error(JSON.stringify({ event: 'PROVIDER_KEY_DECRYPT_FAILED', provider: providerName, error: err?.message || String(err) }));
+      return null;
+    }
+  }
+
+  // 2. Fallback to deployment-level credentials
+  if (providerName === 'smtp') {
+    const host = hostname(settings.SMTP_HOST || env.SMTP_HOST || '');
+    const port = String(settings.SMTP_PORT || env.SMTP_PORT || '465');
+    const user = String(settings.SMTP_USER || env.SMTP_USER || '').slice(0, 255);
+    if (!host || isPrivateHost(host) || !user) return null;
+    const pass = await resolveSingleAppSecret(env, 'SMTP_PASS');
+    if (!pass) return null;
+    return {
+      SMTP_HOST: host,
+      SMTP_PORT: port,
+      SMTP_USER: user,
+      SMTP_PASS: pass,
+      REQUEST_TIMEOUT_MS: cfgTimeout,
+    };
+  }
+
+  const apiKey = await resolveSingleAppSecret(env, providerName.toUpperCase() + '_API_KEY');
+  if (!apiKey) return null;
+  const res = {
+    [providerName.toUpperCase() + '_API_KEY']: apiKey,
+    REQUEST_TIMEOUT_MS: cfgTimeout,
+  };
+  if (providerName === 'mailgun') {
+    const domain = settings.MAILGUN_DOMAIN || env.MAILGUN_DOMAIN;
+    if (!domain) return null;
+    res.MAILGUN_DOMAIN = domain;
+  }
+  return res;
 }
 

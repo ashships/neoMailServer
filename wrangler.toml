@@ -1,4 +1,4 @@
-name = "neomailserver"
+name = "neomailer"
 main = "src/index.js"
 compatibility_date = "2026-10-27"
 compatibility_flags = ["nodejs_compat"]
@@ -7,7 +7,7 @@ preview_urls = false
 
 [[d1_databases]]
 binding = "DB"
-database_name = "neomailserver"
+database_name = "neomailer"
 database_id = "ccf65664-c515-46b9-93f7-1278fd142b13"
 migrations_dir = "migrations"
 

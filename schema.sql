@@ -1,5 +1,5 @@
 -- Cloudflare D1 Database Schema for Enterprise Multi-Identity Email Infrastructure
--- Apply explicitly using: npx wrangler d1 execute neomailserver --file=./schema.sql
+-- Apply explicitly using: npx wrangler d1 execute neomailer --file=./schema.sql
 
 -- 1. Main Email Audit, Storage & Transmission Log Table
 CREATE TABLE IF NOT EXISTS email_logs (
@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS api_clients (
  id TEXT PRIMARY KEY,
  name TEXT NOT NULL,
  key_hash TEXT NOT NULL UNIQUE,
+ domain TEXT,
  sender_address TEXT,
  is_active INTEGER NOT NULL DEFAULT 1 CHECK(is_active IN (0,1)),
  created_at INTEGER NOT NULL,
@@ -138,6 +139,7 @@ CREATE TABLE IF NOT EXISTS api_clients (
 );
 CREATE INDEX IF NOT EXISTS idx_api_clients_active ON api_clients(is_active);
 CREATE INDEX IF NOT EXISTS idx_api_clients_owner ON api_clients(owner_subject);
+CREATE INDEX IF NOT EXISTS idx_api_clients_domain ON api_clients(domain);
 
 -- 6. Application-level administrator accounts authorized through Cloudflare Access identities.
 CREATE TABLE IF NOT EXISTS admin_users (

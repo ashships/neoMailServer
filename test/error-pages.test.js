@@ -33,6 +33,7 @@ test('errorPage renders the modern mascot layout and dynamic countdown timer for
   assert.ok(html.includes('wallAlbumPhoto'), 'Must include framed wall album photo on the left wall');
   assert.ok(html.includes('server-led-1'), 'Must include server activity LEDs');
   assert.ok(html.includes('fill="#ffffff" fill-opacity="0.92"'), 'Must include light glasses lenses in dark mode');
+  assert.ok(html.includes('neo<span>Mailer</span>'), 'Must use neoMailer as brand title');
   assert.ok(html.includes('nml-envelope-clip') || html.includes('nm-envelope-clip'), 'Must include neomail logo svg in brand');
 });
 

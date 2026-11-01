@@ -1,5 +1,5 @@
 import { HttpError, reply, redirect, hash, hashOtp, equal, email, text, hostname, isPrivateHost, cookie, local, sameOrigin, form, json, readBody, rate, audit, access, session, csrf, sessionCookie, bytes64, headers } from './security.js';
-import { config, redactConfig, saveSettings, saveSecret, PROVIDERS, getAccountProviderKeys, saveAccountProviderKey, deleteAccountProviderKey, toggleAccountProviderKey, resolveAccountProviderSecrets } from './config.js';
+import { config, redactConfig, saveSettings, saveSecret, PROVIDERS, getAccountProviderKeys, saveAccountProviderKey, deleteAccountProviderKey, toggleAccountProviderKey, resolveAccountProviderSecrets, resolveSingleAppSecret, resolveSingleProviderCredentials } from './config.js';
 import { dispatch, validateMail, verifyWebhook, applyWebhook, sendSmtp, send, getProviderLimits, getProviderUsage } from './providers.js';
 import { safeFetch } from './security.js';
 import * as ui from './ui.js';
@@ -67,26 +67,30 @@ async function dispatchOtpEmail(env, cfg, recipientEmail, code, subjectLine, hea
   let sent = false;
   let dispatchErr = null;
 
-  // 1. Try master SMTP first if configured
-  if (masterCfg.SMTP_HOST && masterCfg.SMTP_USER && masterCfg.SMTP_PASS) {
-    try {
-      await sendSmtp(masterCfg, mail);
-      sent = true;
-    } catch (err) {
-      dispatchErr = err;
-      console.error('Master SMTP failed during OTP dispatch:', err.message || err);
+  // 1. Try master SMTP first if configured (JIT decryption of SMTP password)
+  if (masterCfg.SMTP_HOST && masterCfg.SMTP_USER) {
+    const smtpPass = env.OTP_SMTP_PASS || env.OTP_SMTP_PASSWORD || env.SMTP_PASS || env.SMTP_PASSWORD || (await resolveSingleAppSecret(env, 'SMTP_PASS'));
+    if (smtpPass) {
+      masterCfg.SMTP_PASS = smtpPass;
+      try {
+        await sendSmtp(masterCfg, mail);
+        sent = true;
+      } catch (err) {
+        dispatchErr = err;
+        console.error('Master SMTP failed during OTP dispatch:', err.message || err);
+      }
     }
   }
 
   // 2. Fallback across active system providers if SMTP failed or was not configured
   if (!sent) {
-    const providers = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',');
-    const adminSecrets = await resolveAccountProviderSecrets(env, 'local-admin').catch(() => ({}));
-    const mergedEnv = { REQUEST_TIMEOUT_MS: '6000', ...env, ...cfg, ...adminSecrets };
+    const providers = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',').map(p => p.trim());
     for (const p of providers) {
       if (p === 'smtp' || !PROVIDERS.includes(p)) continue;
-      if (!mergedEnv[p.toUpperCase() + '_API_KEY']) continue;
-      if (p === 'mailgun' && !mergedEnv.MAILGUN_DOMAIN) continue;
+      // JIT decryption: resolve credential ONLY for this single provider
+      const creds = await resolveSingleProviderCredentials(env, 'local-admin', p, cfg);
+      if (!creds) continue;
+      const mergedEnv = { REQUEST_TIMEOUT_MS: '6000', ...env, ...cfg, ...creds };
       try {
         const providerMail = { ...mail, from: defaultSender };
         await send(p, mergedEnv, providerMail, 'otp-' + crypto.randomUUID());
@@ -160,8 +164,8 @@ async function apiClient(env, token) {
     }
     return row;
   }
-  const { values: cfg } = await config(env);
-  if (cfg.API_SECRET_KEY && await equal(token, cfg.API_SECRET_KEY)) return { id: 'legacy', name: 'Legacy API key', sender_address: null, owner_subject: 'local-admin' };
+  const apiSecret = await resolveSingleAppSecret(env, 'API_SECRET_KEY');
+  if (apiSecret && await equal(token, apiSecret)) return { id: 'legacy', name: 'Legacy API key', domain: null, sender_address: null, owner_subject: 'local-admin' };
   return null;
 }
 function accessConfigured(env) {
@@ -209,7 +213,7 @@ async function handler(request, env) {
     requireMethod(request, ['GET']);
     const { values: cfg } = await config(env);
     const row = await env.DB.prepare("SELECT value FROM app_settings WHERE name='DOCS_CONTENT'").first();
-    const content = row?.value || 'NeoMail documentation. Configure your deployment and providers in the admin panel.';
+    const content = row?.value || 'neoMailer documentation. Configure your deployment and providers in the admin panel.';
     const isDark = cookie(request, 'neomail_theme') === 'dark';
     return reply(ui.publicDocs(content, isDark, cfg.FOOTER_CREDIT), 200, { 'Content-Type': 'text/html; charset=utf-8' });
   }
@@ -261,7 +265,7 @@ async function handler(request, env) {
         throw new HttpError(403, 'This API client is restricted to dedicated white-label endpoint: https://' + wlCheck.custom_api_hostname + '/api/v1/send');
       }
     }
-    const { values: cfg } = await config(env, request.method === 'POST');
+    const { values: cfg } = await config(env, false);
     await rate(env, 'api:client:' + client.id, +cfg.API_RATE_LIMIT_PER_MINUTE, 60);
     const data = await json(request);
     if (client.sender_address) {
@@ -269,7 +273,7 @@ async function handler(request, env) {
       if (!data.from) data.from = client.sender_address;
     }
     const mail = validateMail(data, cfg);
-    const result = await dispatch(env, cfg, mail, request.headers.get('idempotency-key'), owner);
+    const result = await dispatch(env, cfg, mail, request.headers.get('idempotency-key'), owner, client.domain);
     return reply(result, result.success ? 200 : result.uncertain ? 202 : 502);
   }
   if (path.startsWith('/webhooks/')) {
@@ -478,77 +482,7 @@ async function handler(request, env) {
             await env.DB.prepare('INSERT INTO admin_otps (subject,salt,code_hash,expires_at,attempts,created_at) VALUES (?,?,?,?,0,unixepoch()) ON CONFLICT(subject) DO UPDATE SET salt=excluded.salt,code_hash=excluded.code_hash,expires_at=excluded.expires_at,attempts=0,created_at=unixepoch()').bind(emailAddr, salt, await hashOtp(salt, code), expires).run();
           }
           try {
-            const masterCfg = {
-              SMTP_HOST: env.OTP_SMTP_HOST || env.SMTP_HOST || cfg.SMTP_HOST,
-              SMTP_PORT: env.OTP_SMTP_PORT || env.SMTP_PORT || cfg.SMTP_PORT || '465',
-              SMTP_USER: env.OTP_SMTP_USER || env.OTP_SMTP_USERNAME || env.SMTP_USER || env.SMTP_USERNAME || cfg.SMTP_USER || cfg.SMTP_USERNAME,
-              SMTP_PASS: env.OTP_SMTP_PASS || env.OTP_SMTP_PASSWORD || env.SMTP_PASS || env.SMTP_PASSWORD || cfg.SMTP_PASS || cfg.SMTP_PASSWORD,
-              DEFAULT_SENDER: cfg.DEFAULT_SENDER,
-              DEFAULT_SENDER_NAME: 'neoMailer',
-            };
-            const defaultSender = email(cfg.DEFAULT_SENDER) || email(env.DEFAULT_SENDER) || 'no-reply@mail.neopathshala.com';
-            const isGmail = (masterCfg.SMTP_HOST || '').toLowerCase().includes('gmail') || (masterCfg.SMTP_HOST || '').toLowerCase().includes('google');
-            const smtpUserEmail = email(masterCfg.SMTP_USER);
-            const smtpSender = (isGmail && smtpUserEmail) ? smtpUserEmail : (defaultSender || smtpUserEmail || 'no-reply@mail.neopathshala.com');
-            masterCfg.DEFAULT_SENDER = smtpSender;
-
-            const mailText = `Your neoMailer verification code is: ${code}\n\nIt expires in 5 minutes.\nIf you did not request this code, you can safely ignore this email.`;
-            const mailHtml = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:24px auto;padding:32px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;color:#0f172a;">
-  <div style="font-size:20px;font-weight:700;color:#087d54;margin-bottom:16px;">neoMailer</div>
-  <h2 style="font-size:18px;font-weight:600;margin:0 0 12px 0;">Sign-in verification code</h2>
-  <p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 24px 0;">Enter the following 6-digit verification code to complete your login to the neoMailer administration panel. This code is valid for 5 minutes.</p>
-  <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:20px;text-align:center;font-size:32px;font-weight:700;letter-spacing:6px;color:#0f172a;font-family:monospace;margin:0 0 24px 0;">${code}</div>
-  <p style="font-size:12px;line-height:1.5;color:#94a3b8;margin:0;">If you did not request this login code, you can safely ignore this email. Do not share this code with anyone.</p>
-</div>`;
-
-            const mail = validateMail({
-              to: emailAddr,
-              from: smtpSender,
-              from_name: masterCfg.DEFAULT_SENDER_NAME || 'neoMailer',
-              subject: 'neoMailer verification code',
-              text: mailText,
-              html: mailHtml,
-            }, masterCfg);
-
-            let sent = false;
-            let dispatchErr = null;
-
-            // 1. Try master SMTP first if configured
-            if (masterCfg.SMTP_HOST && masterCfg.SMTP_USER && masterCfg.SMTP_PASS) {
-              try {
-                await sendSmtp(masterCfg, mail);
-                sent = true;
-              } catch (err) {
-                dispatchErr = err;
-                console.error('Master SMTP failed during OTP dispatch:', err.message || err);
-              }
-            }
-
-            // 2. Fallback across active system providers if SMTP failed or was not configured
-            if (!sent) {
-              const providers = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',');
-              const adminSecrets = await resolveAccountProviderSecrets(env, 'local-admin').catch(() => ({}));
-              const mergedEnv = { REQUEST_TIMEOUT_MS: '6000', ...env, ...cfg, ...adminSecrets };
-              for (const p of providers) {
-                if (p === 'smtp' || !PROVIDERS.includes(p)) continue;
-                if (!mergedEnv[p.toUpperCase() + '_API_KEY']) continue;
-                if (p === 'mailgun' && !mergedEnv.MAILGUN_DOMAIN) continue;
-                try {
-                  const providerMail = { ...mail, from: defaultSender };
-                  await send(p, mergedEnv, providerMail, 'otp-' + crypto.randomUUID());
-                  sent = true;
-                  break;
-                } catch (provErr) {
-                  dispatchErr = provErr;
-                  console.error(`Provider ${p} failed during OTP dispatch:`, provErr.message || provErr);
-                }
-              }
-            }
-
-            if (!sent) {
-              const reason = dispatchErr?.message ? `: ${dispatchErr.message}` : '';
-              throw new Error('Unable to deliver login code' + reason);
-            }
+            await dispatchOtpEmail(env, cfg, emailAddr, code, 'neoMailer verification code', 'Sign-in verification code', 'Enter the following 6-digit verification code to complete your login to the neoMailer administration panel. This code is valid for 5 minutes.', 'login code');
           } catch (err) {
             await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run().catch(() => {});
             // Upstream errors may echo credentials or addresses; log a correlation
@@ -977,31 +911,39 @@ async function handler(request, env) {
     if (actionPath === '/admin/api-clients/create') {
       const name = text(data.get('name'), 80);
       if (!name) throw new HttpError(422, 'Client name is required.');
+      const admin = await isSuperadmin(env, subject);
+      let domain = (data.get('domain') || '').trim().toLowerCase();
       const senderRaw = data.get('sender_address');
       const sender = senderRaw ? email(senderRaw) : null;
       if (senderRaw && !sender) throw new HttpError(422, 'Invalid sender address.');
-      // A client key may only be pinned to a sender identity the workspace owns.
-      const admin = await isSuperadmin(env, subject);
-      if (!admin) {
-        const verifiedDomain = await env.DB.prepare('SELECT 1 FROM managed_domains WHERE owner_subject=? AND is_verified=1').bind(subject).first();
-        if (!verifiedDomain) throw new HttpError(422, 'Domain verification required. You must add and verify at least one domain before creating API clients.');
+      if (!domain && sender) {
+        domain = sender.split('@')[1]?.toLowerCase();
       }
+      if (!domain) {
+        const defaultDomRow = await env.DB.prepare(admin ? "SELECT domain FROM managed_domains WHERE is_verified=1 AND owner_subject IN (?, 'local-admin') ORDER BY created_at LIMIT 1" : "SELECT domain FROM managed_domains WHERE is_verified=1 AND owner_subject=? ORDER BY created_at LIMIT 1").bind(subject).first();
+        domain = defaultDomRow?.domain || '';
+      }
+      if (!domain) throw new HttpError(422, 'Domain verification required. You must add and verify at least one domain before creating API clients.');
+      // Verify domain ownership & verification status
+      const domRow = await env.DB.prepare(admin ? "SELECT domain FROM managed_domains WHERE domain=? AND is_verified=1 AND owner_subject IN (?, 'local-admin')" : "SELECT domain FROM managed_domains WHERE domain=? AND is_verified=1 AND owner_subject=?").bind(domain, subject).first();
+      if (!domRow) throw new HttpError(422, 'Selected domain must be verified and owned by your workspace.');
       if (sender) {
-        const identityRow = await env.DB.prepare(admin ? 'SELECT 1 FROM sender_identities WHERE email_address=? AND is_active=1' : 'SELECT 1 FROM sender_identities WHERE email_address=? AND is_active=1 AND owner_subject=?').bind(sender,...(admin?[]:[subject])).first();
+        const senderDom = sender.split('@')[1]?.toLowerCase();
+        if (senderDom !== domain) throw new HttpError(422, 'Sender address domain must match the selected domain (' + domain + ').');
+        const identityRow = await env.DB.prepare(admin ? "SELECT 1 FROM sender_identities WHERE email_address=? AND is_active=1 AND owner_subject IN (?, 'local-admin')" : "SELECT 1 FROM sender_identities WHERE email_address=? AND is_active=1 AND owner_subject=?").bind(sender, subject).first();
         if (!identityRow) throw new HttpError(422, 'Sender must be an active identity owned by this workspace.');
-        const d = sender.split('@')[1]; const dr = await env.DB.prepare('SELECT is_verified FROM managed_domains WHERE domain=?').bind(d).first(); if (dr && !dr.is_verified) throw new HttpError(422, 'Sender domain must be verified first.');
       }
       const bytes = new Uint8Array(32); crypto.getRandomValues(bytes);
       const key = btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-      await env.DB.prepare('INSERT INTO api_clients (id,name,key_hash,sender_address,is_active,created_at,owner_subject) VALUES (?,?,?,?,1,unixepoch(),?)').bind(crypto.randomUUID(), name, await hash(key), sender, subject).run();
-      await audit(env, request, 'API_CLIENT_CREATED', { name, sender });
-      return redirect(targetBase + '?view=clients&created_key=' + encodeURIComponent(key) + '&notice=' + encodeURIComponent('API client created. Copy the key now; it will not be shown again.'));
+      await env.DB.prepare('INSERT INTO api_clients (id,name,key_hash,domain,sender_address,is_active,created_at,owner_subject) VALUES (?,?,?,?,?,1,unixepoch(),?)').bind(crypto.randomUUID(), name, await hash(key), domain, sender, subject).run();
+      await audit(env, request, 'API_CLIENT_CREATED', { name, domain, sender });
+      return redirect(targetBase + '?view=clients&created_key=' + encodeURIComponent(key) + '&notice=' + encodeURIComponent('API client created for domain ' + domain + '. Copy the key now; it will not be shown again.'));
     }
     if (actionPath === '/admin/api-clients/revoke') {
       const id = data.get('id');
       if (typeof id !== 'string' || !id || id.length > 100) throw new HttpError(422, 'Invalid client.');
-      const admin = await isSuperadmin(env, subject);
-      await env.DB.prepare(admin ? 'UPDATE api_clients SET is_active=0 WHERE id=?' : 'UPDATE api_clients SET is_active=0 WHERE id=? AND owner_subject=?').bind(id,...(admin?[]:[subject])).run();
+      // Full isolation: Even superadmin cannot revoke another tenant's API clients.
+      await env.DB.prepare('UPDATE api_clients SET is_active=0 WHERE id=? AND owner_subject=?').bind(id, subject).run();
       await audit(env, request, 'API_CLIENT_REVOKED', { id });
       return redirect(targetBase + '?view=clients&notice=' + encodeURIComponent('API client revoked.'));
     }
@@ -1234,7 +1176,7 @@ async function handler(request, env) {
         if(!cfg.MAILGUN_API_KEY) throw new HttpError(422,'Save your Mailgun API key first.');
         dispatchConfig={...cfg,MAILGUN_DOMAIN:cfg.MAILGUN_SANDBOX_DOMAIN,FALLBACK_ORDER:'mailgun'};
         payload.from='postmaster@'+cfg.MAILGUN_SANDBOX_DOMAIN;
-        payload.from_name='NeoMail Mailgun Sandbox';
+        payload.from_name='neoMailer Mailgun Sandbox';
         // The sandbox shares the deployment provider account, so it is always
         // attributed to the deployment workspace.
         owner='local-admin';
@@ -1337,9 +1279,10 @@ async function handler(request, env) {
   } else if (view === 'clients') {
     title='API clients'; subtitle='Issue and revoke integration keys for applications.';
     const isSuper = await isSuperadmin(env, subject);
-    const clients = await rows(env, isSuper ? 'SELECT id,name,sender_address,is_active,created_at,last_used_at FROM api_clients ORDER BY created_at DESC' : 'SELECT id,name,sender_address,is_active,created_at,last_used_at FROM api_clients WHERE owner_subject=? ORDER BY created_at DESC', ...(isSuper?[]:[subject]));
-    const verifiedCount = isSuper ? 1 : ((await env.DB.prepare('SELECT COUNT(*) AS count FROM managed_domains WHERE owner_subject=? AND is_verified=1').bind(subject).first())?.count || 0);
-    content = ui.apiClients(clients, sess, (url.searchParams.get('created_key') || '').slice(0, 128), verifiedCount > 0);
+    // Strict isolation: Each workspace only sees their own API clients. Even superadmin cannot access other tenants' keys.
+    const clients = await rows(env, 'SELECT id,name,domain,sender_address,is_active,created_at,last_used_at FROM api_clients WHERE owner_subject=? ORDER BY created_at DESC', subject);
+    const verifiedDomains = await rows(env, isSuper ? "SELECT domain,display_name FROM managed_domains WHERE is_verified=1 AND owner_subject IN (?, 'local-admin') ORDER BY domain" : "SELECT domain,display_name FROM managed_domains WHERE is_verified=1 AND owner_subject=? ORDER BY domain", subject);
+    content = ui.apiClients(clients, sess, (url.searchParams.get('created_key') || '').slice(0, 128), verifiedDomains);
   } else if (view === 'users') {
     title='Admin users'; subtitle='Manage administrator identities authorized through Cloudflare Access.';
     const role = await adminRole(env, sess.access_subject || subject);

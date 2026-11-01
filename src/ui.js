@@ -4241,6 +4241,24 @@ main.docs-main-studio {
   transform-origin: 270px 225px;
   animation: mascotBlink 4.2s ease-in-out infinite;
 }
+@keyframes drinkTea {
+  0%, 55%, 100% {
+    transform: translate(0, 0) rotate(0deg);
+  }
+  66% {
+    transform: translate(25px, -32px) rotate(18deg);
+  }
+  72%, 78% {
+    transform: translate(27px, -35px) rotate(24deg);
+  }
+  88% {
+    transform: translate(2px, -2px) rotate(1deg);
+  }
+}
+.mascot-drink-tea {
+  transform-origin: 220px 270px;
+  animation: drinkTea 7.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
 @keyframes neomailSteamFloat {
   0% { opacity: 0; transform: translateY(0) scaleX(0.8); }
   50% { opacity: 0.7; transform: translateY(-8px) scaleX(1.1); }
@@ -6767,7 +6785,7 @@ export function docsViewer(content, sess) {
     <div class="panelhead">
       <div>
         <h2>Documentation & System Guide</h2>
-        <p>Reference guide for neoMail transactional mail infrastructure.</p>
+        <p>Reference guide for neoMailer transactional mail infrastructure.</p>
       </div>
       <a class="button secondary studio-action-btn" href="/docs" target="_blank">${icon('external')} <span>View</span></a>
     </div>
@@ -7087,12 +7105,13 @@ export function providersView(rows, cfg, sess, limits = {}, usage = {}, userLimi
   `;
 }
 
-export function apiClients(clients, sess, createdKey = '', hasVerifiedDomains = true) {
+export function apiClients(clients, sess, createdKey = '', verifiedDomains = []) {
   const base = sess?.base || '/dashboard';
   const isSuper = sess?.role === 'superadmin';
-  const canCreate = isSuper || hasVerifiedDomains;
+  const domainList = Array.isArray(verifiedDomains) ? verifiedDomains : (verifiedDomains ? [{ domain: 'mail.neopathshala.com', display_name: 'Primary Domain' }] : []);
+  const canCreate = isSuper || domainList.length > 0;
   const keyNotice = createdKey ? `<div class="notice">New API key (shown once): <code>${e(createdKey)}</code>. Store it securely; it will not be displayed again.</div>` : '';
-  const domainWarning = (!isSuper && !hasVerifiedDomains) ? `
+  const domainWarning = (!isSuper && domainList.length === 0) ? `
     <div class="notice warn" style="margin-bottom:16px;border-left:4px solid var(--accent)">
       <strong>⚠️ Domain Verification Required</strong>
       <p style="margin:4px 0 0;font-size:13px">You cannot generate API client keys until you add and verify ownership of a sending domain under <a href="${base}/domains" style="text-decoration:underline;font-weight:600">Domains</a>.</p>
@@ -7105,7 +7124,7 @@ export function apiClients(clients, sess, createdKey = '', hasVerifiedDomains = 
         <h2 style="margin:0">Create API client</h2>
         <span class="info-help-btn" tabindex="0" role="tooltip" title="Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender." aria-label="Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender.">
           ${icon('info')}
-          <span class="info-tooltip-box">Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender.</span>
+          <span class="info-tooltip-box">Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender. Each API key is strictly isolated to a single verified domain.</span>
         </span>
       </div>
       <div class="panelbody">
@@ -7115,13 +7134,20 @@ export function apiClients(clients, sess, createdKey = '', hasVerifiedDomains = 
             <label class="field">Client name
               <input name="name" required maxlength="80" placeholder="App backend" ${!canCreate ? 'disabled' : ''}>
             </label>
+            <label class="field">Authorized domain (Required)
+              <select name="domain" required class="custom-select" ${!canCreate ? 'disabled' : ''}>
+                ${domainList.length > 0 ? domainList.map(d => `<option value="${e(typeof d === 'string' ? d : d.domain)}">${e(typeof d === 'string' ? d : (d.display_name ? `${d.display_name} (${d.domain})` : d.domain))}</option>`).join('') : '<option value="" disabled selected>No verified domains available</option>'}
+              </select>
+              <small>This API key is strictly isolated to this domain only. Even superadmin cannot access your keys.</small>
+            </label>
             <label class="field">Restricted sender (optional)
               <input type="email" name="sender_address" maxlength="254" autocomplete="off" spellcheck="false" placeholder="your-sender@your-verified-domain.com" ${!canCreate ? 'disabled' : ''}>
+              <small>Optional exact sender email on the authorized domain.</small>
             </label>
           </div>
           <button class="button" ${!canCreate ? 'disabled' : ''}>Create client key</button>
         </form>
-        <p class="footnote">Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender.</p>
+        <p class="footnote">Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender. Each API key is strictly isolated to its authorized domain; even superadmin cannot view or access your keys.</p>
       </div>
     </section>
   `;
@@ -7130,7 +7156,7 @@ export function apiClients(clients, sess, createdKey = '', hasVerifiedDomains = 
       <div class="panelhead" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
         <div>
           <h2>API clients</h2>
-          <p>Issue separate bearer tokens for each application. Keys are stored only as hashes.</p>
+          <p>Issue separate bearer tokens for each application. Keys are stored only as hashes and isolated per domain.</p>
         </div>
         <span class="tag" style="font-size:11px">${clients.length} ${clients.length === 1 ? 'client' : 'clients'}</span>
       </div>
@@ -7139,6 +7165,7 @@ export function apiClients(clients, sess, createdKey = '', hasVerifiedDomains = 
           <thead>
             <tr>
               <th>Name</th>
+              <th>Domain</th>
               <th>Sender</th>
               <th>Status</th>
               <th>Created</th>
@@ -7150,7 +7177,8 @@ export function apiClients(clients, sess, createdKey = '', hasVerifiedDomains = 
             ${clients.map(c => `
               <tr>
                 <td><strong>${e(c.name)}</strong></td>
-                <td><code>${e(c.sender_address || 'Any active identity')}</code></td>
+                <td><span class="tag good" style="font-size:11px">${e(c.domain || 'Primary')}</span></td>
+                <td><code>${e(c.sender_address || 'Any identity on domain')}</code></td>
                 <td>${badge(c.is_active ? 'Active' : 'Revoked')}</td>
                 <td><span style="color:var(--muted);font-size:12px">${e(new Date(c.created_at * 1000).toISOString().slice(0, 16).replace('T', ' '))}</span></td>
                 <td><span style="color:var(--muted);font-size:12px">${c.last_used_at ? e(new Date(c.last_used_at * 1000).toISOString().slice(0, 16).replace('T', ' ')) : 'Never'}</span></td>
@@ -7164,7 +7192,7 @@ export function apiClients(clients, sess, createdKey = '', hasVerifiedDomains = 
                   ` : '<span class="muted">—</span>'}
                 </td>
               </tr>
-            `).join('') || `<tr><td colspan="6">No API clients yet.</td></tr>`}
+            `).join('') || `<tr><td colspan="7">No API clients yet.</td></tr>`}
           </tbody>
         </table>
       </div>
@@ -7635,7 +7663,7 @@ export function errorIllustrationSvg() {
         <stop offset="100%" stop-color="var(--illus-mascot-dark)"/>
       </linearGradient>
       <clipPath id="albumPhotoClip">
-        <rect x="89" y="67" width="46" height="46" rx="2"/>
+        <rect x="89" y="44" width="46" height="50" rx="2"/>
       </clipPath>
     </defs>
     <ellipse cx="270" cy="220" rx="190" ry="170" fill="url(#errBackdropGlow)"/>
@@ -7655,25 +7683,25 @@ export function errorIllustrationSvg() {
       <circle cx="45" cy="45" r="1.2" fill="#ffffff"/>
     </g>
     <g id="wallAlbumPhoto">
-      <circle cx="112" cy="46" r="2.2" fill="var(--illus-chair-shadow)"/>
-      <path d="M 112 46 L 94 60 M 112 46 L 130 60" stroke="var(--line-strong)" stroke-width="1.2" stroke-linecap="round"/>
-      <rect x="82" y="60" width="60" height="70" rx="3.5" fill="var(--surface)" stroke="var(--illus-chair-shadow)" stroke-width="3"/>
-      <rect x="86" y="64" width="52" height="62" rx="1.5" fill="#f8fafc" stroke="var(--line)" stroke-width="0.6"/>
+      <circle cx="112" cy="30" r="2.2" fill="var(--illus-chair-shadow)"/>
+      <path d="M 112 30 L 96 37 M 112 30 L 128 37" stroke="var(--line-strong)" stroke-width="1.2" stroke-linecap="round"/>
+      <rect x="82" y="37" width="60" height="76" rx="3.5" fill="var(--surface)" stroke="var(--illus-chair-shadow)" stroke-width="3"/>
+      <rect x="86" y="41" width="52" height="68" rx="1.5" fill="#f8fafc" stroke="var(--line)" stroke-width="0.6"/>
       <g clip-path="url(#albumPhotoClip)">
-        <rect x="89" y="67" width="46" height="46" fill="#e0f2fe"/>
-        <circle cx="123" cy="76" r="4.5" fill="#f59e0b"/>
-        <path d="M 87 113 Q 102 96 116 113 Z" fill="#059669" opacity="0.65"/>
-        <path d="M 104 113 Q 118 99 137 113 Z" fill="var(--accent)" opacity="0.85"/>
-        <ellipse cx="107" cy="103" r="5" fill="#334155"/>
-        <ellipse cx="107" cy="96" r="4" fill="#334155"/>
-        <circle cx="105.5" cy="95.5" r="1.5" fill="none" stroke="#ffffff" stroke-width="0.6"/>
-        <circle cx="108.5" cy="95.5" r="1.5" fill="none" stroke="#ffffff" stroke-width="0.6"/>
-        <path d="M 112 97 Q 115 93 117 95" stroke="#334155" stroke-width="1.2" stroke-linecap="round" fill="none"/>
-        <path d="M 107 89 C 105.5 87 103 89 107 92.5 C 111 89 108.5 87 107 89 Z" fill="#ef4444"/>
-        <polygon points="89,67 115,67 95,113 89,113" fill="#ffffff" opacity="0.2"/>
+        <rect x="89" y="44" width="46" height="50" fill="#e0f2fe"/>
+        <circle cx="123" cy="54" r="4.5" fill="#f59e0b"/>
+        <path d="M 87 94 Q 102 77 116 94 Z" fill="#059669" opacity="0.65"/>
+        <path d="M 104 94 Q 118 80 137 94 Z" fill="var(--accent)" opacity="0.85"/>
+        <ellipse cx="107" cy="84" r="5" fill="#334155"/>
+        <ellipse cx="107" cy="77" r="4" fill="#334155"/>
+        <circle cx="105.5" cy="76.5" r="1.5" fill="none" stroke="#ffffff" stroke-width="0.6"/>
+        <circle cx="108.5" cy="76.5" r="1.5" fill="none" stroke="#ffffff" stroke-width="0.6"/>
+        <path d="M 112 78 Q 115 74 117 76" stroke="#334155" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <path d="M 107 70 C 105.5 68 103 70 107 73.5 C 111 70 108.5 68 107 70 Z" fill="#ef4444"/>
+        <polygon points="89,44 115,44 95,94 89,94" fill="#ffffff" opacity="0.2"/>
       </g>
-      <line x1="97" y1="120" x2="127" y2="120" stroke="var(--line-strong)" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
-      <circle cx="112" cy="120" r="1.5" fill="var(--accent)"/>
+      <line x1="97" y1="102" x2="127" y2="102" stroke="var(--line-strong)" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+      <circle cx="112" cy="102" r="1.5" fill="var(--accent)"/>
     </g>
     <g id="serverRack">
       <rect x="72" y="220" width="80" height="150" rx="8" fill="var(--illus-chair-shadow)" stroke="var(--line-strong)" stroke-width="1.5"/>
@@ -7756,16 +7784,18 @@ export function errorIllustrationSvg() {
       <path d="M266 244 Q272 250 278 244" stroke="var(--illus-glasses)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
       <ellipse cx="236" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
       <ellipse cx="304" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
-      <path d="M225 270 C216 276, 212 284, 222 288" stroke="var(--illus-arms)" stroke-width="12" stroke-linecap="round" fill="none"/>
-      <g transform="translate(228, 274)">
-        <path d="M0 6 C-9 6, -9 18, 0 18" fill="none" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round"/>
-        <path d="M0 6 C-9 6, -9 18, 0 18" fill="none" stroke="var(--line-strong)" stroke-width="1.3" stroke-linecap="round"/>
-        <rect x="0" y="0" width="20" height="24" rx="4" fill="#ffffff" stroke="var(--line-strong)" stroke-width="1.5"/>
-        <path d="M7 -2 Q10 -6 7 -10" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-1"/>
-        <path d="M14 -3 Q17 -8 14 -13" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-2"/>
+      <g class="mascot-drink-tea">
+        <path d="M225 270 C216 276, 212 284, 222 288" stroke="var(--illus-arms)" stroke-width="12" stroke-linecap="round" fill="none"/>
+        <g transform="translate(228, 274)">
+          <path d="M0 6 C-9 6, -9 18, 0 18" fill="none" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round"/>
+          <path d="M0 6 C-9 6, -9 18, 0 18" fill="none" stroke="var(--line-strong)" stroke-width="1.3" stroke-linecap="round"/>
+          <rect x="0" y="0" width="20" height="24" rx="4" fill="#ffffff" stroke="var(--line-strong)" stroke-width="1.5"/>
+          <path d="M7 -2 Q10 -6 7 -10" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-1"/>
+          <path d="M14 -3 Q17 -8 14 -13" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-2"/>
+        </g>
+        <ellipse cx="224" cy="284" rx="6" ry="7" fill="var(--illus-arms)"/>
+        <path d="M224 278 C220 281, 219 289, 223 293" stroke="var(--illus-arms)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
       </g>
-      <ellipse cx="224" cy="284" rx="6" ry="7" fill="var(--illus-arms)"/>
-      <path d="M224 278 C220 281, 219 289, 223 293" stroke="var(--illus-arms)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
       <path d="M312 265 C326 270, 334 285, 310 292" stroke="var(--illus-arms)" stroke-width="12" stroke-linecap="round" fill="none"/>
       <ellipse cx="304" cy="289" rx="6" ry="5" fill="var(--illus-arms)"/>
       <g transform="translate(306, 280)">
@@ -7903,7 +7933,7 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
           <a class="error-page-brand" href="/dashboard">
             <span class="brandmark">${neomailLogoSvg}</span>
             <div class="brand-text">
-              <span class="brand-title">neo<span>Mail</span></span>
+              <span class="brand-title">neo<span>Mailer</span></span>
               <span class="brand-sub">Mail Infrastructure</span>
             </div>
           </a>
