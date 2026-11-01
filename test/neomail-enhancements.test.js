@@ -139,4 +139,36 @@ test('neoMail enhancements: clean slugs, dark mode hover, SPA encrypted cache, D
   const restoredHtml = await pageRestored.text();
   assert.ok(!restoredHtml.includes('class="dns-alert-banner"'), 'Alert banner element must disappear once DNS is restored');
   assert.ok(!restoredHtml.includes('Domain Security Alert · Outbound Mail Paused'), 'Alert message must disappear');
+
+  // 7. Verify superadmin domain separation for other tenant domains
+  await db.prepare("INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,owner_subject,verification_token) VALUES ('tenant-client.com','Tenant Client',0,unixepoch(),'other-admin','other-tenant@neomail.internal','other-token-1234')").run();
+  const superDomainsRes = await call('super@neomail.internal', '/admin/domains', { headers: { cookie: superCookie } });
+  const superDomainsHtml = await superDomainsRes.text();
+  assert.ok(superDomainsHtml.includes('Tenant domains · Other admin workspaces'), 'Must separate other tenant domains into dedicated section in superadmin panel');
+  assert.ok(superDomainsHtml.includes('other-tenant@neomail.internal'), 'Must show owning admin workspace tag');
+  assert.ok(superDomainsHtml.includes('tenant-client.com'), 'Must list other admin domain');
+
+  // 8. Verify Documentation page hides pagehead (2nd image contents)
+  const docsRes = await call('super@neomail.internal', '/admin/docs', { headers: { cookie: superCookie } });
+  const docsHtml = await docsRes.text();
+  assert.ok(!docsHtml.includes('class="pagehead"'), 'Must hide pagehead on docs view');
+  assert.ok(docsHtml.includes('Documentation Content & Live Editor'), 'Must still render docs editor panel');
+
+  // 9. Verify Dark mode hover color is darker than primary, and selection text is black
+  assert.ok(superDomainsHtml.includes('--accent: #10b981;'), 'Dark mode primary accent must be emerald green');
+  assert.ok(superDomainsHtml.includes('--accent-hover: #059669;'), 'Hover color must be darker than primary accent');
+  assert.ok(superDomainsHtml.includes('color: #000000 !important;'), 'Selection text color must be black');
+
+  // 10. Verify Viewport lock & scroll glitch prevention CSS
+  assert.ok(superDomainsHtml.includes('overscroll-behavior: none;'), 'Must have overscroll-behavior none to stop bounce space');
+  assert.ok(superDomainsHtml.includes('position: fixed;'), 'Must lock html/body fixed position to prevent scroll drift');
+
+  // 11. Verify Profile Settings (3rd image design)
+  const settingsRes = await call('super@neomail.internal', '/admin/settings', { headers: { cookie: superCookie } });
+  const settingsHtml = await settingsRes.text();
+  assert.ok(settingsHtml.includes('Profile photo'), 'Must render Profile photo heading');
+  assert.ok(settingsHtml.includes('avatar-squircle'), 'Must render squircle avatar container');
+  assert.ok(settingsHtml.includes('btn-camera-trigger'), 'Must render camera badge overlay trigger');
+  assert.ok(settingsHtml.includes('Change photo'), 'Must render Change photo button');
+  assert.ok(settingsHtml.includes('JPG, PNG, or WebP · Up to 3 MB'), 'Must render 3 MB WebP hint');
 });

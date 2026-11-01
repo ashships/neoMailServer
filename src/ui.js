@@ -126,6 +126,8 @@ const iconMap = {
   link: 'Link',
   eye: 'Eye',
   zap: 'Zap',
+  camera: 'Camera',
+  upload: 'Upload',
 };
 
 function initial(name) {
@@ -232,12 +234,12 @@ const css = `
   --muted: #8d9a92;
   --line: #2b332f;
   --line-strong: #3d4842;
-  --accent: #34d399;
-  --accent-hover: #5eead4;
-  --accent-active: #10b981;
-  --accent-fg: #0d1f17;
-  --tint: rgba(52, 211, 153, 0.12);
-  --tint-strong: rgba(52, 211, 153, 0.22);
+  --accent: #10b981;
+  --accent-hover: #059669;
+  --accent-active: #047857;
+  --accent-fg: #000000;
+  --tint: rgba(16, 185, 129, 0.12);
+  --tint-strong: rgba(16, 185, 129, 0.22);
   --tint-text: #6ee7b7;
   --brand-dark: #063b2c;
   --danger: #f87171;
@@ -267,12 +269,12 @@ const css = `
     --muted: #8d9a92;
     --line: #2b332f;
     --line-strong: #3d4842;
-    --accent: #34d399;
-    --accent-hover: #5eead4;
-    --accent-active: #10b981;
-    --accent-fg: #0d1f17;
-    --tint: rgba(52, 211, 153, 0.12);
-    --tint-strong: rgba(52, 211, 153, 0.22);
+    --accent: #10b981;
+    --accent-hover: #059669;
+    --accent-active: #047857;
+    --accent-fg: #000000;
+    --tint: rgba(16, 185, 129, 0.12);
+    --tint-strong: rgba(16, 185, 129, 0.22);
     --tint-text: #6ee7b7;
     --brand-dark: #063b2c;
     --danger: #f87171;
@@ -291,9 +293,26 @@ const css = `
   }
 }
 
+::selection {
+  background: var(--accent);
+  color: #000000 !important;
+}
+
+::-moz-selection {
+  background: var(--accent);
+  color: #000000 !important;
+}
+
 html, body {
   height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
   overflow: hidden;
+  position: fixed;
+  inset: 0;
+  overscroll-behavior: none;
+  overscroll-behavior-y: none;
 }
 
 * {
@@ -585,14 +604,19 @@ select option::checkmark {
 .app {
   display: grid;
   grid-template-columns: 248px minmax(0, 1fr);
-  height: 100vh;
+  height: 100%;
+  height: 100dvh;
+  width: 100%;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .sidebar {
-  height: 100vh;
+  height: 100%;
+  height: 100dvh;
   overflow-y: auto;
   overflow-x: hidden;
+  overscroll-behavior: contain;
   border-right: 1px solid var(--line);
   background: var(--surface);
   padding: 20px 14px;
@@ -764,10 +788,12 @@ nav {
 /* Workspace main content & topbar */
 .workspace {
   min-width: 0;
-  height: 100vh;
+  height: 100%;
+  height: 100dvh;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .topbar {
@@ -1001,7 +1027,8 @@ main {
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  scroll-behavior: smooth;
+  overscroll-behavior-y: contain;
+  -webkit-overflow-scrolling: touch;
   width: 100%;
   max-width: 1600px;
   margin: 0;
@@ -2389,12 +2416,119 @@ input[type=checkbox] {
   width: 100%;
   opacity: 0;
 }
-.refreshing svg {
-  animation: refreshSpin 0.7s linear infinite;
+/* Action icon hover animations */
+.button svg,
+.navlink svg,
+.iconb svg,
+.spa-refresh-btn svg,
+.avatar-camera-btn svg,
+.compose-quickbtn svg {
+  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes refreshSpin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+
+.button:hover svg {
+  transform: scale(1.12);
+}
+
+.button.secondary:hover svg {
+  transform: scale(1.08);
+}
+
+.navlink:hover svg {
+  transform: translateX(2px) scale(1.08);
+}
+
+.spa-refresh-btn:hover svg {
+  transform: rotate(45deg);
+}
+
+.iconb:hover svg {
+  transform: scale(1.15);
+}
+
+/* Profile Photo Card (Image 3 Design) */
+.profile-photo-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.profile-photo-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0;
+}
+.profile-photo-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+.avatar-wrapper {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  flex-shrink: 0;
+}
+.avatar-squircle {
+  width: 80px;
+  height: 80px;
+  border-radius: 18px;
+  background: var(--surface-hover);
+  border: 1px solid var(--line);
+  display: grid;
+  place-items: center;
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--accent);
+  overflow: hidden;
+}
+.avatar-squircle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.avatar-camera-btn {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1a1e1c;
+  border: 2px solid var(--surface);
+  color: #f0ede6;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: none !important;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+.avatar-camera-btn svg {
+  width: 14px;
+  height: 14px;
+}
+.avatar-camera-btn:hover {
+  background: #2b332f;
+  transform: scale(1.12);
+}
+.profile-photo-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.profile-photo-buttons {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.profile-photo-hint {
+  font-size: 13px;
+  color: var(--muted);
 }
 
 /* Rich Text Editor */
@@ -2835,6 +2969,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
               </form>
             </div>
           `).join('') : ''}
+          ${view === 'docs' ? '' : `
           <div class="pagehead">
             <div>
               <h1>${e(title)}</h1>
@@ -2845,6 +2980,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
               <a class="button" href="${base}/compose">${icon('mail')} Send a test</a>
             </div>
           </div>
+          `}
           ${notice ? `<div class="notice" role="status">${e(notice)}</div>` : ''}
           ${content}
           <p class="footnote">neoMail · Private transactional email infrastructure · UTC</p>
@@ -3566,10 +3702,56 @@ export function otpVerify(email, error = '', isDark = false) {
 
 export function domains(rows, sess) {
   const base = sess?.role === 'superadmin' ? '/admin' : '/dashboard';
+  const isSuper = sess?.role === 'superadmin';
+  const currentSubject = sess?.access_subject || sess?.subject || 'local-admin';
+
+  const ownRows = isSuper ? rows.filter(r => !r.owner_subject || r.owner_subject === currentSubject || r.owner_subject === 'local-admin') : rows;
+  const otherRows = isSuper ? rows.filter(r => r.owner_subject && r.owner_subject !== currentSubject && r.owner_subject !== 'local-admin') : [];
+
   const copyScript = sess.script_nonce ? `<script nonce="${e(sess.script_nonce)}">const copyIcon=${JSON.stringify(icon('copy'))};const check=${JSON.stringify(icon('check'))};document.addEventListener('click',async ev=>{const b=ev.target.closest('button[data-copy]');if(!b||b.disabled)return;ev.preventDefault();const value=b.getAttribute('data-copy');try{await navigator.clipboard.writeText(value);}catch{const ta=document.createElement('textarea');ta.value=value;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}finally{ta.remove();}}b.classList.add('copied');b.innerHTML=check;b.disabled=true;setTimeout(()=>{b.classList.remove('copied');b.innerHTML=copyIcon;b.disabled=false;},1600);});</script>` : '';
   const dnsField = (label, value, title) => `<div class="dnsfield"><span class="dnstype">${label}</span><code title="${e(title)}">${e(value)}</code><button type="button" class="button secondary small iconb" data-copy="${e(value)}" aria-label="Copy ${label}" title="Copy">${icon('copy')}</button></div>`;
   const record = r => r.verification_token ? `${dnsField('Name', '_neomail-verification.' + r.domain, 'TXT record host — paste this into the Host/Name field of your DNS provider')}${dnsField('Value', r.verification_token, 'TXT record content — paste this into the Value/Content field of your DNS provider')}` : '<p class="sub">Verification token missing — remove and re-add the domain.</p>';
-  return `<div class="notice">Add a <strong>TXT record</strong> at your DNS provider (Cloudflare, GoDaddy, Namecheap…), then click <strong>Verify</strong>. Continuous background verification protects your sender reputation: if a domain\'s DNS fails, outbound sending from that domain is immediately paused and you are alerted.</div><div class="notice warn">In your DNS panel: choose <code>TXT</code> as the record type, paste <strong>Name</strong> in the host/name box and <strong>Value</strong> in the content box, save, wait a few minutes for propagation, then verify below.</div><section class="panel"><div class="panelhead" style="display:flex;align-items:center;justify-content:space-between"><div><h2>Client domains</h2><p>Track domains clients send from. All unverified domains automatically pause outbound email dispatch.</p></div><form method="post" action="${base}/domains/auto-check">${hidden(sess.csrf_token)}<button class="button secondary small" type="submit">${icon('refresh')} Auto-Check All DNS</button></form></div><div class="tablewrap"><table><thead><tr><th>Domain</th><th>Status</th><th>Verification TXT record</th><th>Action</th></tr></thead><tbody>${rows.map(r => `<tr><td><div class="subject">${e(r.domain)}</div><span class="muted">${e(r.display_name)}</span></td><td>${r.is_verified ? '<span class="tag good">' + icon('check') + ' Active · Verified</span>' : '<span class="tag danger">' + icon('security') + ' Paused · DNS Failed</span>'}</td><td>${record(r)}</td><td><form method="post" action="${base}/domains/verify">${hidden(sess.csrf_token)}<input type="hidden" name="domain" value="${e(r.domain)}"><button class="button secondary small">${r.is_verified ? 'Re-check' : 'Verify'}</button></form></td></tr>`).join('') || '<tr><td colspan="4">No domains yet.</td></tr>'}</tbody></table></div></section><section class="panel"><div class="panelhead"><h2>Add domain</h2></div><div class="panelbody"><form method="post" action="${base}/domains/create">${hidden(sess.csrf_token)}<div class="settingsgrid"><label class="field">Domain<input name="domain" required maxlength="253" pattern="[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?" title="Letters, digits, dots and hyphens only (e.g. client.example.com)" autocomplete="off" spellcheck="false" placeholder="client.example.com"></label><label class="field">Display name<input name="display_name" required maxlength="100" placeholder="Client name"></label></div><button class="button">Add domain</button></form></div></section>${copyScript}`;
+
+  const otherDomainsPanel = otherRows.length > 0 ? `
+    <section class="panel" style="margin-top:24px">
+      <div class="panelhead" style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <h2>Tenant domains · Other admin workspaces</h2>
+          <p>Sending domains configured by other administrators. Monitored for continuous DNS verification and scam protection.</p>
+        </div>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Domain</th>
+              <th>Admin workspace</th>
+              <th>Status</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${otherRows.map(r => `
+              <tr>
+                <td><div class="subject">${e(r.domain)}</div><span class="muted">${e(r.display_name)}</span></td>
+                <td><span class="tag" style="font-family:var(--mono);font-size:11px">${e(r.owner_subject)}</span></td>
+                <td>${r.is_verified ? '<span class="tag good">' + icon('check') + ' Active · Verified</span>' : '<span class="tag danger">' + icon('security') + ' Paused · DNS Failed</span>'}</td>
+                <td>
+                  <form method="post" action="${base}/domains/verify">
+                    ${hidden(sess.csrf_token)}
+                    <input type="hidden" name="domain" value="${e(r.domain)}">
+                    <button class="button secondary small">${r.is_verified ? 'Re-check' : 'Verify'}</button>
+                  </form>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ` : '';
+
+  return `<div class="notice">Add a <strong>TXT record</strong> at your DNS provider (Cloudflare, GoDaddy, Namecheap…), then click <strong>Verify</strong>. Continuous background verification protects your sender reputation: if a domain\'s DNS fails, outbound sending from that domain is immediately paused and you are alerted.</div><div class="notice warn">In your DNS panel: choose <code>TXT</code> as the record type, paste <strong>Name</strong> in the host/name box and <strong>Value</strong> in the content box, save, wait a few minutes for propagation, then verify below.</div><section class="panel"><div class="panelhead" style="display:flex;align-items:center;justify-content:space-between"><div><h2>${isSuper ? 'Your workspace domains' : 'Client domains'}</h2><p>Track domains clients send from. All unverified domains automatically pause outbound email dispatch.</p></div><form method="post" action="${base}/domains/auto-check">${hidden(sess.csrf_token)}<button class="button secondary small" type="submit">${icon('refresh')} Auto-Check All DNS</button></form></div><div class="tablewrap"><table><thead><tr><th>Domain</th><th>Status</th><th>Verification TXT record</th><th>Action</th></tr></thead><tbody>${ownRows.map(r => `<tr><td><div class="subject">${e(r.domain)}</div><span class="muted">${e(r.display_name)}</span></td><td>${r.is_verified ? '<span class="tag good">' + icon('check') + ' Active · Verified</span>' : '<span class="tag danger">' + icon('security') + ' Paused · DNS Failed</span>'}</td><td>${record(r)}</td><td><form method="post" action="${base}/domains/verify">${hidden(sess.csrf_token)}<input type="hidden" name="domain" value="${e(r.domain)}"><button class="button secondary small">${r.is_verified ? 'Re-check' : 'Verify'}</button></form></td></tr>`).join('') || '<tr><td colspan="4">No domains yet.</td></tr>'}</tbody></table></div></section>${otherDomainsPanel}<section class="panel"><div class="panelhead"><h2>Add domain</h2></div><div class="panelbody"><form method="post" action="${base}/domains/create">${hidden(sess.csrf_token)}<div class="settingsgrid"><label class="field">Domain<input name="domain" required maxlength="253" pattern="[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?" title="Letters, digits, dots and hyphens only (e.g. client.example.com)" autocomplete="off" spellcheck="false" placeholder="client.example.com"></label><label class="field">Display name<input name="display_name" required maxlength="100" placeholder="Client name"></label></div><button class="button">Add domain</button></form></div></section>${copyScript}`;
 }
 
 export function errorPage(message, status) {
@@ -3587,8 +3769,59 @@ function profileAvatar(profile) {
   return `<span class="avatar">${profile?.avatar_mime ? `<img src="/admin/profile-image?v=${e(profile.updated_at)}" alt="${e(name)} profile image">` : e(initials)}</span>`;
 }
 
+function profileSquircle(profile) {
+  const name = profile?.display_name || 'Administrator';
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  const initials = parts.slice(0, 2).map(part => part[0] || '').join('').toUpperCase() || 'A';
+  return `<div class="avatar-squircle" id="avatar-squircle-preview">${profile?.avatar_mime ? `<img src="/admin/profile-image?v=${e(profile.updated_at)}" alt="${e(name)} profile image">` : e(initials)}</div>`;
+}
+
 function profileSettings(sess) {
-  return `<section class="panel" id="profile"><div class="panelhead"><div><h2>Your profile</h2><p>Edit your name and upload a photo or company logo for your NeoMail profile.</p></div></div><div class="panelbody"><div class="profileeditor">${profileAvatar(sess.profile)}<div><strong>${e(sess.profile?.display_name || 'Administrator')}</strong><p class="sub">${e(sess.access_subject || '')}</p></div></div><form method="post" action="/admin/profile" enctype="multipart/form-data">${hidden(sess.csrf_token)}<div class="settingsgrid"><label class="field">Administrator email<input type="email" value="${e(sess.access_subject || '')}" readonly disabled aria-readonly="true"></label><label class="field">Profile name<input name="display_name" value="${e(sess.profile?.display_name || 'Administrator')}" required maxlength="80" autocomplete="name"></label><label class="field">Profile photo or logo<input type="file" name="avatar" accept="image/png,image/jpeg,image/webp"><small>PNG, JPEG or WebP · up to 8 MiB / 16 megapixels. Automatically resized to 512px and compressed to WebP before upload.</small></label></div>${sess.profile?.avatar_mime ? '<label class="checkbox"><input type="checkbox" name="remove_avatar" value="yes">Remove current image</label><br>' : ''}<p class="footnote" id="profile-upload-status" role="status" aria-live="polite"></p><noscript><p>Automatic compression requires JavaScript. Upload an already optimized PNG, JPEG or WebP under 128 KiB.</p></noscript><button class="button" type="submit">Save profile</button></form></div></section>${sess.script_nonce ? `<script nonce="${e(sess.script_nonce)}">${PROFILE_SCRIPT}</script>` : ''}`;
+  const hasAvatar = !!sess.profile?.avatar_mime;
+  return `<section class="panel" id="profile">
+    <div class="panelhead">
+      <div>
+        <h2>Your profile</h2>
+        <p>Edit your name and upload a photo or company logo for your neoMail profile.</p>
+      </div>
+    </div>
+    <div class="panelbody">
+      <form method="post" action="/admin/profile" enctype="multipart/form-data">
+        ${hidden(sess.csrf_token)}
+        <div class="profile-photo-section">
+          <label class="profile-photo-title">Profile photo</label>
+          <div class="profile-photo-card">
+            <div class="avatar-wrapper">
+              ${profileSquircle(sess.profile)}
+              <button type="button" class="avatar-camera-btn" id="btn-camera-trigger" title="Change photo" aria-label="Change photo">
+                ${icon('camera')}
+              </button>
+            </div>
+            <div class="profile-photo-actions">
+              <div class="profile-photo-buttons">
+                <button type="button" class="button secondary" id="btn-upload-avatar">
+                  ${icon('upload')} Change photo
+                </button>
+                <button type="button" class="button secondary textbutton text-danger" id="btn-remove-avatar" style="${hasAvatar ? '' : 'display:none;'}">
+                  ${icon('trash')} Remove
+                </button>
+              </div>
+              <span class="profile-photo-hint">JPG, PNG, or WebP · Up to 3 MB</span>
+              <span id="profile-upload-status" class="footnote" role="status" aria-live="polite"></span>
+            </div>
+          </div>
+          <input type="file" id="profile-avatar-input" name="avatar" accept="image/png,image/jpeg,image/webp" style="display:none">
+          <input type="checkbox" id="profile-remove-checkbox" name="remove_avatar" value="yes" style="display:none">
+        </div>
+        <div class="settingsgrid">
+          <label class="field">Administrator email<input type="email" value="${e(sess.access_subject || '')}" readonly disabled aria-readonly="true"></label>
+          <label class="field">Profile name<input name="display_name" value="${e(sess.profile?.display_name || 'Administrator')}" required maxlength="80" autocomplete="name"></label>
+        </div>
+        <noscript><p>Automatic compression requires JavaScript. Upload an already optimized PNG, JPEG or WebP under 128 KiB.</p></noscript>
+        <button class="button" type="submit">Save profile</button>
+      </form>
+    </div>
+  </section>${sess.script_nonce ? `<script nonce="${e(sess.script_nonce)}">${PROFILE_SCRIPT}</script>` : ''}`;
 }
 
 function bimiSettings(cfg) {

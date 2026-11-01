@@ -134,10 +134,6 @@ export const SPA_CLIENT_SCRIPT = String.raw`
       return;
     }
 
-    // Refresh animation on buttons
-    const refreshButtons = document.querySelectorAll('.spa-refresh-btn, .button.secondary[href*="view="], a[href$="' + pathname + '"]');
-    refreshButtons.forEach(btn => btn.classList.add('refreshing'));
-
     setProgress('loading');
 
     // 1. Instant Cache Swap (~0ms) if available
@@ -150,6 +146,7 @@ export const SPA_CLIENT_SCRIPT = String.raw`
         const crumbEl = document.querySelector('.crumb');
         if (crumbEl && cached.crumb) crumbEl.innerHTML = cached.crumb;
         updateActiveNav(pathname);
+        initPageEnhancements();
         renderedCached = true;
         if (pushState) history.pushState({ path: pathname }, '', url.href);
       }
@@ -180,6 +177,7 @@ export const SPA_CLIENT_SCRIPT = String.raw`
         const crumbEl = document.querySelector('.crumb');
         if (newCrumb && crumbEl) crumbEl.innerHTML = newCrumb.innerHTML;
         updateActiveNav(pathname);
+        initPageEnhancements();
         if (pushState && !renderedCached) history.pushState({ path: pathname }, '', url.href);
         await cacheView(pathname, newMain.innerHTML, doc.title, newCrumb ? newCrumb.innerHTML : '');
       } else {
@@ -189,7 +187,6 @@ export const SPA_CLIENT_SCRIPT = String.raw`
       if (!renderedCached) window.location.href = url.href;
     } finally {
       setProgress('done');
-      refreshButtons.forEach(btn => btn.classList.remove('refreshing'));
     }
   }
 
@@ -239,12 +236,107 @@ export const SPA_CLIENT_SCRIPT = String.raw`
     }
   } catch {}
 
+  // Initialize dynamic page behaviors
+  function initProfileUploader() {
+    const form = document.querySelector('#profile form');
+    if (!form || form.dataset.spaBound) return;
+    form.dataset.spaBound = '1';
+    const input = form.querySelector('input[name="avatar"]');
+    const message = document.getElementById('profile-upload-status');
+    const button = form.querySelector('button[type="submit"]');
+    const uploadBtn = document.getElementById('btn-upload-avatar');
+    const cameraBtn = document.getElementById('btn-camera-trigger');
+    const removeBtn = document.getElementById('btn-remove-avatar');
+    const removeCheckbox = form.querySelector('input[name="remove_avatar"]');
+    const preview = document.getElementById('avatar-squircle-preview');
+
+    if (uploadBtn && input) uploadBtn.addEventListener('click', () => input.click());
+    if (cameraBtn && input) cameraBtn.addEventListener('click', () => input.click());
+    if (removeBtn && removeCheckbox) {
+      removeBtn.addEventListener('click', () => {
+        removeCheckbox.checked = true;
+        if (input) input.value = '';
+        if (preview) preview.innerHTML = '<span style="font-size:26px;font-weight:700;color:var(--accent)">A</span>';
+        removeBtn.style.display = 'none';
+        if (message) message.textContent = 'Current photo will be removed when saved.';
+      });
+    }
+
+    async function compressImageFile(file) {
+      if (!file) return;
+      if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+        throw new Error('Choose a JPG, PNG or WebP image.');
+      }
+      if (file.size > 8 * 1024 * 1024) throw new Error('Choose an image smaller than 8 MiB.');
+      if (message) message.textContent = 'Optimizing and converting image to WebP…';
+      const bitmap = await createImageBitmap(file);
+      try {
+        const scale = Math.min(1, 512 / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        let blob;
+        for (const q of [0.86, 0.72, 0.55]) {
+          blob = await new Promise(res => canvas.toBlob(res, 'image/webp', q));
+          if (blob && blob.size <= 131072) break;
+        }
+        if (!blob || blob.size > 131072) throw new Error('Image too large. Please choose a simpler image.');
+        const dt = new DataTransfer();
+        dt.items.add(new File([blob], 'profile.webp', { type: 'image/webp' }));
+        input.files = dt.files;
+        if (preview && typeof URL !== 'undefined' && URL.createObjectURL) {
+          preview.innerHTML = '<img src="' + URL.createObjectURL(blob) + '" alt="Profile preview">';
+        }
+        if (removeCheckbox) removeCheckbox.checked = false;
+        if (removeBtn) removeBtn.style.display = 'inline-flex';
+        if (message) message.textContent = 'Photo optimized (' + Math.round(blob.size / 1024) + ' KiB). Ready to save.';
+      } finally {
+        bitmap?.close?.();
+      }
+    }
+
+    if (input) {
+      input.addEventListener('change', async () => {
+        if (!input.files || !input.files[0]) return;
+        try {
+          if (button) button.disabled = true;
+          await compressImageFile(input.files[0]);
+        } catch (err) {
+          if (message) message.textContent = err.message || 'Image processing failed.';
+        } finally {
+          if (button) button.disabled = false;
+        }
+      });
+    }
+
+    form.addEventListener('submit', async ev => {
+      const file = input?.files?.[0];
+      if (!file || (file.name === 'profile.webp' && file.size <= 131072)) return;
+      ev.preventDefault();
+      try {
+        if (button) button.disabled = true;
+        await compressImageFile(file);
+        HTMLFormElement.prototype.submit.call(form);
+      } catch (err) {
+        if (message) message.textContent = err.message || 'Optimization failed.';
+        if (button) button.disabled = false;
+      }
+    });
+  }
+
+  function initPageEnhancements() {
+    initProfileUploader();
+  }
+
   // Cache current view immediately on initial render
   const initialMain = document.getElementById('app-main') || document.querySelector('main');
   const initialCrumb = document.querySelector('.crumb');
   if (initialMain) {
     cacheView(window.location.pathname, initialMain.innerHTML, document.title, initialCrumb ? initialCrumb.innerHTML : '');
   }
+  initPageEnhancements();
 
   // Download and cache fonts into localStorage as base64 data URIs so on every refresh they load instantly (0ms)
   async function cacheFontsLocally() {
