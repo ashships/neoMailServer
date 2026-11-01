@@ -1,0 +1,74 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 290" width="450" height="290" fill="none">
+  <defs>
+    <!-- Top Flap Gradient: neoMail Primary Emerald -->
+    <linearGradient id="nm-top-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0eb958" />
+      <stop offset="35%" stop-color="#087d54" />
+      <stop offset="100%" stop-color="#055239" />
+    </linearGradient>
+
+    <!-- Bottom Left Flap Gradient -->
+    <linearGradient id="nm-bot-left-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0eb958" />
+      <stop offset="50%" stop-color="#087d54" />
+      <stop offset="100%" stop-color="#055239" />
+    </linearGradient>
+
+    <!-- Bottom Right Flap Gradient (Deeper Shadow at Crease) -->
+    <linearGradient id="nm-bot-right-grad" x1="0%" y1="40%" x2="100%" y2="70%">
+      <stop offset="0%" stop-color="#033b28" />
+      <stop offset="18%" stop-color="#055f42" />
+      <stop offset="65%" stop-color="#087d54" />
+      <stop offset="100%" stop-color="#0ea868" />
+    </linearGradient>
+
+    <!-- Precise outer rounded envelope mask (R = 45) -->
+    <clipPath id="nm-envelope-clip">
+      <rect x="0" y="0" width="450" height="290" rx="45" ry="45" />
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#nm-envelope-clip)">
+    <!-- Solid White Base for Bottom Cutout & Inner Symmetry -->
+    <rect x="0" y="0" width="450" height="290" fill="#ffffff" />
+
+    <!-- Top Envelope Flap -->
+    <path d="M 45 0
+             L 405 0
+             C 429.9 0 448.9 19 449.2 35
+             C 375 65 295 115 225 145
+             C 157 116 82 61 12 36
+             C 18 20 29 9 45 0 Z"
+          fill="url(#nm-top-grad)" />
+
+    <!-- Bottom Left Pillar + Peak -->
+    <path d="M 0 45
+             C 0 20.1 20.1 0 45 0
+             C 29 9 18 20 12 36
+             C 82 96 162 156 228 209
+             C 200 205 180 201 165 199
+             C 125 214 85 264 45 290
+             C 20.1 290 0 270 0 245 Z"
+          fill="url(#nm-bot-left-grad)" />
+
+    <!-- Bottom Right Pillar -->
+    <path d="M 228 209
+             C 298 178 378 88 450 62
+             L 450 245
+             C 450 270 429.9 290 405 290
+             L 300 290
+             C 255 274 210 209 165 199
+             C 180 201 200 205 228 209 Z"
+          fill="url(#nm-bot-right-grad)" />
+
+    <!-- White Checkmark Ribbon -->
+    <path d="M 12 36
+             C 82 61 157 116 225 145
+             C 295 115 375 65 449.2 35
+             C 449.8 40 450 45 450 48
+             L 450 62
+             C 378 88 298 178 228 209
+             C 162 156 82 96 12 36 Z"
+          fill="#ffffff" />
+  </g>
+</svg>

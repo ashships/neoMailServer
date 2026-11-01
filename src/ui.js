@@ -169,7 +169,7 @@ function lucideSvgUri(iconName, stroke = '#64748b', strokeWidth = 2) {
 
 const chevronDownUri = lucideSvgUri('chevron', '#64748b', 2);
 const checkUri = lucideSvgUri('check', '#087d54', 2.5);
-const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="32" height="32" fill="none"><defs><linearGradient id="nm-top-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="35%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-left-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="50%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-right-grad" x1="0%" y1="40%" x2="100%" y2="70%"><stop offset="0%" stop-color="#033b28"/><stop offset="18%" stop-color="#055f42"/><stop offset="65%" stop-color="#087d54"/><stop offset="100%" stop-color="#0ea868"/></linearGradient><clipPath id="nm-envelope-clip"><rect x="0" y="0" width="450" height="290" rx="45" ry="45"/></clipPath></defs><rect x="16" y="16" width="480" height="480" rx="120" fill="#ffffff" stroke="#cbd5e1" stroke-width="8"/><g transform="translate(76, 150) scale(0.80)"><g clip-path="url(#nm-envelope-clip)"><rect x="0" y="0" width="450" height="290" fill="#ffffff"/><path d="M 45 0 L 405 0 C 429.9 0 448.9 19 449.2 35 C 375 65 295 115 225 145 C 157 116 82 61 12 36 C 18 20 29 9 45 0 Z" fill="url(#nm-top-grad)"/><path d="M 0 45 C 0 20.1 20.1 0 45 0 C 29 9 18 20 12 36 C 82 96 162 156 228 209 C 200 205 180 201 165 199 C 125 214 85 264 45 290 C 20.1 290 0 270 0 245 Z" fill="url(#nm-bot-left-grad)"/><path d="M 228 209 C 298 178 378 88 450 62 L 450 245 C 450 270 429.9 290 405 290 L 300 290 C 255 274 210 209 165 199 C 180 201 200 205 228 209 Z" fill="url(#nm-bot-right-grad)"/><path d="M 12 36 C 82 61 157 116 225 145 C 295 115 375 65 449.2 35 C 449.8 40 450 45 450 48 L 450 62 C 378 88 298 178 228 209 C 162 156 82 96 12 36 Z" fill="#ffffff"/></g><circle cx="410" cy="40" r="28" fill='#34d399'/><rect width="0" height="0" fill='#087d54'/></g></svg>`;
+const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="32" height="32" fill="none"><defs><linearGradient id="nm-top-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="35%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-left-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="50%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-right-grad" x1="0%" y1="40%" x2="100%" y2="70%"><stop offset="0%" stop-color="#033b28"/><stop offset="18%" stop-color="#055f42"/><stop offset="65%" stop-color="#087d54"/><stop offset="100%" stop-color="#0ea868"/></linearGradient><clipPath id="nm-envelope-clip"><rect x="0" y="0" width="450" height="290" rx="45" ry="45"/></clipPath></defs><rect x="16" y="16" width="480" height="480" rx="120" fill="#ffffff" stroke="#cbd5e1" stroke-width="8"/><g transform="translate(76, 150) scale(0.80)"><g clip-path="url(#nm-envelope-clip)"><rect x="0" y="0" width="450" height="290" fill="#ffffff"/><path d="M 45 0 L 405 0 C 429.9 0 448.9 19 449.2 35 C 375 65 295 115 225 145 C 157 116 82 61 12 36 C 18 20 29 9 45 0 Z" fill="url(#nm-top-grad)"/><path d="M 0 45 C 0 20.1 20.1 0 45 0 C 29 9 18 20 12 36 C 82 96 162 156 228 209 C 200 205 180 201 165 199 C 125 214 85 264 45 290 C 20.1 290 0 270 0 245 Z" fill="url(#nm-bot-left-grad)"/><path d="M 228 209 C 298 178 378 88 450 62 L 450 245 C 450 270 429.9 290 405 290 L 300 290 C 255 274 210 209 165 199 C 180 201 200 205 228 209 Z" fill="url(#nm-bot-right-grad)"/><path d="M 12 36 C 82 61 157 116 225 145 C 295 115 375 65 449.2 35 C 449.8 40 450 45 450 48 L 450 62 C 378 88 298 178 228 209 C 162 156 82 96 12 36 Z" fill="#ffffff"/></g></g></svg>`;
 export { faviconSvg };
 export const faviconUri = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
 
@@ -811,25 +811,117 @@ nav {
   height: 17px;
 }
 
-.sidefoot {
+.side-docs-box {
   margin-top: auto;
-  padding: 16px 18px 16px;
+  padding: 12px 14px 10px;
+}
+
+.side-docs-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.side-docs-link {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: var(--radius-md);
+  color: var(--accent);
+  background: var(--tint);
+  border: 1px solid var(--tint-strong);
+  text-decoration: none;
+  transition: all 0.15s ease;
+  margin-bottom: 0;
+}
+
+.side-docs-link:hover {
+  background: var(--surface-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.side-docs-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 10px;
+  border-radius: var(--radius-md);
+  background: var(--surface-hover);
+  border: 1px solid var(--line);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+  height: 36px;
+  box-sizing: border-box;
+}
+
+.side-docs-edit-btn:hover {
+  background: var(--tint);
+  color: var(--accent);
+  border-color: var(--tint-strong);
+}
+
+.side-docs-edit-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.sidefoot {
+  padding: 14px 14px;
   border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .sidefoot-credit {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   font-size: 11px;
   color: var(--muted);
   font-weight: 500;
-  margin-top: 10px;
   line-height: 1.4;
   letter-spacing: 0.1px;
+  text-align: center;
+  margin: 0;
+  width: 100%;
 }
 
 .sidefoot-credit strong {
   color: var(--text);
   font-weight: 600;
+}
+
+.sidefoot-credit-edit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 4px;
+  color: var(--muted);
+  text-decoration: none;
+  transition: all 0.15s ease;
+}
+
+.sidefoot-credit-edit:hover {
+  color: var(--accent);
+  background: var(--tint);
+}
+
+.sidefoot-credit-edit svg {
+  width: 11px;
+  height: 11px;
 }
 
 .sidefoot small {
@@ -4076,47 +4168,17 @@ main.docs-main-studio {
   animation: neomailSteamFloat 2.8s ease-out infinite 1.4s;
 }
 
-/* Natural plant & leaf swaying animation */
-@keyframes leafSwayLeft {
+/* Subtle natural plant breeze animation - gentle air movement at top, leaves stay fully attached at base */
+@keyframes plantGentleAir {
   0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(-3.5deg); }
+  35% { transform: rotate(1deg); }
+  75% { transform: rotate(-0.7deg); }
 }
-@keyframes leafSwayRight {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(3.2deg); }
-}
-@keyframes leafSwayGentle {
-  0%, 100% { transform: rotate(0deg); }
-  35% { transform: rotate(2deg); }
-  75% { transform: rotate(-2deg); }
-}
-@keyframes succulentSway {
-  0%, 100% { transform: rotate(0deg); }
-  50% { transform: rotate(2.5deg); }
-}
-.plant-leaf-1 {
-  transform-origin: 445px 320px;
-  animation: leafSwayLeft 5.5s ease-in-out infinite;
-}
-.plant-leaf-2 {
-  transform-origin: 445px 320px;
-  animation: leafSwayGentle 6.2s ease-in-out infinite 0.4s;
-}
-.plant-leaf-3 {
-  transform-origin: 445px 320px;
-  animation: leafSwayRight 4.8s ease-in-out infinite 0.8s;
-}
-.plant-leaf-4 {
-  transform-origin: 445px 320px;
-  animation: leafSwayLeft 5.0s ease-in-out infinite 1.2s;
-}
-.plant-leaf-5 {
-  transform-origin: 445px 320px;
-  animation: leafSwayRight 5.8s ease-in-out infinite 0.6s;
-}
-.succulent-sway {
-  transform-origin: 109px 272px;
-  animation: succulentSway 4.5s ease-in-out infinite;
+.plant-breeze {
+  transform-origin: 30px 150px;
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+  animation: plantGentleAir 6.5s ease-in-out infinite;
 }
 `;
 
@@ -4182,9 +4244,21 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
         </div>
         <div class="eyebrow">Workspace</div>
         <nav>${navFor(sess?.role).map(([id, label]) => `<a class="navlink ${id === view ? 'active' : ''}" ${id === view ? 'aria-current="page"' : ''} href="${base}/${id}">${icon(id)}<span>${label}</span></a>`).join('')}</nav>
+        <div class="side-docs-box">
+          <div class="side-docs-row">
+            <a class="navlink side-docs-link" href="/docs" target="_blank" title="View live documentation in a new tab">${icon('docs')}<span>Documentation ↗</span></a>
+            ${(!sess?.role || sess?.role === 'superadmin') ? `
+              <a class="side-docs-edit-btn" href="${base}/docs" title="Edit documentation in Documentation Studio" aria-label="Edit documentation in Studio">${icon('edit')}<span>Edit</span></a>
+            ` : ''}
+          </div>
+        </div>
         <div class="sidefoot">
-          <a class="navlink side-docs-link" href="/docs" target="_blank">${icon('docs')}<span>Documentation ↗</span></a>
-          <div class="sidefoot-credit">${formatCredit(sess?.footerCredit || footerCredit)}</div>
+          <div class="sidefoot-credit">
+            <span>${formatCredit(sess?.footerCredit || footerCredit)}</span>
+            ${(!sess?.role || sess?.role === 'superadmin') ? `
+              <a class="sidefoot-credit-edit" href="${base}/settings#branding" title="Edit branding &amp; footer credit in Settings" aria-label="Edit footer credit in Settings">${icon('edit')}</a>
+            ` : ''}
+          </div>
         </div>
       </aside>
       <div class="workspace">
@@ -4490,7 +4564,7 @@ export function settings(cfg, sess, canEditGlobal = true, accountKeys = [], limi
   const accountCredentialsSection = accountProviderCredentials(accountKeys, sess);
   const limitsSection = providerLimitsPanel(sess, limits, usage);
   if (!canEditGlobal) return `${profileSettings(sess)}${limitsSection}${accountCredentialsSection}`;
-  return `${profileSettings(sess)}${limitsSection}${accountCredentialsSection}${bimiSettings(cfg)}<div class="notice">Global settings apply to new requests without account-specific overrides. Global credentials are encrypted with your Worker’s encryption key.</div><div class="grid2"><section class="panel"><div class="panelhead"><div><h2>Global Workspace settings</h2><p>Mail routing, limits, and retention.</p></div></div><div class="panelbody"><form method="post" action="/admin/settings">${hidden(sess.csrf_token)}<div class="settingsgrid">${Object.entries(SETTINGS).map(([name, spec]) => `<label class="field">${e(spec[0])}${spec[1] === 'boolean' ? `<select name="${name}" class="custom-select"><option value="false" ${cfg[name] === 'false' ? 'selected' : ''}>False</option><option value="true" ${cfg[name] === 'true' ? 'selected' : ''}>True</option></select>` : `<input name="${name}" value="${e(cfg[name])}" type="${spec[1] === 'number' ? 'number' : spec[1] === 'email' ? 'email' : 'text'}" ${spec[1] === 'number' ? `min="${spec[3]}" max="${spec[4]}"` : ''} ${['https-url', 'optional-domain', 'sandbox-domain'].includes(spec[1]) ? '' : 'required'} maxlength="255">`}</label>`).join('')}</div><button class="button">Save settings</button></form></div></section><div><section class="panel"><div class="panelhead"><div><h2>Global Fallback Credentials</h2><p>Blank values keep your current credential. Values are never displayed.</p></div></div>${SECRETS.map(name => `<details><summary>${e(name)} &nbsp; ${badge(cfg[name] ? 'Configured' : 'Not set')}</summary><form method="post" action="/admin/credentials">${hidden(sess.csrf_token)}<input type="hidden" name="name" value="${name}"><label class="field">New credential<input type="password" name="value" autocomplete="new-password" required minlength="${name === 'API_SECRET_KEY' ? 43 : 16}" maxlength="4096" placeholder="Paste a new credential"></label>${sess.local_dev ? '<label class="field">Confirm local administrator token<input type="password" name="admin_token" autocomplete="current-password" required minlength="43" maxlength="128"></label>' : '<p class="footnote">Credential changes require a Cloudflare Access token issued within the last five minutes. Sign out of Access and sign in again if requested. This checks token age; identity-provider policy controls fresh user verification.</p>'}<button class="button">Save credential</button></form></details>`).join('')}</section><div class="notice warn">Access policy, local development token, encryption key, database binding, and domain routes stay in Cloudflare. They cannot be changed through this panel. Rotate credentials by replacing their values here.</div></div></div>`;
+  return `${profileSettings(sess)}${limitsSection}${accountCredentialsSection}${bimiSettings(cfg)}<div class="notice">Global settings apply to new requests without account-specific overrides. Global credentials are encrypted with your Worker’s encryption key.</div><div class="grid2"><section class="panel" id="branding"><div class="panelhead"><div><h2>Global Workspace settings</h2><p>Mail routing, limits, and retention.</p></div></div><div class="panelbody"><form method="post" action="/admin/settings">${hidden(sess.csrf_token)}<div class="settingsgrid">${Object.entries(SETTINGS).map(([name, spec]) => `<label class="field">${e(spec[0])}${spec[1] === 'boolean' ? `<select name="${name}" class="custom-select"><option value="false" ${cfg[name] === 'false' ? 'selected' : ''}>False</option><option value="true" ${cfg[name] === 'true' ? 'selected' : ''}>True</option></select>` : `<input name="${name}" value="${e(cfg[name])}" type="${spec[1] === 'number' ? 'number' : spec[1] === 'email' ? 'email' : 'text'}" ${spec[1] === 'number' ? `min="${spec[3]}" max="${spec[4]}"` : ''} ${['https-url', 'optional-domain', 'sandbox-domain'].includes(spec[1]) ? '' : 'required'} maxlength="255">`}</label>`).join('')}</div><button class="button">Save settings</button></form></div></section><div><section class="panel"><div class="panelhead"><div><h2>Global Fallback Credentials</h2><p>Blank values keep your current credential. Values are never displayed.</p></div></div>${SECRETS.map(name => `<details><summary>${e(name)} &nbsp; ${badge(cfg[name] ? 'Configured' : 'Not set')}</summary><form method="post" action="/admin/credentials">${hidden(sess.csrf_token)}<input type="hidden" name="name" value="${name}"><label class="field">New credential<input type="password" name="value" autocomplete="new-password" required minlength="${name === 'API_SECRET_KEY' ? 43 : 16}" maxlength="4096" placeholder="Paste a new credential"></label>${sess.local_dev ? '<label class="field">Confirm local administrator token<input type="password" name="admin_token" autocomplete="current-password" required minlength="43" maxlength="128"></label>' : '<p class="footnote">Credential changes require a Cloudflare Access token issued within the last five minutes. Sign out of Access and sign in again if requested. This checks token age; identity-provider policy controls fresh user verification.</p>'}<button class="button">Save credential</button></form></details>`).join('')}</section><div class="notice warn">Access policy, local development token, encryption key, database binding, and domain routes stay in Cloudflare. They cannot be changed through this panel. Rotate credentials by replacing their values here.</div></div></div>`;
 }
 
 export function identities(rows, sess, domains = []) {
@@ -7254,7 +7328,7 @@ export function errorIllustrationSvg() {
       <path d="M125 298 L152 294 L162 300 L135 304 Z" fill="var(--surface)"/>
       <ellipse cx="126" cy="287" rx="14" ry="4" fill="var(--text)" opacity="0.1"/>
       <path d="M118 288 L122 272 L132 272 L136 288 Z" fill="var(--illus-pot)" stroke="var(--line)" stroke-width="1"/>
-      <g class="succulent-sway">
+      <g>
         <path d="M127 272 C120 262, 114 266, 122 258 C128 266, 127 270, 127 272 Z" fill="var(--illus-plant-light)"/>
         <path d="M127 272 C134 262, 140 266, 132 258 C126 266, 127 270, 127 272 Z" fill="var(--illus-plant-dark)"/>
         <path d="M127 272 C127 256, 131 254, 127 250 C123 254, 127 266, 127 272 Z" fill="#10b981"/>
@@ -7264,8 +7338,6 @@ export function errorIllustrationSvg() {
       <path d="M200 280 C185 190, 205 130, 270 130 C335 130, 355 190, 340 280 Z" fill="url(#chairGrad)"/>
       <path d="M185 240 C180 240, 175 250, 175 270 C175 305, 195 320, 215 320 C222 320, 226 312, 226 300 C226 265, 205 240, 185 240 Z" fill="url(#chairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
       <path d="M355 240 C360 240, 365 250, 365 270 C365 305, 345 320, 325 320 C318 320, 314 312, 314 300 C314 265, 335 240, 355 240 Z" fill="url(#chairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
-      <line x1="234" y1="326" x2="230" y2="368" stroke="var(--illus-chair-shadow)" stroke-width="7" stroke-linecap="round"/>
-      <line x1="306" y1="326" x2="310" y2="368" stroke="var(--illus-chair-shadow)" stroke-width="7" stroke-linecap="round"/>
       <path d="M198 320 L194 326 L204 336 L336 336 L346 326 L342 320 Z" fill="var(--illus-wood-dark)"/>
       <path d="M200 322 L194 326 L178 376 C176 382, 184 384, 188 378 L204 336 L336 336 L352 378 C356 384, 364 382, 362 376 L346 326 L340 322 L332 328 L208 328 Z" fill="var(--illus-wood)"/>
     </g>
@@ -7308,13 +7380,15 @@ export function errorIllustrationSvg() {
     </g>
     <path d="M192 300 C192 290, 205 285, 270 285 C335 285, 348 290, 348 300 C348 322, 335 336, 270 336 C205 336, 192 322, 192 300 Z" fill="url(#errCushionGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1.5"/>
     <g transform="translate(415, 170)">
-      <path class="plant-leaf-1" d="M30 150 C10 100, 0 50, 15 10 C25 60, 35 110, 30 150 Z" fill="var(--illus-plant-dark)"/>
-      <path class="plant-leaf-1" d="M22 80 C26 50, 25 30, 15 10" stroke="var(--illus-plant-light)" stroke-width="1" fill="none" opacity="0.6"/>
-      <path class="plant-leaf-2" d="M30 150 C20 90, 25 30, 34 -15 C45 30, 42 90, 30 150 Z" fill="var(--illus-plant-light)"/>
-      <path class="plant-leaf-2" d="M31 70 C33 30, 33 0, 34 -15" stroke="var(--surface)" stroke-width="1" fill="none" opacity="0.4"/>
-      <path class="plant-leaf-3" d="M30 150 C40 100, 60 55, 55 18 C42 65, 38 115, 30 150 Z" fill="var(--illus-plant-dark)"/>
-      <path class="plant-leaf-4" d="M30 150 C5 125, -5 95, 2 65 C15 95, 25 125, 30 150 Z" fill="var(--illus-plant-light)"/>
-      <path class="plant-leaf-5" d="M30 150 C50 125, 68 100, 62 70 C48 100, 38 125, 30 150 Z" fill="var(--illus-plant-dark)"/>
+      <g class="plant-breeze">
+        <path d="M30 150 C10 100, 0 50, 15 10 C25 60, 35 110, 30 150 Z" fill="var(--illus-plant-dark)"/>
+        <path d="M22 80 C26 50, 25 30, 15 10" stroke="var(--illus-plant-light)" stroke-width="1" fill="none" opacity="0.6"/>
+        <path d="M30 150 C20 90, 25 30, 34 -15 C45 30, 42 90, 30 150 Z" fill="var(--illus-plant-light)"/>
+        <path d="M31 70 C33 30, 33 0, 34 -15" stroke="var(--illus-plant-light)" stroke-width="1" fill="none" opacity="0.4"/>
+        <path d="M30 150 C40 100, 60 55, 55 18 C42 65, 38 115, 30 150 Z" fill="var(--illus-plant-dark)"/>
+        <path d="M30 150 C5 125, -5 95, 2 65 C15 95, 25 125, 30 150 Z" fill="var(--illus-plant-light)"/>
+        <path d="M30 150 C50 125, 68 100, 62 70 C48 100, 38 125, 30 150 Z" fill="var(--illus-plant-dark)"/>
+      </g>
       <ellipse cx="30" cy="150" rx="22" ry="6" fill="var(--text)" opacity="0.1"/>
       <path d="M12 152 L16 200 C17 205, 43 205, 44 200 L48 152 Z" fill="var(--illus-pot)" stroke="var(--line)" stroke-width="1.5"/>
       <ellipse cx="30" cy="152" rx="18" ry="4" fill="#374151" opacity="0.3"/>
@@ -7749,8 +7823,22 @@ export function healthPage(isDark = false) {
       height: 6.5px;
       border-radius: 50%;
       background: var(--accent);
-      box-shadow: 0 0 6px var(--accent);
+      box-shadow: 0 0 8px var(--accent);
       display: inline-block;
+      animation: statusBlink 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+      flex-shrink: 0;
+    }
+    @keyframes statusBlink {
+      0%, 100% {
+        opacity: 1;
+        transform: scale(1);
+        box-shadow: 0 0 10px rgba(16, 185, 129, 0.9), 0 0 3px #10b981;
+      }
+      50% {
+        opacity: 0.25;
+        transform: scale(0.8);
+        box-shadow: 0 0 2px rgba(16, 185, 129, 0.2);
+      }
     }
     .hero-sub {
       font-size: 12.5px;

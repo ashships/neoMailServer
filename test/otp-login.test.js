@@ -137,8 +137,8 @@ test('OTP login: robust default sender fallback, multi-provider dispatch, and ze
     assert.equal(favIco.status, 200);
     assert.equal(favIco.headers.get('content-type'), 'image/svg+xml; charset=utf-8');
     const favSvg = await favIco.text();
-    assert.ok(favSvg.includes("fill='#087d54'"), 'Favicon must use primary neoPathshala green #087d54');
-    assert.ok(favSvg.includes("fill='#34d399'"), 'Favicon must use mint green dot #34d399');
+    assert.ok(favSvg.includes('#087d54'), 'Favicon must use primary neoPathshala green #087d54');
+    assert.ok(!favSvg.includes("fill='#34d399'"), 'Favicon must not include green dot');
 
     const favSvgEndpoint = await worker.fetch(new Request('https://mail.neopathshala.com/favicon.svg'), env);
     assert.equal(favSvgEndpoint.status, 200);
