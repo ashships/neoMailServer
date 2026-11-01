@@ -7184,13 +7184,15 @@ export function errorIllustrationSvg() {
       <line x1="160" y1="310" x2="175" y2="370" stroke="var(--illus-chair-shadow)" stroke-width="4" stroke-linecap="round"/>
       <ellipse cx="140" cy="308" rx="46" ry="14" fill="var(--illus-table)"/>
       <ellipse cx="140" cy="305" rx="46" ry="13" fill="var(--illus-wood)"/>
-      <path d="M125 296 L152 292 L162 298 L135 302 Z" fill="#3b82f6"/>
+      <path d="M125 296 L152 292 L162 298 L135 302 Z" fill="var(--accent)"/>
       <path d="M125 298 L152 294 L162 300 L135 304 Z" fill="var(--surface)"/>
       <ellipse cx="126" cy="287" rx="14" ry="4" fill="var(--text)" opacity="0.1"/>
       <path d="M118 288 L122 272 L132 272 L136 288 Z" fill="var(--illus-pot)" stroke="var(--line)" stroke-width="1"/>
-      <path d="M127 272 C120 262, 114 266, 122 258 C128 266, 127 270, 127 272 Z" fill="var(--illus-plant-light)"/>
-      <path d="M127 272 C134 262, 140 266, 132 258 C126 266, 127 270, 127 272 Z" fill="var(--illus-plant-dark)"/>
-      <path d="M127 272 C127 256, 131 254, 127 250 C123 254, 127 266, 127 272 Z" fill="#10b981"/>
+      <g class="succulent-sway">
+        <path d="M127 272 C120 262, 114 266, 122 258 C128 266, 127 270, 127 272 Z" fill="var(--illus-plant-light)"/>
+        <path d="M127 272 C134 262, 140 266, 132 258 C126 266, 127 270, 127 272 Z" fill="var(--illus-plant-dark)"/>
+        <path d="M127 272 C127 256, 131 254, 127 250 C123 254, 127 266, 127 272 Z" fill="#10b981"/>
+      </g>
     </g>
     <g id="armchair">
       <path d="M200 280 C185 190, 205 130, 270 130 C335 130, 355 190, 340 280 Z" fill="url(#chairGrad)"/>
@@ -7203,15 +7205,15 @@ export function errorIllustrationSvg() {
     </g>
     <g id="mascot">
       <path d="M225 300 C210 240, 225 170, 270 170 C315 170, 330 240, 315 300 C305 325, 235 325, 225 300 Z" fill="url(#errMascotGrad)"/>
-      <rect x="238" y="212" width="28" height="26" rx="8" fill="var(--surface)" fill-opacity="0.9" stroke="var(--illus-glasses)" stroke-width="3"/>
-      <rect x="274" y="212" width="28" height="26" rx="8" fill="var(--surface)" fill-opacity="0.9" stroke="var(--illus-glasses)" stroke-width="3"/>
+      <rect x="238" y="212" width="28" height="26" rx="8" fill="#ffffff" fill-opacity="0.92" stroke="var(--illus-glasses)" stroke-width="3"/>
+      <rect x="274" y="212" width="28" height="26" rx="8" fill="#ffffff" fill-opacity="0.92" stroke="var(--illus-glasses)" stroke-width="3"/>
       <line x1="266" y1="223" x2="274" y2="223" stroke="var(--illus-glasses)" stroke-width="3.5" stroke-linecap="round"/>
       <line x1="238" y1="223" x2="226" y2="228" stroke="var(--illus-glasses)" stroke-width="3" stroke-linecap="round"/>
       <line x1="302" y1="223" x2="314" y2="228" stroke="var(--illus-glasses)" stroke-width="3" stroke-linecap="round"/>
       <g class="mascot-blinking-eyes">
-        <ellipse cx="254" cy="225" rx="5.5" ry="7" fill="var(--illus-glasses)"/>
+        <ellipse cx="254" cy="225" rx="5.5" ry="7" fill="#142822"/>
         <circle cx="252" cy="222" r="2.2" fill="#ffffff"/>
-        <ellipse cx="286" cy="225" rx="5.5" ry="7" fill="var(--illus-glasses)"/>
+        <ellipse cx="286" cy="225" rx="5.5" ry="7" fill="#142822"/>
         <circle cx="284" cy="222" r="2.2" fill="#ffffff"/>
       </g>
       <path d="M266 244 Q272 250 278 244" stroke="var(--illus-glasses)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
@@ -7240,13 +7242,13 @@ export function errorIllustrationSvg() {
     </g>
     <path d="M192 300 C192 290, 205 285, 270 285 C335 285, 348 290, 348 300 C348 322, 335 336, 270 336 C205 336, 192 322, 192 300 Z" fill="url(#errCushionGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1.5"/>
     <g transform="translate(415, 170)">
-      <path d="M30 150 C10 100, 0 50, 15 10 C25 60, 35 110, 30 150 Z" fill="var(--illus-plant-dark)"/>
-      <path d="M22 80 C26 50, 25 30, 15 10" stroke="var(--illus-plant-light)" stroke-width="1" fill="none" opacity="0.6"/>
-      <path d="M30 150 C20 90, 25 30, 34 -15 C45 30, 42 90, 30 150 Z" fill="var(--illus-plant-light)"/>
-      <path d="M31 70 C33 30, 33 0, 34 -15" stroke="var(--surface)" stroke-width="1" fill="none" opacity="0.4"/>
-      <path d="M30 150 C40 100, 60 55, 55 18 C42 65, 38 115, 30 150 Z" fill="var(--illus-plant-dark)"/>
-      <path d="M30 150 C5 125, -5 95, 2 65 C15 95, 25 125, 30 150 Z" fill="var(--illus-plant-light)"/>
-      <path d="M30 150 C50 125, 68 100, 62 70 C48 100, 38 125, 30 150 Z" fill="var(--illus-plant-dark)"/>
+      <path class="plant-leaf-1" d="M30 150 C10 100, 0 50, 15 10 C25 60, 35 110, 30 150 Z" fill="var(--illus-plant-dark)"/>
+      <path class="plant-leaf-1" d="M22 80 C26 50, 25 30, 15 10" stroke="var(--illus-plant-light)" stroke-width="1" fill="none" opacity="0.6"/>
+      <path class="plant-leaf-2" d="M30 150 C20 90, 25 30, 34 -15 C45 30, 42 90, 30 150 Z" fill="var(--illus-plant-light)"/>
+      <path class="plant-leaf-2" d="M31 70 C33 30, 33 0, 34 -15" stroke="var(--surface)" stroke-width="1" fill="none" opacity="0.4"/>
+      <path class="plant-leaf-3" d="M30 150 C40 100, 60 55, 55 18 C42 65, 38 115, 30 150 Z" fill="var(--illus-plant-dark)"/>
+      <path class="plant-leaf-4" d="M30 150 C5 125, -5 95, 2 65 C15 95, 25 125, 30 150 Z" fill="var(--illus-plant-light)"/>
+      <path class="plant-leaf-5" d="M30 150 C50 125, 68 100, 62 70 C48 100, 38 125, 30 150 Z" fill="var(--illus-plant-dark)"/>
       <ellipse cx="30" cy="150" rx="22" ry="6" fill="var(--text)" opacity="0.1"/>
       <path d="M12 152 L16 200 C17 205, 43 205, 44 200 L48 152 Z" fill="var(--illus-pot)" stroke="var(--line)" stroke-width="1.5"/>
       <ellipse cx="30" cy="152" rx="18" ry="4" fill="#374151" opacity="0.3"/>

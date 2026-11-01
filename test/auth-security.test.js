@@ -66,7 +66,8 @@ test('auth security: only superadmin-provisioned accounts can request OTP and lo
 
     assert.equal(unregReq.status, 403, 'Unregistered user must be rejected with 403');
     const unregHtml = await unregReq.text();
-    assert.ok(unregHtml.includes('We couldn\'t find an account. Please check your email address or contact your <a href="mailto:aashish@neopathshala.com">workspace administrator</a> for access.'), 'Must display custom error message with mailto link');
+    assert.ok(unregHtml.includes('We couldn&#39;t find an account. Please check your email address or contact your <a href="mailto:aashish@neopathshala.com">workspace administrator</a> for access.'), 'Must display custom error message with mailto link');
+    assert.ok(unregHtml.includes('mailto:aashish@neopathshala.com'), 'Must display custom error message with mailto link');
     assert.ok(unregHtml.includes('class="notice error" role="alert"'), 'Must have notice error banner');
     assert.ok(!unregHtml.includes('class="notice error" role="alert"><svg'), 'Notice error banner must not display an icon');
     assert.ok(unregHtml.indexOf('Administrator email') < unregHtml.indexOf('notice error'), 'Error must be displayed below the email input field');
@@ -130,7 +131,7 @@ test('auth security: only superadmin-provisioned accounts can request OTP and lo
     assert.equal(revokedReq.status, 403);
     assert.equal(dispatchedEmails.length, 0, 'Revoked user must NOT receive OTP email');
     const revokedHtml = await revokedReq.text();
-    assert.ok(revokedHtml.includes("We couldn't find an account"));
+    assert.ok(revokedHtml.includes("We couldn&#39;t find an account"));
     assert.ok(revokedHtml.includes('mailto:aashish@neopathshala.com'));
 
     // 7. CLIENT REGISTRATION REQUEST FLOW

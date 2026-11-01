@@ -26,6 +26,10 @@ test('errorPage renders the modern mascot layout and dynamic countdown timer for
   assert.ok(html.includes('clockMinuteHand'), 'Must include real-time clock minute hand');
   assert.ok(html.includes('clockSecondHand'), 'Must include real-time clock second hand');
   assert.ok(html.includes('mascot-blinking-eyes'), 'Must include mascot blinking eyes');
+  assert.ok(html.includes('plant-leaf-1'), 'Must include animated swaying leaves');
+  assert.ok(html.includes('succulent-sway'), 'Must include animated succulent sway');
+  assert.ok(html.includes('fill="#ffffff" fill-opacity="0.92"'), 'Must include light glasses lenses in dark mode');
+  assert.ok(html.includes('nml-envelope-clip') || html.includes('nm-envelope-clip'), 'Must include neomail logo svg in brand');
 });
 
 test('errorPage adapts cleanly for 404, 403, and 500 error codes', () => {
