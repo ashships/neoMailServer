@@ -313,4 +313,5 @@ test('neoMail enhancements: clean slugs, dark mode hover, SPA encrypted cache, D
   assert.ok(!healthHtml.includes('Mailgun'), 'Must NOT leak Mailgun provider name');
   assert.ok(!healthHtml.includes('Mailtrap'), 'Must NOT leak Mailtrap provider name');
   assert.ok(!healthHtml.includes('MailerSend'), 'Must NOT leak MailerSend provider name');
+  assert.ok(!healthHtml.includes('Cloudflare Workers'), 'Must NOT display Cloudflare Workers on public health page');
 });
