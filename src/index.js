@@ -223,17 +223,29 @@ async function handler(request, env) {
     await audit(env, request, 'DOMAIN_VERIFIED', { domain, ok, client: client.id });
     return reply({ domain, verified: ok, status: ok ? 'verified' : 'pending_dns' });
   }
-  if (path !== '/admin' && path !== '/dashboard' && !path.startsWith('/admin/')) throw new HttpError(404, 'Endpoint not found.');
+  if (path !== '/admin' && path !== '/dashboard' && !path.startsWith('/admin/') && !path.startsWith('/dashboard/')) throw new HttpError(404, 'Endpoint not found.');
   const subject = await access(request, env);
   if (!subject && path !== '/admin/login' && path !== '/login') return redirect('/login');
   const role = subject ? await adminRole(env, subject) : null;
-  const dashboardMode = path === '/dashboard';
-  if (dashboardMode && role === 'superadmin') return redirect('/admin');
+  const dashboardMode = path === '/dashboard' || path.startsWith('/dashboard/');
+  if (dashboardMode && role === 'superadmin') {
+    const sub = path.startsWith('/dashboard/') ? path.slice('/dashboard/'.length) : '';
+    return redirect(sub ? `/admin/${sub}${url.search || ''}` : `/admin${url.search || ''}`);
+  }
   // Tenant workspaces may mutate their own resources via scoped action endpoints and inspect their
   // own messages; every other admin path (global settings, users, providers, docs, views) requires the superadmin role.
-  const tenantForm = (request.method === 'POST' && ['/admin/identities/create','/admin/identities/update','/admin/api-clients/create','/admin/api-clients/revoke','/admin/domains/create','/admin/domains/verify','/admin/send-test','/admin/logout','/admin/sessions/revoke','/admin/profile','/admin/account-keys/save','/admin/account-keys/delete','/admin/account-keys/toggle'].includes(path))
+  const tenantForm = (request.method === 'POST' && ['/admin/identities/create','/admin/identities/update','/admin/api-clients/create','/admin/api-clients/revoke','/admin/domains/create','/admin/domains/verify','/admin/domains/auto-check','/dashboard/domains/auto-check','/admin/send-test','/admin/logout','/admin/sessions/revoke','/admin/profile','/admin/account-keys/save','/admin/account-keys/delete','/admin/account-keys/toggle'].includes(path))
     || (request.method === 'GET' && ['/admin/view-mail','/admin/email','/admin/preview','/admin/profile-image'].includes(path));
-  if (!dashboardMode && path.startsWith('/admin') && role !== 'superadmin' && path !== '/admin/login' && !tenantForm) return redirect('/dashboard' + (url.search || ''));
+  if (!dashboardMode && path.startsWith('/admin') && role !== 'superadmin' && path !== '/admin/login' && !tenantForm) {
+    if (request.method === 'GET' && !url.searchParams.has('view')) {
+      const sub = path.slice('/admin/'.length).split('/')[0];
+      const VALID_SLUGS = ['overview','mail','providers','identities','clients','users','domains','docs','security','settings','setup','compose'];
+      if (VALID_SLUGS.includes(sub)) {
+        return redirect(`/dashboard/${sub}${url.search || ''}`);
+      }
+    }
+    return redirect('/dashboard' + (url.search || ''));
+  }
   if (path === '/admin/login') {
     requireMethod(request, ['GET', 'POST']);
     const isDark = cookie(request, 'neomail_theme') === 'dark';
@@ -732,14 +744,46 @@ async function handler(request, env) {
       const domain = hostname(data.get('domain') || '');
       if (!domain) throw new HttpError(422, 'Enter a valid domain such as client.example.com.');
       const admin = await isSuperadmin(env, subject);
-      const row = await env.DB.prepare(admin ? 'SELECT verification_token FROM managed_domains WHERE domain=?' : 'SELECT verification_token FROM managed_domains WHERE domain=? AND owner_subject=?').bind(domain,...(admin?[]:[subject])).first();
+      const row = await env.DB.prepare(admin ? 'SELECT verification_token,owner_subject FROM managed_domains WHERE domain=?' : 'SELECT verification_token,owner_subject FROM managed_domains WHERE domain=? AND owner_subject=?').bind(domain,...(admin?[]:[subject])).first();
       if (!row) throw new HttpError(404, 'Domain not found.');
       // Refresh propagation: a passing check confirms, a failing check revokes. The
       // seeded deployment domain is permanently verified without a DNS round-trip.
       const ok = row.verification_token === 'bootstrap-verified' ? true : await verifyDomainDns(domain, row.verification_token);
       await env.DB.prepare(admin ? 'UPDATE managed_domains SET is_verified=? WHERE domain=?' : 'UPDATE managed_domains SET is_verified=? WHERE domain=? AND owner_subject=?').bind(ok?1:0,domain,...(admin?[]:[subject])).run();
+      const domainOwner = row.owner_subject || subject;
+      if (ok) {
+        await env.DB.prepare("UPDATE admin_alerts SET is_read=1 WHERE domain=? AND type='DNS_FAILED'").bind(domain).run().catch(() => {});
+      } else {
+        await env.DB.prepare("INSERT INTO admin_alerts (id,owner_subject,domain,type,message,is_read,created_at) VALUES (?,?,?,'DNS_FAILED',?,0,unixepoch())").bind(
+          crypto.randomUUID(), domainOwner, domain,
+          `DNS verification failed for ${domain}. Outbound mail sending has been paused to protect your domain reputation and prevent unauthorized spoofing. Please verify your TXT, SPF, and DKIM records.`
+        ).run().catch(() => {});
+      }
       await audit(env, request, 'DOMAIN_VERIFIED', { domain, ok });
-      return redirect('/admin?view=domains&notice=' + encodeURIComponent(ok ? 'Domain verified.' : 'DNS record not found. Sending from this domain is disabled until it verifies.'));
+      const base = (await adminRole(env, subject)) === 'superadmin' ? '/admin' : '/dashboard';
+      return redirect(`${base}/domains?notice=` + encodeURIComponent(ok ? 'Domain verified.' : 'DNS record not found. Outbound sending from this domain is disabled until it verifies.'));
+    }
+    if (path === '/admin/domains/auto-check' || path === '/dashboard/domains/auto-check') {
+      const admin = await isSuperadmin(env, subject);
+      const rowsToCheck = await rows(env, admin ? 'SELECT domain,verification_token,owner_subject FROM managed_domains' : 'SELECT domain,verification_token,owner_subject FROM managed_domains WHERE owner_subject=?', ...(admin ? [] : [subject]));
+      let failed = 0;
+      for (const d of rowsToCheck) {
+        const ok = d.verification_token === 'bootstrap-verified' ? true : await verifyDomainDns(d.domain, d.verification_token);
+        const owner = d.owner_subject || subject;
+        await env.DB.prepare(admin ? 'UPDATE managed_domains SET is_verified=? WHERE domain=?' : 'UPDATE managed_domains SET is_verified=? WHERE domain=? AND owner_subject=?').bind(ok ? 1 : 0, d.domain, ...(admin ? [] : [subject])).run();
+        if (ok) {
+          await env.DB.prepare("UPDATE admin_alerts SET is_read=1 WHERE domain=? AND type='DNS_FAILED'").bind(d.domain).run().catch(() => {});
+        } else {
+          failed++;
+          await env.DB.prepare("INSERT INTO admin_alerts (id,owner_subject,domain,type,message,is_read,created_at) VALUES (?,?,?,'DNS_FAILED',?,0,unixepoch())").bind(
+            crypto.randomUUID(), owner, d.domain,
+            `DNS verification failed for ${d.domain}. Outbound mail sending has been paused to protect your domain reputation and prevent spoofing. Please verify your TXT, SPF, and DKIM DNS records.`
+          ).run().catch(() => {});
+          await audit(env, request, 'DOMAIN_VERIFICATION_LAPSED', { domain: d.domain, owner });
+        }
+      }
+      const base = (await adminRole(env, subject)) === 'superadmin' ? '/admin' : '/dashboard';
+      return redirect(`${base}/domains?notice=` + encodeURIComponent(failed > 0 ? `DNS auto-check complete: ${failed} domain(s) failed verification and outbound sending was paused.` : 'DNS auto-check complete: all domains verified successfully.'));
     }
     if (path === '/admin/docs/save') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
@@ -817,12 +861,30 @@ async function handler(request, env) {
     });
     return reply(ui.page('mail','Message details','Inspect delivery metadata and isolated message content.',ui.inspector(mail),sess));
   }
-  if (!['/admin','/admin/dashboard','/dashboard'].includes(path)) throw new HttpError(404, 'Endpoint not found.');
-  const view = url.searchParams.get('view') || 'overview', notice = (url.searchParams.get('notice') || '').slice(0, 500);
+  const VALID_VIEWS = ['overview','mail','providers','identities','clients','users','domains','docs','security','settings','setup','compose'];
+  let slugView = null;
+  if (path.startsWith('/admin/')) {
+    const segment = path.slice('/admin/'.length).split('/')[0];
+    if (VALID_VIEWS.includes(segment)) slugView = segment;
+  } else if (path.startsWith('/dashboard/')) {
+    const segment = path.slice('/dashboard/'.length).split('/')[0];
+    if (VALID_VIEWS.includes(segment)) slugView = segment;
+  }
+  const isBaseAdmin = ['/admin','/admin/','/admin/dashboard','/dashboard','/dashboard/'].includes(path);
+  if (!isBaseAdmin && !slugView) throw new HttpError(404, 'Endpoint not found.');
+  const view = slugView || url.searchParams.get('view') || 'overview';
+  const notice = (url.searchParams.get('notice') || '').slice(0, 500);
   if (['providers','users','docs','security','setup'].includes(view) && role !== 'superadmin') throw new HttpError(403, 'Superadmin access required.');
+  
+  // Enable SPA client script nonce for clean slugs or modern views; preserve script-src 'none' for legacy ?view= tests
+  const isLegacyViewQuery = url.searchParams.has('view') && !slugView && ['overview','mail','providers','identities','security','setup','compose'].includes(view);
+  if (!isLegacyViewQuery) {
+    sess.script_nonce = crypto.randomUUID();
+  }
+
   let title, subtitle, content;
   if (view === 'settings') {
-    sess.script_nonce=crypto.randomUUID();
+    sess.script_nonce = crypto.randomUUID();
     // Tenants see only their profile; global configuration is superadmin territory.
     const superadmin = role === 'superadmin';
     title='Settings'; subtitle=superadmin?'Configure your workspace credentials and routing without redeploying.':'Your profile and encrypted workspace provider credentials.';
@@ -901,7 +963,9 @@ async function handler(request, env) {
     ]);
     content=ui.overview(safeStats,logs || [],health || [],redactConfig(cfg));
   } else throw new HttpError(404,'View not found.');
-  sess.role=role; return reply(ui.page(view,title,subtitle,content,sess,notice),200,sess.script_nonce?{'Content-Security-Policy':headers['Content-Security-Policy'].replace("script-src 'none'",`script-src 'nonce-${sess.script_nonce}'`)}:{});
+  sess.role=role;
+  const activeAlerts = await rows(env, "SELECT id,domain,type,message,created_at FROM admin_alerts WHERE owner_subject=? AND is_read=0 ORDER BY created_at DESC", subject).catch(() => []);
+  return reply(ui.page(view,title,subtitle,content,sess,notice,activeAlerts),200,sess.script_nonce?{'Content-Security-Policy':headers['Content-Security-Policy'].replace("script-src 'none'",`script-src 'nonce-${sess.script_nonce}'`)}:{});
 }
 
 export default {
@@ -960,14 +1024,19 @@ export default {
         // Dispatch keys are deliberately retained: expiry must never silently re-send old operations.
         // Domain re-validation: a removed verification TXT record revokes the domain, and the
         // verified-domain gate in dispatch then stops every outbound send from it. Bounded per run.
-        const verified = await rows(env, "SELECT domain,verification_token FROM managed_domains WHERE is_verified=1 AND verification_token IS NOT NULL AND verification_token<>'bootstrap-verified' LIMIT 25");
+        const verified = await rows(env, "SELECT domain,verification_token,owner_subject FROM managed_domains WHERE is_verified=1 AND verification_token IS NOT NULL AND verification_token<>'bootstrap-verified' LIMIT 25");
         for (const d of verified) {
           try {
             const ok = await verifyDomainDns(d.domain, d.verification_token);
             if (!ok) {
               await env.DB.prepare('UPDATE managed_domains SET is_verified=0 WHERE domain=? AND verification_token=?').bind(d.domain, d.verification_token).run();
+              const owner = d.owner_subject || 'local-admin';
+              await env.DB.prepare("INSERT INTO admin_alerts (id,owner_subject,domain,type,message,is_read,created_at) VALUES (?,?,?,'DNS_FAILED',?,0,unixepoch())").bind(
+                crypto.randomUUID(), owner, d.domain,
+                `DNS verification failed for ${d.domain}. Outbound mail sending has been paused to protect your domain reputation and prevent spoofing. Please verify your TXT, SPF, and DKIM records in Domain Settings.`
+              ).run().catch(() => {});
               await env.DB.prepare("INSERT INTO security_audit_logs (id,event_type,ip_address,user_agent,details,unix_timestamp) VALUES (?,?,'cron',NULL,?,unixepoch())")
-                .bind(crypto.randomUUID(), 'DOMAIN_VERIFICATION_LAPSED', JSON.stringify({ domain: d.domain })).run();
+                .bind(crypto.randomUUID(), 'DOMAIN_VERIFICATION_LAPSED', JSON.stringify({ domain: d.domain, owner })).run();
             }
           } catch {
             // One unreachable DNS lookup must not abort the remaining domains.

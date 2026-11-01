@@ -20,7 +20,7 @@ crons = ["17 2 * * *"]
 
 [vars]
 DEFAULT_SENDER = "no-reply@mail.neopathshala.com"
-DEFAULT_SENDER_NAME = "NeoMail"
+DEFAULT_SENDER_NAME = "neoMail"
 FALLBACK_ORDER = "resend,brevo,mailgun,mailtrap,mailersend"
 REQUEST_TIMEOUT_MS = "6000"
 MAX_LOGIN_ATTEMPTS = "5"

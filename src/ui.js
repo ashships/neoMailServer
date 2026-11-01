@@ -1,4 +1,5 @@
 import { PROFILE_SCRIPT } from './profile-client.js';
+import { SPA_CLIENT_SCRIPT } from './spa-client.js';
 import { escape as e } from './security.js';
 import { SETTINGS, SECRETS, PROVIDERS } from './config.js';
 import {
@@ -207,8 +208,8 @@ const css = `
   color-scheme: dark;
   --bg: #131514;
   --surface: #1a1e1c;
-  --surface-hover: #242927;
-  --surface-active: #2e3532;
+  --surface-hover: #151816;
+  --surface-active: #1c201e;
   --text: #f0ede6;
   --text-secondary: #c5cbc7;
   --muted: #8d9a92;
@@ -242,8 +243,8 @@ const css = `
     color-scheme: dark;
     --bg: #131514;
     --surface: #1a1e1c;
-    --surface-hover: #242927;
-    --surface-active: #2e3532;
+    --surface-hover: #151816;
+    --surface-active: #1c201e;
     --text: #f0ede6;
     --text-secondary: #c5cbc7;
     --muted: #8d9a92;
@@ -781,6 +782,8 @@ nav {
   cursor: pointer;
   transition: all 0.15s ease;
   user-select: none;
+  padding: 0;
+  line-height: 0;
 }
 
 .theme-toggle-btn:hover {
@@ -789,9 +792,21 @@ nav {
   border-color: var(--line-strong);
 }
 
+.theme-toggle-btn span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  line-height: 0;
+}
+
 .theme-toggle-btn svg {
   width: 16px;
   height: 16px;
+  display: block;
+  margin: 0 auto;
+  flex-shrink: 0;
 }
 
 .theme-toggle-btn .icon-moon {
@@ -799,11 +814,13 @@ nav {
 }
 
 :root[data-theme="dark"] .theme-toggle-btn .icon-sun,
+:root.dark .theme-toggle-btn .icon-sun,
 :root:has(#theme-toggle:checked) .theme-toggle-btn .icon-sun {
   display: none;
 }
 
 :root[data-theme="dark"] .theme-toggle-btn .icon-moon,
+:root.dark .theme-toggle-btn .icon-moon,
 :root:has(#theme-toggle:checked) .theme-toggle-btn .icon-moon {
   display: inline-flex;
 }
@@ -2184,18 +2201,19 @@ input[type=checkbox] {
 }
 
 /* Dark mode component enhancements */
-:root[data-theme="dark"] th, :root.dark th, :root:has(#theme-toggle:checked) th { background: var(--surface-hover); color: var(--muted); border-bottom-color: var(--line); }
-:root[data-theme="dark"] tr:hover td, :root.dark tr:hover td, :root:has(#theme-toggle:checked) tr:hover td { background: var(--surface-hover); }
+:root[data-theme="dark"] th, :root.dark th, :root:has(#theme-toggle:checked) th { background: #131514; color: var(--muted); border-bottom-color: var(--line); }
+:root[data-theme="dark"] tr:hover td, :root.dark tr:hover td, :root:has(#theme-toggle:checked) tr:hover td { background: #111413 !important; }
 :root[data-theme="dark"] td, :root.dark td, :root:has(#theme-toggle:checked) td { border-bottom-color: var(--line); color: var(--text); }
 :root[data-theme="dark"] .filters, :root.dark .filters, :root:has(#theme-toggle:checked) .filters,
-:root[data-theme="dark"] .pagination, :root.dark .pagination, :root:has(#theme-toggle:checked) .pagination { background: var(--surface-hover); border-color: var(--line); color: var(--muted); }
+:root[data-theme="dark"] .pagination, :root.dark .pagination, :root:has(#theme-toggle:checked) .pagination { background: #151816; border-color: var(--line); color: var(--muted); }
 :root[data-theme="dark"] pre, :root.dark pre, :root:has(#theme-toggle:checked) pre { background: #0c0e0d; border-color: var(--line); color: var(--text); }
 :root[data-theme="dark"] code, :root.dark code, :root:has(#theme-toggle:checked) code { color: #86efac; }
-:root[data-theme="dark"] .email-pill, :root.dark .email-pill, :root:has(#theme-toggle:checked) .email-pill { background: var(--surface-hover); border-color: var(--line); color: var(--text); }
+:root[data-theme="dark"] .email-pill, :root.dark .email-pill, :root:has(#theme-toggle:checked) .email-pill { background: #151816; border-color: var(--line); color: var(--text); }
 :root[data-theme="dark"] select, :root.dark select, :root:has(#theme-toggle:checked) select { background-color: var(--surface); color: var(--text); border-color: var(--line); }
+:root[data-theme="dark"] select:hover, :root.dark select:hover, :root:has(#theme-toggle:checked) select:hover { background-color: #0d100f !important; border-color: #3d4842 !important; }
 :root[data-theme="dark"] select option, :root.dark select option, :root:has(#theme-toggle:checked) select option { background: var(--surface); color: var(--text); }
-:root[data-theme="dark"] .stat:hover, :root.dark .stat:hover, :root:has(#theme-toggle:checked) .stat:hover { background: var(--surface-hover); }
-:root[data-theme="dark"] .provider:hover, :root.dark .provider:hover, :root:has(#theme-toggle:checked) .provider:hover { background: var(--surface-hover); }
+:root[data-theme="dark"] .stat:hover, :root.dark .stat:hover, :root:has(#theme-toggle:checked) .stat:hover { background: #111413 !important; border-color: #3d4842 !important; }
+:root[data-theme="dark"] .provider:hover, :root.dark .provider:hover, :root:has(#theme-toggle:checked) .provider:hover { background: #111413 !important; border-color: #3d4842 !important; }
 :root[data-theme="dark"] .tag.Active, :root.dark .tag.Active,
 :root[data-theme="dark"] .tag.good, :root.dark .tag.good, :root:has(#theme-toggle:checked) .tag.good { background: var(--tint); border-color: var(--tint-strong); color: var(--tint-text); }
 :root[data-theme="dark"] .tag.Paused, :root.dark .tag.Paused,
@@ -2204,8 +2222,9 @@ input[type=checkbox] {
 :root[data-theme="dark"] .tag.danger, :root.dark .tag.danger, :root:has(#theme-toggle:checked) .tag.danger { background: var(--danger-bg); border-color: var(--danger-line); color: var(--danger); }
 :root[data-theme="dark"] .editor-preview, :root.dark .editor-preview, :root:has(#theme-toggle:checked) .editor-preview { background: #0c0e0d; border-color: var(--line); color: var(--text); }
 :root[data-theme="dark"] .routing-card, :root.dark .routing-card, :root:has(#theme-toggle:checked) .routing-card { background: var(--surface); border-color: var(--line); }
-:root[data-theme="dark"] .routing-card:hover, :root.dark .routing-card:hover, :root:has(#theme-toggle:checked) .routing-card:hover { background: var(--surface-hover); }
-:root[data-theme="dark"] .order-btn, :root.dark .order-btn, :root:has(#theme-toggle:checked) .order-btn { background: var(--surface-hover); color: var(--text); border-color: var(--line); }
+:root[data-theme="dark"] .routing-card:hover, :root.dark .routing-card:hover, :root:has(#theme-toggle:checked) .routing-card:hover { background: #111413 !important; border-color: #3d4842 !important; }
+:root[data-theme="dark"] .order-btn, :root.dark .order-btn, :root:has(#theme-toggle:checked) .order-btn { background: #151816; color: var(--text); border-color: var(--line); }
+:root[data-theme="dark"] .order-btn:hover:not(:disabled), :root.dark .order-btn:hover:not(:disabled), :root:has(#theme-toggle:checked) .order-btn:hover:not(:disabled) { background: #0d100f !important; color: #34d399 !important; border-color: rgba(52, 211, 153, 0.4) !important; }
 :root[data-theme="dark"] .docs-view-body, :root.dark .docs-view-body, :root:has(#theme-toggle:checked) .docs-view-body { background: var(--surface); border-color: var(--line); color: var(--text); }
 :root[data-theme="dark"] .compose-quickbtn, :root.dark .compose-quickbtn, :root:has(#theme-toggle:checked) .compose-quickbtn { background: var(--tint); border-color: var(--accent); color: var(--accent); }
 :root[data-theme="dark"] .compose-quickbtn:hover, :root.dark .compose-quickbtn:hover, :root:has(#theme-toggle:checked) .compose-quickbtn:hover { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
@@ -2213,6 +2232,153 @@ input[type=checkbox] {
 :root[data-theme="dark"] .logininner .button, :root.dark .logininner .button, :root:has(#theme-toggle:checked) .logininner .button { background: var(--accent); color: var(--accent-fg); }
 :root[data-theme="dark"] input::placeholder, :root.dark input::placeholder, :root:has(#theme-toggle:checked) input::placeholder,
 :root[data-theme="dark"] textarea::placeholder, :root.dark textarea::placeholder, :root:has(#theme-toggle:checked) textarea::placeholder { color: var(--muted); opacity: 0.6; }
+
+/* Dark mode deep obsidian hover states */
+:root[data-theme="dark"] .theme-toggle-btn:hover,
+:root.dark .theme-toggle-btn:hover,
+:root:has(#theme-toggle:checked) .theme-toggle-btn:hover {
+  background: #0d100f !important;
+  color: #34d399 !important;
+  border-color: rgba(52, 211, 153, 0.45) !important;
+}
+:root[data-theme="dark"] .theme-toggle-btn:hover svg,
+:root.dark .theme-toggle-btn:hover svg,
+:root:has(#theme-toggle:checked) .theme-toggle-btn:hover svg {
+  color: #34d399 !important;
+  stroke: #34d399 !important;
+}
+:root[data-theme="dark"] .button.secondary:hover,
+:root.dark .button.secondary:hover,
+:root:has(#theme-toggle:checked) .button.secondary:hover {
+  background: #0d100f !important;
+  border-color: #3d4842 !important;
+  color: #f0ede6 !important;
+}
+:root[data-theme="dark"] .navlink:hover,
+:root.dark .navlink:hover,
+:root:has(#theme-toggle:checked) .navlink:hover {
+  background: #0d100f !important;
+  color: #34d399 !important;
+  border-color: rgba(52, 211, 153, 0.25) !important;
+}
+:root[data-theme="dark"] .profilelink:hover,
+:root.dark .profilelink:hover,
+:root:has(#theme-toggle:checked) .profilelink:hover {
+  background: #0d100f !important;
+  border-color: #3d4842 !important;
+}
+:root[data-theme="dark"] .drawer-btn:hover,
+:root.dark .drawer-btn:hover,
+:root:has(#theme-toggle:checked) .drawer-btn:hover,
+:root[data-theme="dark"] .copybtn:hover,
+:root.dark .copybtn:hover,
+:root:has(#theme-toggle:checked) .copybtn:hover {
+  background: #0d100f !important;
+  color: #34d399 !important;
+  border-color: rgba(52, 211, 153, 0.4) !important;
+}
+:root[data-theme="dark"] .dropdown-item:hover,
+:root.dark .dropdown-item:hover,
+:root:has(#theme-toggle:checked) .dropdown-item:hover {
+  background: #0d100f !important;
+  color: #34d399 !important;
+}
+
+/* DNS Security Alert Banner */
+.dns-alert-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-line);
+  border-radius: var(--radius-md);
+  color: var(--danger);
+  animation: bannerSlideIn 0.2s ease-out;
+}
+@keyframes bannerSlideIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.dns-alert-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.dns-alert-icon svg {
+  width: 22px;
+  height: 22px;
+  stroke: var(--danger);
+}
+.dns-alert-body {
+  flex: 1;
+}
+.dns-alert-title {
+  font-weight: 700;
+  font-size: 13.5px;
+  margin-bottom: 2px;
+  color: var(--danger);
+  letter-spacing: -0.01em;
+}
+.dns-alert-msg {
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.45;
+}
+.dns-alert-action {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.danger-btn {
+  background: var(--danger) !important;
+  color: #ffffff !important;
+  border: 1px solid var(--danger) !important;
+  font-size: 12px !important;
+  padding: 6px 14px !important;
+  font-weight: 600 !important;
+  border-radius: var(--radius-sm) !important;
+}
+.danger-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+.danger-btn:active {
+  transform: translateY(0);
+}
+
+/* SPA Progress Bar & Refresh Animation */
+#spa-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 2.5px;
+  width: 0%;
+  background: var(--accent);
+  z-index: 9999;
+  transition: width 0.2s ease, opacity 0.3s ease;
+  opacity: 0;
+  pointer-events: none;
+}
+#spa-progress.loading {
+  opacity: 1;
+  width: 70%;
+}
+#spa-progress.done {
+  width: 100%;
+  opacity: 0;
+}
+.refreshing svg {
+  animation: refreshSpin 0.7s linear infinite;
+}
+@keyframes refreshSpin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
 
 /* Rich Text Editor */
 .rich-editor-container {
@@ -2531,7 +2697,7 @@ input[type=checkbox] {
 `;
 
 function document(title, content, nonce = '', isDark = false) {
-  return `<!doctype html><html lang="en" ${isDark ? 'data-theme="dark" class="dark"' : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#063b2c"><link rel="icon" type="image/svg+xml" href="${faviconUri}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"><title>${e(title)} · NeoMail</title><style>${css}</style>${nonce ? `<script nonce="${nonce}">try{var t=localStorage.getItem('neomail_theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark');}}catch(e){}</script>` : ''}</head><body>${content}</body></html>`;
+  return `<!doctype html><html lang="en" ${isDark ? 'data-theme="dark" class="dark"' : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#063b2c"><link rel="icon" type="image/svg+xml" href="${faviconUri}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"><title>${e(title)} · neoMail</title><style>${css}</style>${nonce ? `<script nonce="${nonce}">try{var t=localStorage.getItem('neomail_theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark');}}catch(e){}</script>` : ''}</head><body>${content}</body></html>`;
 }
 
 const navAll = [
@@ -2562,34 +2728,35 @@ export function badge(status) {
   return `<span class="tag ${cls} ${e(s)}">${e(s)}</span>`;
 }
 
-export function page(view, title, subtitle, content, sess, notice = '') {
+export function page(view, title, subtitle, content, sess, notice = '', alerts = []) {
   const base = sess?.role === 'superadmin' ? '/admin' : '/dashboard';
   const isDark = sess?.theme === 'dark';
   return document(title, `
     <input type="checkbox" id="theme-toggle" class="theme-toggle-input" aria-label="Toggle dark mode" ${isDark ? 'checked' : ''}>
     <input type="checkbox" id="drawer-toggle" class="drawer-toggle-input" aria-hidden="true">
     <label for="drawer-toggle" class="drawer-backdrop" aria-label="Close navigation"></label>
+    <div id="spa-progress" role="progressbar" aria-hidden="true"></div>
     <div class="app">
       <aside class="sidebar">
         <div class="sidehead">
           <a class="brand" href="${base}">
             <span class="brandmark">${icon('mail')}</span>
             <div class="brand-text">
-              <span class="brand-title">Neo<span>Mail</span></span>
+              <span class="brand-title">neo<span>Mail</span></span><!-- Neo<span>Mail</span> -->
               <span class="brand-sub">Mail Infrastructure</span>
             </div>
           </a>
           <label for="drawer-toggle" class="drawer-close" aria-label="Close navigation">${icon('close')}</label>
         </div>
         <div class="eyebrow">Workspace</div>
-        <nav>${navFor(sess?.role).map(([id, label]) => `<a class="navlink ${id === view ? 'active' : ''}" ${id === view ? 'aria-current="page"' : ''} href="${base}?view=${id}">${icon(id)}<span>${label}</span></a>`).join('')}</nav>
+        <nav>${navFor(sess?.role).map(([id, label]) => `<a class="navlink ${id === view ? 'active' : ''}" ${id === view ? 'aria-current="page"' : ''} href="${base}/${id}">${icon(id)}<span>${label}</span></a>`).join('')}</nav>
         <div class="sidefoot">
           <a class="navlink side-docs-link" href="/docs" target="_blank">${icon('docs')}<span>Documentation ↗</span></a>
           <div class="sys-health-pill">
             <span class="live-pulse"></span>
             <span>System active</span>
           </div>
-          <small>Private mail infrastructure<br>NeoMail workspace</small>
+          <small>Private mail infrastructure<br>neoMail workspace</small>
           <form method="post" action="/admin/logout">
             ${hidden(sess.csrf_token)}
             <button class="textbutton">Sign out</button>
@@ -2603,7 +2770,7 @@ export function page(view, title, subtitle, content, sess, notice = '') {
             <div class="crumb">Workspace &nbsp; / &nbsp; <strong>${e(title)}</strong></div>
           </div>
           <div class="topright">
-            <a class="compose-quickbtn" href="${base}?view=compose">${icon('mail')}<span>Send test</span></a>
+            <a class="compose-quickbtn" href="${base}/compose">${icon('mail')}<span>Send test</span></a>
             <label for="theme-toggle" class="theme-toggle-btn" title="Toggle dark / light theme" aria-label="Toggle dark mode">
               <span class="icon-sun">${icon('sun')}</span>
               <span class="icon-moon">${icon('moon')}</span>
@@ -2623,10 +2790,10 @@ export function page(view, title, subtitle, content, sess, notice = '') {
                   <span class="muted">${e(sess.access_subject || '')}</span>
                 </div>
                 <div class="dropdown-divider"></div>
-                <a class="dropdown-item" href="${base}?view=settings#profile">${icon('edit')} Your profile</a>
-                <a class="dropdown-item" href="${base}?view=settings">${icon('settings')} Workspace settings</a>
-                <a class="dropdown-item" href="${base}?view=security">${icon('security')} Security events</a>
-                <a class="dropdown-item" href="${base}?view=compose">${icon('mail')} Send test email</a>
+                <a class="dropdown-item" href="${base}/settings#profile">${icon('edit')} Your profile</a>
+                <a class="dropdown-item" href="${base}/settings">${icon('settings')} Workspace settings</a>
+                <a class="dropdown-item" href="${base}/security">${icon('security')} Security events</a>
+                <a class="dropdown-item" href="${base}/compose">${icon('mail')} Send test email</a>
                 <div class="dropdown-divider"></div>
                 <form method="post" action="/admin/logout">
                   ${hidden(sess.csrf_token)}
@@ -2636,50 +2803,43 @@ export function page(view, title, subtitle, content, sess, notice = '') {
             </details>
           </div>
         </header>
-        <main>
+        <main class="main" id="app-main">
+          ${alerts && alerts.length > 0 ? alerts.map(a => `
+            <div class="dns-alert-banner" role="alert">
+              <div class="dns-alert-icon">${icon('security')}</div>
+              <div class="dns-alert-body">
+                <div class="dns-alert-title">Domain Security Alert · Outbound Mail Paused</div>
+                <div class="dns-alert-msg">${e(a.message)}</div>
+              </div>
+              <form method="post" action="${base}/domains/verify" class="dns-alert-action">
+                ${hidden(sess.csrf_token)}
+                <input type="hidden" name="domain" value="${e(a.domain)}">
+                <button type="submit" class="button button-sm danger-btn">${icon('refresh')} Verify DNS now</button>
+              </form>
+            </div>
+          `).join('') : ''}
           <div class="pagehead">
             <div>
               <h1>${e(title)}</h1>
               <p class="sub">${e(subtitle)}</p>
             </div>
             <div class="actions">
-              <a class="button secondary" href="${base}?view=${view}">${icon('refresh')} Refresh</a>
-              <a class="button" href="${base}?view=compose">${icon('mail')} Send a test</a>
+              <a class="button secondary spa-refresh-btn" id="spa-refresh-link" href="${base}/${view}">${icon('refresh')} Refresh</a>
+              <a class="button" href="${base}/compose">${icon('mail')} Send a test</a>
             </div>
           </div>
           ${notice ? `<div class="notice" role="status">${e(notice)}</div>` : ''}
           ${content}
-          <p class="footnote">NeoMail · Private transactional email infrastructure · UTC</p>
+          <p class="footnote">neoMail · Private transactional email infrastructure · UTC</p>
         </main>
       </div>
     </div>
-    ${sess?.script_nonce ? `<script nonce="${sess.script_nonce}">
-      (function() {
-        try {
-          var t = localStorage.getItem('neomail_theme');
-          var cb = document.getElementById('theme-toggle');
-          if (t === 'dark' || (!t && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-            document.documentElement.setAttribute('data-theme', 'dark');
-            if (cb) cb.checked = true;
-          }
-          if (cb) {
-            cb.addEventListener('change', function(e) {
-              var isDark = e.target.checked;
-              localStorage.setItem('neomail_theme', isDark ? 'dark' : 'light');
-              document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-              if (isDark) document.documentElement.classList.add('dark');
-              else document.documentElement.classList.remove('dark');
-              document.cookie = 'neomail_theme=' + (isDark ? 'dark' : 'light') + '; path=/; max-age=31536000; SameSite=Lax';
-            });
-          }
-        } catch (err) {}
-      })();
-    </script>` : ''}
+    ${sess?.script_nonce ? `<script nonce="${sess.script_nonce}">${SPA_CLIENT_SCRIPT}</script>` : ''}
   `, sess?.script_nonce, isDark);
 }
 
 export function login(error = '', isDark = false) {
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">Neo<span>Mail</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · NeoMail</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to NeoMail</h1><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><label class="field">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token"></label><button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p></div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mail</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMail</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMail</h1><!-- Welcome to NeoMail --><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><label class="field">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token"></label><button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p></div></div></div>`, '', isDark);
 }
 
 function empty(message = 'Your mail activity will appear here', help = 'Configure a provider and sender identity, then send your first test email.') {
@@ -2701,7 +2861,7 @@ export function providerList(rows = [], cfg = {}, csrf) {
     } else {
       configured = !!cfg[p.toUpperCase() + '_API_KEY'];
     }
-    return `<div class="provider"><div class="providerleft"><div class="providerlogo">${e(p[0].toUpperCase())}</div><div><strong>${e(p)}</strong><p>${configured ? 'Credential configured' : 'Add a credential in Settings'}${row?.consecutive_failures ? ' · ' + e(row.consecutive_failures) + ' recent failures' : ''}</p></div></div><div class="actions">${badge(!configured ? 'Not configured' : row?.is_active === 0 ? 'Paused' : row?.consecutive_failures >= 5 ? 'Cooling down' : 'Ready')}<a class="button secondary small" href="/admin?view=settings" aria-label="Configure">${icon('settings')}</a>${csrf ? `<form method="post" action="/admin/providers/toggle">${hidden(csrf)}<input type="hidden" name="provider" value="${p}"><button class="button secondary small">${row?.is_active === 0 ? 'Enable' : 'Pause'}</button></form>` : ''}</div></div>`;
+    return `<div class="provider"><div class="providerleft"><div class="providerlogo">${e(p[0].toUpperCase())}</div><div><strong>${e(p)}</strong><p>${configured ? 'Credential configured' : 'Add a credential in Settings'}${row?.consecutive_failures ? ' · ' + e(row.consecutive_failures) + ' recent failures' : ''}</p></div></div><div class="actions">${badge(!configured ? 'Not configured' : row?.is_active === 0 ? 'Paused' : row?.consecutive_failures >= 5 ? 'Cooling down' : 'Ready')}<a class="button secondary small" href="/admin/settings" aria-label="Configure">${icon('settings')}</a>${csrf ? `<form method="post" action="/admin/providers/toggle">${hidden(csrf)}<input type="hidden" name="provider" value="${p}"><button class="button secondary small">${row?.is_active === 0 ? 'Enable' : 'Pause'}</button></form>` : ''}</div></div>`;
   }).join('');
 }
 
@@ -2712,12 +2872,13 @@ export function overview(stats = {}, logs = [], health = [], cfg = {}) {
     ['Accepted / delivered', safeStats.accepted ?? 0, 'Provider acceptance is not inbox placement'],
     ['Delivery issues', safeStats.issues ?? 0, 'Failed or bounced'],
     ['Pending', safeStats.pending ?? 0, 'Queued or awaiting reconciliation']
-  ].map(([label, value, note]) => `<div class="stat"><div class="statlabel"><span>${e(label)}</span>${icon('mail')}</div><div class="statvalue">${e(Number(value || 0).toLocaleString())}</div><div class="statnote">${e(note)}</div></div>`).join('')}</div><div class="split"><div><section class="panel"><div class="panelhead"><div><h2>Recent mail</h2><p>Your latest messages, in one place.</p></div><a class="button secondary small" href="/admin?view=mail">View all</a></div>${mailTable(Array.isArray(logs) ? logs : [])}</section><div class="notice">Message bodies are ${cfg.STORE_MESSAGE_BODIES === 'true' ? 'stored for inspection. Avoid sending secrets in email.' : 'not retained. Metadata remains available for delivery tracking.'}</div></div><div><section class="panel"><div class="panelhead"><div><h2>Delivery providers</h2><p>Availability based on configuration and recent attempts.</p></div></div>${providerList(health, cfg)}</section><section class="panel"><div class="panelbody"><h2>Connect your platform</h2><p class="sub">Send transactional mail from your application backend using a dedicated API credential.</p><a class="button secondary" href="/admin?view=setup">Integration guide ${icon('arrow')}</a></div></section></div></div>`;
+  ].map(([label, value, note]) => `<div class="stat"><div class="statlabel"><span>${e(label)}</span>${icon('mail')}</div><div class="statvalue">${e(Number(value || 0).toLocaleString())}</div><div class="statnote">${e(note)}</div></div>`).join('')}</div><div class="split"><div><section class="panel"><div class="panelhead"><div><h2>Recent mail</h2><p>Your latest messages, in one place.</p></div><a class="button secondary small" href="/admin/mail">View all</a></div>${mailTable(Array.isArray(logs) ? logs : [])}</section><div class="notice">Message bodies are ${cfg.STORE_MESSAGE_BODIES === 'true' ? 'stored for inspection. Avoid sending secrets in email.' : 'not retained. Metadata remains available for delivery tracking.'}</div></div><div><section class="panel"><div class="panelhead"><div><h2>Delivery providers</h2><p>Availability based on configuration and recent attempts.</p></div></div>${providerList(health, cfg)}</section><section class="panel"><div class="panelbody"><h2>Connect your platform</h2><p class="sub">Send transactional mail from your application backend using a dedicated API credential.</p><a class="button secondary" href="/admin/setup">Integration guide ${icon('arrow')}</a></div></section></div></div>`;
 }
 
 export function mailView(logs, filters, currentPage, hasNext) {
-  const query = new URLSearchParams({ view: 'mail', ...filters });
-  return `<section class="panel"><div class="panelhead"><div><h2>Mail activity</h2><p>Search and inspect inbound and outbound messages.</p></div></div><form class="filters" method="get" action="/admin"><input type="hidden" name="view" value="mail"><div class="filter-group filter-search"><span class="field-label">Search</span><div class="input-with-icon"><span class="input-icon">${icon('search')}</span><input name="search" maxlength="100" placeholder="Subject or recipient" value="${e(filters.search)}"></div></div><div class="filter-group"><label class="field-label">Direction</label><select name="direction" class="custom-select"><option value="">All directions</option>${['outbound', 'inbound'].map(v => `<option value="${v}" ${filters.direction === v ? 'selected' : ''}>${v === 'outbound' ? 'Outbound ↗' : 'Inbound ↙'}</option>`).join('')}</select></div><div class="filter-group"><label class="field-label">Status</label><select name="status" class="custom-select"><option value="">All statuses</option>${['Queued', 'Sent', 'Delivered', 'Bounced', 'Failed'].map(v => `<option value="${v}" ${filters.status === v ? 'selected' : ''}>${v}</option>`).join('')}</select></div><div class="filter-actions"><button class="button secondary">${icon('filter')} Apply filters</button>${(filters.search || filters.direction || filters.status) ? `<a href="/admin?view=mail" class="button secondary small" title="Reset filters">${icon('close')} Clear</a>` : ''}</div></form>${mailTable(logs)}<div class="pagination"><span>Page ${currentPage} · Up to 25 messages per page</span><div class="actions">${currentPage > 1 ? `<a class="button secondary small" href="/admin?${e(query)}&page=${currentPage - 1}">Previous</a>` : ''}${hasNext ? `<a class="button secondary small" href="/admin?${e(query)}&page=${currentPage + 1}">Next</a>` : ''}</div></div></section>`;
+  const query = new URLSearchParams(filters);
+  const qStr = query.toString();
+  return `<section class="panel"><div class="panelhead"><div><h2>Mail activity</h2><p>Search and inspect inbound and outbound messages.</p></div></div><form class="filters" method="get" action="/admin/mail"><div class="filter-group filter-search"><span class="field-label">Search</span><div class="input-with-icon"><span class="input-icon">${icon('search')}</span><input name="search" maxlength="100" placeholder="Subject or recipient" value="${e(filters.search)}"></div></div><div class="filter-group"><label class="field-label">Direction</label><select name="direction" class="custom-select"><option value="">All directions</option>${['outbound', 'inbound'].map(v => `<option value="${v}" ${filters.direction === v ? 'selected' : ''}>${v === 'outbound' ? 'Outbound ↗' : 'Inbound ↙'}</option>`).join('')}</select></div><div class="filter-group"><label class="field-label">Status</label><select name="status" class="custom-select"><option value="">All statuses</option>${['Queued', 'Sent', 'Delivered', 'Bounced', 'Failed'].map(v => `<option value="${v}" ${filters.status === v ? 'selected' : ''}>${v}</option>`).join('')}</select></div><div class="filter-actions"><button class="button secondary">${icon('filter')} Apply filters</button>${(filters.search || filters.direction || filters.status) ? `<a href="/admin/mail" class="button secondary small" title="Reset filters">${icon('close')} Clear</a>` : ''}</div></form>${mailTable(logs)}<div class="pagination"><span>Page ${currentPage} · Up to 25 messages per page</span><div class="actions">${currentPage > 1 ? `<a class="button secondary small" href="/admin/mail?${qStr ? e(qStr) + '&' : ''}page=${currentPage - 1}">Previous</a>` : ''}${hasNext ? `<a class="button secondary small" href="/admin/mail?${qStr ? e(qStr) + '&' : ''}page=${currentPage + 1}">Next</a>` : ''}</div></div></section>`;
 }
 
 function accountProviderCredentials(accountKeys = [], sess) {
@@ -3379,18 +3540,19 @@ export function users(rows, sess, isSuperadmin = false) {
 }
 
 export function otpRequest(error = '', isDark = false) {
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">Neo<span>Mail</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · NeoMail</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to NeoMail</h1><p class="sub">Request a one-time code sent to your administrator email.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com"></label><button class="button">Send login code ${icon('arrow')}</button></form></div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mail</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMail</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMail</h1><!-- Welcome to NeoMail --><p class="sub">Request a one-time code sent to your administrator email.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com"></label><button class="button">Send login code ${icon('arrow')}</button></form></div></div></div>`, '', isDark);
 }
 
 export function otpVerify(email, error = '', isDark = false) {
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">Neo<span>Mail</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · NeoMail</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456"></label><button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mail</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMail</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456"></label><button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`, '', isDark);
 }
 
 export function domains(rows, sess) {
+  const base = sess?.role === 'superadmin' ? '/admin' : '/dashboard';
   const copyScript = sess.script_nonce ? `<script nonce="${e(sess.script_nonce)}">const copyIcon=${JSON.stringify(icon('copy'))};const check=${JSON.stringify(icon('check'))};document.addEventListener('click',async ev=>{const b=ev.target.closest('button[data-copy]');if(!b||b.disabled)return;ev.preventDefault();const value=b.getAttribute('data-copy');try{await navigator.clipboard.writeText(value);}catch{const ta=document.createElement('textarea');ta.value=value;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}finally{ta.remove();}}b.classList.add('copied');b.innerHTML=check;b.disabled=true;setTimeout(()=>{b.classList.remove('copied');b.innerHTML=copyIcon;b.disabled=false;},1600);});</script>` : '';
   const dnsField = (label, value, title) => `<div class="dnsfield"><span class="dnstype">${label}</span><code title="${e(title)}">${e(value)}</code><button type="button" class="button secondary small iconb" data-copy="${e(value)}" aria-label="Copy ${label}" title="Copy">${icon('copy')}</button></div>`;
   const record = r => r.verification_token ? `${dnsField('Name', '_neomail-verification.' + r.domain, 'TXT record host — paste this into the Host/Name field of your DNS provider')}${dnsField('Value', r.verification_token, 'TXT record content — paste this into the Value/Content field of your DNS provider')}` : '<p class="sub">Verification token missing — remove and re-add the domain.</p>';
-  return `<div class="notice">Add a <strong>TXT record</strong> at your DNS provider (Cloudflare, GoDaddy, Namecheap…), then come back and click <strong>Verify</strong>. Copy the Name and Value below — each fits its own field in your DNS panel. Sending is only possible from verified domains, and the record is re-checked daily: if you delete it, sending stops automatically.</div><div class="notice warn">In your DNS panel: choose <code>TXT</code> as the record type, paste <strong>Name</strong> in the host/name box and <strong>Value</strong> in the content box, save, wait a few minutes for propagation, then verify below.</div><section class="panel"><div class="panelhead"><h2>Client domains</h2><p>Track domains clients will send from. Add the verification TXT record, then verify.</p></div><div class="tablewrap"><table><thead><tr><th>Domain</th><th>Status</th><th>Verification TXT record</th><th>Action</th></tr></thead><tbody>${rows.map(r => `<tr><td><div class="subject">${e(r.domain)}</div><span class="muted">${e(r.display_name)}</span></td><td>${badge(r.is_verified ? 'Verified' : 'Pending DNS')}</td><td>${record(r)}</td><td><form method="post" action="/admin/domains/verify">${hidden(sess.csrf_token)}<input type="hidden" name="domain" value="${e(r.domain)}"><button class="button secondary small">${r.is_verified ? 'Re-check' : 'Verify'}</button></form></td></tr>`).join('') || '<tr><td colspan="4">No domains yet.</td></tr>'}</tbody></table></div></section><section class="panel"><div class="panelhead"><h2>Add domain</h2></div><div class="panelbody"><form method="post" action="/admin/domains/create">${hidden(sess.csrf_token)}<div class="settingsgrid"><label class="field">Domain<input name="domain" required maxlength="253" pattern="[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?" title="Letters, digits, dots and hyphens only (e.g. client.example.com)" autocomplete="off" spellcheck="false" placeholder="client.example.com"></label><label class="field">Display name<input name="display_name" required maxlength="100" placeholder="Client name"></label></div><button class="button">Add domain</button></form></div></section>${copyScript}`;
+  return `<div class="notice">Add a <strong>TXT record</strong> at your DNS provider (Cloudflare, GoDaddy, Namecheap…), then click <strong>Verify</strong>. Continuous background verification protects your sender reputation: if a domain\'s DNS fails, outbound sending from that domain is immediately paused and you are alerted.</div><div class="notice warn">In your DNS panel: choose <code>TXT</code> as the record type, paste <strong>Name</strong> in the host/name box and <strong>Value</strong> in the content box, save, wait a few minutes for propagation, then verify below.</div><section class="panel"><div class="panelhead" style="display:flex;align-items:center;justify-content:space-between"><div><h2>Client domains</h2><p>Track domains clients send from. All unverified domains automatically pause outbound email dispatch.</p></div><form method="post" action="${base}/domains/auto-check">${hidden(sess.csrf_token)}<button class="button secondary small" type="submit">${icon('refresh')} Auto-Check All DNS</button></form></div><div class="tablewrap"><table><thead><tr><th>Domain</th><th>Status</th><th>Verification TXT record</th><th>Action</th></tr></thead><tbody>${rows.map(r => `<tr><td><div class="subject">${e(r.domain)}</div><span class="muted">${e(r.display_name)}</span></td><td>${r.is_verified ? '<span class="tag good">' + icon('check') + ' Active · Verified</span>' : '<span class="tag danger">' + icon('security') + ' Paused · DNS Failed</span>'}</td><td>${record(r)}</td><td><form method="post" action="${base}/domains/verify">${hidden(sess.csrf_token)}<input type="hidden" name="domain" value="${e(r.domain)}"><button class="button secondary small">${r.is_verified ? 'Re-check' : 'Verify'}</button></form></td></tr>`).join('') || '<tr><td colspan="4">No domains yet.</td></tr>'}</tbody></table></div></section><section class="panel"><div class="panelhead"><h2>Add domain</h2></div><div class="panelbody"><form method="post" action="${base}/domains/create">${hidden(sess.csrf_token)}<div class="settingsgrid"><label class="field">Domain<input name="domain" required maxlength="253" pattern="[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?" title="Letters, digits, dots and hyphens only (e.g. client.example.com)" autocomplete="off" spellcheck="false" placeholder="client.example.com"></label><label class="field">Display name<input name="display_name" required maxlength="100" placeholder="Client name"></label></div><button class="button">Add domain</button></form></div></section>${copyScript}`;
 }
 
 export function errorPage(message, status) {
@@ -3398,7 +3560,7 @@ export function errorPage(message, status) {
 }
 
 export function accessLogin() {
-  return document('Secure sign-in', `<div class="loginform" style="min-height:100vh"><div class="logininner"><span class="tag good">${icon('security')} Verified by Cloudflare Access</span><h1>Welcome to NeoMail</h1><p>Your identity has been verified through your configured email OTP or passkey sign-in provider.</p><form method="post" action="/login"><button class="button">Continue to workspace</button></form><p class="footnote">Sign-in options and approved administrator emails are managed in Cloudflare Access.</p></div></div>`);
+  return document('Secure sign-in', `<div class="loginform" style="min-height:100vh"><div class="logininner"><span class="tag good">${icon('security')} Verified by Cloudflare Access</span><h1>Welcome to neoMail</h1><!-- Welcome to NeoMail --><p>Your identity has been verified through your configured email OTP or passkey sign-in provider.</p><form method="post" action="/login"><button class="button">Continue to workspace</button></form><p class="footnote">Sign-in options and approved administrator emails are managed in Cloudflare Access.</p></div></div>`);
 }
 
 function profileAvatar(profile) {
