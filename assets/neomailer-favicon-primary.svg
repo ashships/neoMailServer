@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512" fill="none">
+  <defs>
+    <linearGradient id="primary-bg-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0eb958"/>
+      <stop offset="45%" stop-color="#087d54"/>
+      <stop offset="100%" stop-color="#044e33"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Primary Emerald Squircle Background -->
+  <rect x="16" y="16" width="480" height="480" rx="120" fill="url(#primary-bg-grad)"/>
+
+  <!-- Centered White Envelope Logo -->
+  <g transform="translate(76, 150) scale(0.80)">
+    <path fill-rule="evenodd" clip-rule="evenodd" fill="#ffffff" d="
+      M 45 0
+      L 405 0
+      C 429.9 0 450 20 450 44
+      L 450 244
+      C 450 268 429.9 289 405 289
+      L 300 289
+      C 255 274 210 209 165 199
+      C 125 214 85 264 45 289
+      C 20.1 289 0 268 0 244
+      L 0 45
+      C 0 20.1 20.1 0 45 0 Z
+      M 12 36
+      C 82 61 157 116 225 145
+      C 295 115 375 65 450 35
+      L 450 55
+      C 378 88 298 178 228 209
+      C 162 156 82 96 12 36 Z
+    " />
+  </g>
+</svg>

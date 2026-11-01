@@ -4575,21 +4575,6 @@ export function identities(rows, sess, domains = []) {
         <span class="identity-avatar">${e(initial(r.display_name))}</span>
         <div class="identity-info">
           <span class="identity-title">${e(r.display_name)}</span>
-          <details class="rename-popover">
-            <summary class="rename-trigger" title="Rename display name">${icon('edit')}<span>Rename</span></summary>
-            <div class="popover-dropdown">
-              <form method="post" action="/admin/identities/update">
-                ${hidden(sess.csrf_token)}
-                <input type="hidden" name="email_address" value="${e(r.email_address)}">
-                <input type="hidden" name="action" value="rename">
-                <label class="field">
-                  <span>Sender display name</span>
-                  <input name="display_name" value="${e(r.display_name)}" required maxlength="100" autocomplete="off">
-                </label>
-                <button class="button small">Save name</button>
-              </form>
-            </div>
-          </details>
         </div>
       </div>
     </td>
@@ -4608,6 +4593,10 @@ export function identities(rows, sess, domains = []) {
       <form method="post" action="/admin/identities/update" class="identity-actions">
         ${hidden(sess.csrf_token)}
         <input type="hidden" name="email_address" value="${e(r.email_address)}">
+        <button type="button" class="button secondary small" data-action="rename-identity" data-address="${e(r.email_address)}" data-name="${e(r.display_name)}" onclick="openEditIdentityModal('${e(r.email_address)}', '${e(r.display_name)}')" title="Rename display name or change address">
+          ${icon('edit')}
+          <span>Rename</span>
+        </button>
         <button class="button secondary small" name="action" value="toggle" title="${r.is_active ? 'Pause identity' : 'Enable identity'}">
           ${icon(r.is_active ? 'pause' : 'play')}
           <span>${r.is_active ? 'Pause' : 'Enable'}</span>
@@ -4619,6 +4608,173 @@ export function identities(rows, sess, domains = []) {
       </form>
     </td>
   </tr>`).join('');
+
+  const editModal = `
+    <dialog id="editIdentityModal" class="login-modal admin-modal" onclick="if(event.target===this)this.close()">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="brandmark" style="width:32px;height:32px;padding:0;background:var(--tint);color:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center">${icon('edit')}</div>
+            <div>
+              <h2 style="font-size:15px;margin:0;font-weight:700">Edit Sender Identity</h2>
+              <p style="font-size:11px;color:var(--muted);margin:2px 0 0">Update display name or transfer sender email address</p>
+            </div>
+          </div>
+          <button type="button" class="modal-close-btn" onclick="document.getElementById('editIdentityModal').close()" aria-label="Close modal">&times;</button>
+        </div>
+        <form method="post" action="/admin/identities/update" class="modal-body" id="editIdentityForm">
+          ${hidden(sess.csrf_token)}
+          <input type="hidden" name="email_address" id="edit-id-original-address">
+          <input type="hidden" name="action" value="rename">
+
+          <label class="field" style="margin-bottom:12px">
+            <span style="font-size:11px;font-weight:600;display:block;margin-bottom:4px">Display name</span>
+            <input name="display_name" id="edit-id-display-name" required maxlength="100" autocomplete="off" placeholder="e.g. Support Team" style="width:100%">
+            <small style="font-size:11px;color:var(--muted);display:block;margin-top:2px">Human-friendly sender name shown to recipients</small>
+          </label>
+
+          <label class="field" style="margin-bottom:14px">
+            <span style="font-size:11px;font-weight:600;display:block;margin-bottom:4px">Sender email address</span>
+            <input type="email" name="new_email_address" id="edit-id-email-address" required maxlength="254" autocomplete="off" spellcheck="false" placeholder="support@yourdomain.com" style="width:100%">
+            <small style="font-size:11px;color:var(--muted);display:block;margin-top:2px">Must belong to one of your active verified sending domains</small>
+          </label>
+
+          <div id="edit-id-otp-section" style="display:none;background:var(--bg);border:1px solid var(--line);border-radius:var(--radius-md);padding:14px;margin-bottom:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px">
+              <div>
+                <strong style="font-size:12px;display:block">Address Change Authorization</strong>
+                <p style="font-size:11px;color:var(--muted);margin:2px 0 0">Confirmation code will be sent to: <span style="color:var(--text);font-weight:600">${e(sess.subject || 'your admin email')}</span></p>
+              </div>
+              <button type="button" class="button secondary small" id="edit-id-send-otp-btn" style="white-space:nowrap;flex-shrink:0">${icon('mail')} <span>Send OTP</span></button>
+            </div>
+            <div id="edit-id-otp-msg" style="font-size:11px;margin-bottom:8px;display:none;line-height:1.4"></div>
+            <label class="field" style="margin:0">
+              <span style="font-size:11px;font-weight:600;display:block;margin-bottom:4px">6-digit confirmation code</span>
+              <input name="otp_code" id="edit-id-otp-input" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="123456" style="width:100%;letter-spacing:4px;font-weight:700;font-family:monospace;font-size:16px">
+            </label>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:10px">
+            <button type="button" class="button secondary" onclick="document.getElementById('editIdentityModal').close()">Cancel</button>
+            <button type="submit" class="button" id="edit-id-submit-btn">Save changes</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+  `;
+
+  const editIdentityScript = sess?.script_nonce ? `<script nonce="${e(sess.script_nonce)}">
+window.openEditIdentityModal = function(address, displayName) {
+  var modal = document.getElementById('editIdentityModal');
+  if (!modal) return;
+  var origInput = document.getElementById('edit-id-original-address');
+  var nameInput = document.getElementById('edit-id-display-name');
+  var emailInput = document.getElementById('edit-id-email-address');
+  var otpSection = document.getElementById('edit-id-otp-section');
+  var otpInput = document.getElementById('edit-id-otp-input');
+  var otpMsg = document.getElementById('edit-id-otp-msg');
+  if (origInput) origInput.value = address;
+  if (nameInput) nameInput.value = displayName;
+  if (emailInput) emailInput.value = address;
+  if (otpSection) otpSection.style.display = 'none';
+  if (otpInput) { otpInput.value = ''; otpInput.required = false; }
+  if (otpMsg) { otpMsg.style.display = 'none'; otpMsg.textContent = ''; }
+  modal.showModal();
+};
+
+document.addEventListener('click', function(ev) {
+  var btn = ev.target.closest('[data-action="rename-identity"]');
+  if (btn) {
+    ev.preventDefault();
+    window.openEditIdentityModal(btn.getAttribute('data-address'), btn.getAttribute('data-name'));
+  }
+});
+
+(function() {
+  var origInput = document.getElementById('edit-id-original-address');
+  var emailInput = document.getElementById('edit-id-email-address');
+  var otpSection = document.getElementById('edit-id-otp-section');
+  var otpInput = document.getElementById('edit-id-otp-input');
+  var sendBtn = document.getElementById('edit-id-send-otp-btn');
+  var otpMsg = document.getElementById('edit-id-otp-msg');
+
+  function checkAddressChange() {
+    if (!origInput || !emailInput || !otpSection) return;
+    var changed = emailInput.value.trim().toLowerCase() !== origInput.value.trim().toLowerCase();
+    if (changed) {
+      otpSection.style.display = 'block';
+      if (otpInput) otpInput.required = true;
+    } else {
+      otpSection.style.display = 'none';
+      if (otpInput) { otpInput.required = false; otpInput.value = ''; }
+      if (otpMsg) otpMsg.style.display = 'none';
+    }
+  }
+
+  if (emailInput) {
+    emailInput.addEventListener('input', checkAddressChange);
+    emailInput.addEventListener('change', checkAddressChange);
+  }
+
+  if (sendBtn) {
+    sendBtn.addEventListener('click', async function() {
+      var currentAddress = origInput.value.trim();
+      var newAddress = emailInput.value.trim();
+      if (!newAddress || currentAddress.toLowerCase() === newAddress.toLowerCase()) {
+        if (otpMsg) {
+          otpMsg.style.display = 'block';
+          otpMsg.style.color = 'var(--danger)';
+          otpMsg.textContent = 'Please enter a different email address to change.';
+        }
+        return;
+      }
+      sendBtn.disabled = true;
+      var origBtnText = sendBtn.innerHTML;
+      sendBtn.innerHTML = 'Sending...';
+      if (otpMsg) {
+        otpMsg.style.display = 'block';
+        otpMsg.style.color = 'var(--muted)';
+        otpMsg.textContent = 'Requesting 6-digit confirmation code...';
+      }
+      try {
+        var formData = new FormData();
+        formData.append('csrf_token', '${e(sess.csrf_token || '')}');
+        formData.append('email_address', currentAddress);
+        formData.append('new_email_address', newAddress);
+        var resp = await fetch('/admin/identities/request-otp', {
+          method: 'POST',
+          body: formData,
+          headers: { 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        var data = await resp.json().catch(function() { return {}; });
+        if (resp.ok) {
+          if (otpMsg) {
+            otpMsg.style.color = 'var(--accent)';
+            otpMsg.textContent = data.message || 'Verification code sent to your email! Please enter it below.';
+          }
+          sendBtn.innerHTML = 'Resend OTP';
+          setTimeout(function() { sendBtn.disabled = false; }, 15000);
+          if (otpInput) otpInput.focus();
+        } else {
+          if (otpMsg) {
+            otpMsg.style.color = 'var(--danger)';
+            otpMsg.textContent = data.error || (data.message || 'Failed to send confirmation code. Verify your email provider and domain.');
+          }
+          sendBtn.disabled = false;
+          sendBtn.innerHTML = origBtnText;
+        }
+      } catch (err) {
+        if (otpMsg) {
+          otpMsg.style.color = 'var(--danger)';
+          otpMsg.textContent = 'Network or server error while requesting code.';
+        }
+        sendBtn.disabled = false;
+        sendBtn.innerHTML = origBtnText;
+      }
+    });
+  }
+})();
+</script>` : '';
 
   return `<div class="notice warn">Creating an identity here does not verify its domain. Verify every sending domain with each active provider before sending.</div>
 <section class="panel">
@@ -4683,7 +4839,9 @@ export function identities(rows, sess, domains = []) {
       </div>
     </form>
   </div>
-</section>`;
+</section>
+${editModal}
+${editIdentityScript}`;
 }
 
 export function compose(rows, sess) {
