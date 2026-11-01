@@ -234,8 +234,8 @@ async function handler(request, env) {
   }
   // Tenant workspaces may mutate their own resources via scoped action endpoints and inspect their
   // own messages; every other admin path (global settings, users, providers, docs, views) requires the superadmin role.
-  const tenantForm = (request.method === 'POST' && ['/admin/identities/create','/admin/identities/update','/admin/api-clients/create','/admin/api-clients/revoke','/admin/domains/create','/dashboard/domains/create','/admin/domains/verify','/dashboard/domains/verify','/admin/domains/delete','/dashboard/domains/delete','/admin/domains/auto-check','/dashboard/domains/auto-check','/admin/providers/limit','/dashboard/providers/limit','/admin/send-test','/admin/logout','/admin/sessions/revoke','/admin/profile','/admin/account-keys/save','/admin/account-keys/delete','/admin/account-keys/toggle'].includes(path))
-    || (request.method === 'GET' && ['/admin/view-mail','/admin/email','/admin/preview','/admin/profile-image'].includes(path));
+  const tenantForm = (request.method === 'POST' && ['/admin/identities/create','/admin/identities/update','/admin/api-clients/create','/admin/api-clients/revoke','/admin/domains/create','/dashboard/domains/create','/admin/domains/verify','/dashboard/domains/verify','/admin/domains/delete','/dashboard/domains/delete','/admin/domains/auto-check','/dashboard/domains/auto-check','/admin/providers/limit','/dashboard/providers/limit','/admin/send-test','/admin/logout','/admin/sessions/revoke','/admin/profile','/dashboard/profile','/admin/account-keys/save','/admin/account-keys/delete','/admin/account-keys/toggle'].includes(path))
+    || (request.method === 'GET' && ['/admin/view-mail','/admin/email','/admin/preview','/admin/profile-image','/dashboard/profile-image'].includes(path));
   if (!dashboardMode && path.startsWith('/admin') && role !== 'superadmin' && path !== '/admin/login' && !tenantForm) {
     if (request.method === 'GET' && !url.searchParams.has('view')) {
       const sub = path.slice('/admin/'.length).split('/')[0];
@@ -445,20 +445,22 @@ async function handler(request, env) {
   sess.local_dev = local(request, env);
   sess.theme = cookie(request, 'neomail_theme') || '';
   sess.profile = await getProfile(env, subject);
-  if (path === '/admin/profile-image') {
+  if (path === '/admin/profile-image' || path === '/dashboard/profile-image') {
     requireMethod(request, ['GET']);
     const targetSubject = ((await isSuperadmin(env, subject)) && url.searchParams.get('subject')) ? url.searchParams.get('subject') : subject;
     return profileImage(env, targetSubject);
   }
   const { values: cfg } = await config(env, request.method === 'POST');
   if (request.method === 'POST') {
-    const data = path === '/admin/profile' ? await profileForm(request) : await form(request); await csrf(request, data, sess);
+    const isProfilePost = path === '/admin/profile' || path === '/dashboard/profile';
+    const data = isProfilePost ? await profileForm(request) : await form(request); await csrf(request, data, sess);
     // Controls all console mutations, including test email dispatch.
     await rate(env, 'admin:' + subject, 30, 60);
-    if (path === '/admin/profile') {
+    if (isProfilePost) {
       const result = await saveProfile(env, subject, data);
       await audit(env, request, 'PROFILE_UPDATED', result);
-      return redirect('/admin?view=settings&notice=Profile+updated#profile');
+      const redirectBase = role === 'superadmin' ? '/admin/settings' : '/dashboard/settings';
+      return redirect(redirectBase + '?notice=' + encodeURIComponent('Profile updated.') + '#profile');
     }
     if (path === '/admin/logout') {
       await env.DB.prepare('DELETE FROM admin_sessions WHERE token_hash=?').bind(sess.token_hash).run();

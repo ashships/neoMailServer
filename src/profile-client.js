@@ -15,18 +15,53 @@ export const PROFILE_SCRIPT = String.raw`
   const removeCheckbox = form.querySelector('input[name="remove_avatar"]');
   const preview = document.getElementById('avatar-squircle-preview');
 
-  if (uploadBtn && typeof uploadBtn.addEventListener === 'function' && input) {
-    uploadBtn.addEventListener('click', () => typeof input.click === 'function' && input.click());
+  function updatePreviewImage(src) {
+    if (!preview || preview.innerHTML === undefined) return;
+    preview.innerHTML = '<img src="' + src + '" alt="Profile preview" style="width:100%;height:100%;object-fit:cover;display:block;">';
+    const topAvatar = document.querySelector('.profilelink .avatar');
+    if (topAvatar) {
+      topAvatar.innerHTML = '<img src="' + src + '" alt="Profile preview" style="width:100%;height:100%;object-fit:cover;display:block;">';
+    }
   }
-  if (cameraBtn && typeof cameraBtn.addEventListener === 'function' && input) {
-    cameraBtn.addEventListener('click', () => typeof input.click === 'function' && input.click());
+
+  function triggerPicker() {
+    if (input && typeof input.click === 'function') input.click();
   }
+
+  if (uploadBtn && typeof uploadBtn.addEventListener === 'function') {
+    uploadBtn.addEventListener('click', triggerPicker);
+  }
+  if (cameraBtn && typeof cameraBtn.addEventListener === 'function') {
+    cameraBtn.addEventListener('click', triggerPicker);
+  }
+  if (preview && typeof preview.addEventListener === 'function') {
+    preview.addEventListener('click', triggerPicker);
+  }
+
+  // Restore instant preview if saved recently
+  try {
+    const cachedPreview = typeof sessionStorage !== 'undefined' ? sessionStorage.getItem('neomail_preview_avatar') : null;
+    if (cachedPreview && preview && preview.innerHTML !== undefined && !preview.querySelector?.('img')) {
+      if (typeof window !== 'undefined' && window.location && window.location.search && window.location.search.includes('notice=Profile')) {
+        updatePreviewImage(cachedPreview);
+        if (removeBtn && removeBtn.style) removeBtn.style.display = 'inline-flex';
+      }
+    }
+  } catch {}
+
   if (removeBtn && typeof removeBtn.addEventListener === 'function' && removeCheckbox) {
     removeBtn.addEventListener('click', () => {
       removeCheckbox.checked = true;
       if (input) input.value = '';
+      try {
+        if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem('neomail_preview_avatar');
+      } catch {}
       if (preview && preview.innerHTML !== undefined) {
         preview.innerHTML = '<span style="font-size:26px;font-weight:700;color:var(--accent)">A</span>';
+      }
+      const topAvatar = document.querySelector('.profilelink .avatar');
+      if (topAvatar) {
+        topAvatar.innerHTML = 'A';
       }
       if (removeBtn.style) removeBtn.style.display = 'none';
       if (message) message.textContent = 'Current photo will be removed when saved.';
@@ -68,12 +103,26 @@ export const PROFILE_SCRIPT = String.raw`
       const files = new DataTransfer();
       files.items.add(new File([compressed], 'profile.webp', { type: 'image/webp' }));
       input.files = files.files;
-      if (preview && typeof URL !== 'undefined' && URL.createObjectURL) {
-        preview.innerHTML = '<img src="' + URL.createObjectURL(compressed) + '" alt="Profile preview">';
+
+      // Update preview immediately with optimized WebP
+      if (typeof URL !== 'undefined' && URL.createObjectURL) {
+        const url = URL.createObjectURL(compressed);
+        updatePreviewImage(url);
       }
+      if (typeof FileReader !== 'undefined') {
+        const fr = new FileReader();
+        fr.onload = () => {
+          if (fr.result) {
+            updatePreviewImage(fr.result);
+            try { sessionStorage.setItem('neomail_preview_avatar', fr.result); } catch {}
+          }
+        };
+        fr.readAsDataURL(compressed);
+      }
+
       if (removeCheckbox) removeCheckbox.checked = false;
       if (removeBtn && removeBtn.style) removeBtn.style.display = 'inline-flex';
-      if (message) message.textContent = 'Image optimized (' + Math.round(compressed.size / 1024) + ' KiB). Ready to save.';
+      if (message) message.textContent = 'Photo optimized (' + Math.round(compressed.size / 1024) + ' KiB). Ready to save.';
       return compressed;
     } finally {
       bitmap?.close?.();
@@ -83,10 +132,29 @@ export const PROFILE_SCRIPT = String.raw`
   if (input && typeof input.addEventListener === 'function') {
     input.addEventListener('change', async () => {
       if (!input.files || !input.files[0]) return;
+      const rawFile = input.files[0];
+      // 0ms instant preview when file is selected
+      if (rawFile && rawFile.type && rawFile.type.startsWith('image/')) {
+        if (typeof URL !== 'undefined' && URL.createObjectURL) {
+          updatePreviewImage(URL.createObjectURL(rawFile));
+        }
+        if (typeof FileReader !== 'undefined') {
+          const fr = new FileReader();
+          fr.onload = () => {
+            if (fr.result) {
+              updatePreviewImage(fr.result);
+              try { sessionStorage.setItem('neomail_preview_avatar', fr.result); } catch {}
+            }
+          };
+          fr.readAsDataURL(rawFile);
+        }
+        if (removeBtn && removeBtn.style) removeBtn.style.display = 'inline-flex';
+        if (removeCheckbox) removeCheckbox.checked = false;
+      }
       try {
         busy = true;
         if (button) button.disabled = true;
-        await compressImage(input.files[0]);
+        await compressImage(rawFile);
       } catch (err) {
         if (message) message.textContent = err.message || 'Could not process image.';
       } finally {
@@ -99,6 +167,16 @@ export const PROFILE_SCRIPT = String.raw`
   form.addEventListener('submit', async event => {
     if (busy) { event.preventDefault?.(); return; }
     const file = input?.files?.[0];
+
+    // Clear SPA local cache so all pages immediately show the updated profile photo
+    try {
+      if (typeof localStorage !== 'undefined') {
+        Object.keys(localStorage).forEach(k => {
+          if (k.startsWith('neomail_spa_')) localStorage.removeItem(k);
+        });
+      }
+    } catch {}
+
     if (!file) return;
     if (file.name === 'profile.webp' && file.type === 'image/webp' && file.size <= 131072) {
       return;

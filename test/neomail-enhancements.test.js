@@ -277,4 +277,17 @@ test('neoMail enhancements: clean slugs, dark mode hover, SPA encrypted cache, D
   assert.ok(domainsHtml.includes('app-footer'), 'Must render application footer');
   assert.ok(domainsHtml.includes('System: <strong>Operational</strong>'), 'Must render system status');
   assert.ok(domainsHtml.includes('API v1: <strong>Active · Healthy</strong>'), 'Must render API status');
+
+  // 21. Verify profile settings: Camera & Image icons instead of Mail icon, and CSP img-src blob:
+  const profSettingsRes = await call('super@neomail.internal', '/admin/settings', { headers: { cookie: superCookie } });
+  const profSettingsHtml = await profSettingsRes.text();
+  const cspHeader = profSettingsRes.headers.get('content-security-policy') || '';
+  assert.ok(cspHeader.includes("img-src 'self' data: blob:;"), 'CSP must permit blob: for immediate image preview');
+  assert.ok(profSettingsHtml.includes('id="btn-camera-trigger"'), 'Must render camera trigger badge button');
+  assert.ok(profSettingsHtml.includes('id="btn-upload-avatar"'), 'Must render upload avatar button');
+  assert.ok(profSettingsHtml.includes('avatar-squircle'), 'Must render avatar squircle preview container');
+  // Confirm Change photo button uses Image icon (<circle cx="9" cy="9" r="2"/>)
+  assert.ok(profSettingsHtml.includes('<circle cx="9" cy="9" r="2"/>'), 'Upload button must render Lucide Image icon');
+  // Confirm Camera badge uses Camera icon (<path d="M13.997 4a2 2 0 0 1 1.76 1.05)
+  assert.ok(profSettingsHtml.includes('13.997'), 'Camera badge must render Lucide Camera icon');
 });

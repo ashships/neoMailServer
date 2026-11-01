@@ -42,6 +42,9 @@ import {
   Link,
   Eye,
   Zap,
+  Camera,
+  Image,
+  Upload,
 } from 'lucide';
 
 const icons = {
@@ -84,6 +87,9 @@ const icons = {
   Link,
   Eye,
   Zap,
+  Camera,
+  Image,
+  Upload,
 };
 
 const iconMap = {
@@ -127,6 +133,7 @@ const iconMap = {
   eye: 'Eye',
   zap: 'Zap',
   camera: 'Camera',
+  image: 'Image',
   upload: 'Upload',
 };
 
@@ -2486,8 +2493,12 @@ input[type=checkbox] {
 .profile-photo-card {
   display: flex;
   align-items: center;
-  gap: 20px;
+  gap: 24px;
   flex-wrap: wrap;
+  padding: 16px 20px;
+  background: var(--surface-hover);
+  border: 1px solid var(--line);
+  border-radius: 14px;
 }
 .avatar-wrapper {
   position: relative;
@@ -2498,15 +2509,21 @@ input[type=checkbox] {
 .avatar-squircle {
   width: 80px;
   height: 80px;
-  border-radius: 18px;
-  background: var(--surface-hover);
-  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--surface);
+  border: 2px solid var(--line);
   display: grid;
   place-items: center;
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--accent);
   overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.15s ease;
+}
+.avatar-squircle:hover {
+  border-color: var(--accent);
+  transform: scale(1.02);
 }
 .avatar-squircle img {
   width: 100%;
@@ -2516,8 +2533,8 @@ input[type=checkbox] {
 }
 .avatar-camera-btn {
   position: absolute;
-  bottom: -4px;
-  right: -4px;
+  bottom: -3px;
+  right: -3px;
   width: 28px;
   height: 28px;
   border-radius: 50%;
@@ -2530,14 +2547,15 @@ input[type=checkbox] {
   cursor: pointer;
   padding: 0;
   box-shadow: none !important;
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
 }
 .avatar-camera-btn svg {
   width: 14px;
   height: 14px;
 }
 .avatar-camera-btn:hover {
-  background: #2b332f;
+  background: var(--accent);
+  color: #ffffff;
   transform: scale(1.12);
 }
 .profile-photo-actions {
@@ -4606,14 +4624,16 @@ function profileAvatar(profile) {
   const name = profile?.display_name || 'Administrator';
   const parts = name.trim().split(/\s+/).filter(Boolean);
   const initials = parts.slice(0, 2).map(part => part[0] || '').join('').toUpperCase() || 'A';
-  return `<span class="avatar">${profile?.avatar_mime ? `<img src="/admin/profile-image?v=${e(profile.updated_at)}" alt="${e(name)} profile image">` : e(initials)}</span>`;
+  const v = profile?.updated_at || Date.now();
+  return `<span class="avatar">${profile?.avatar_mime ? `<img src="/admin/profile-image?v=${e(v)}" alt="${e(name)} profile image" onerror="this.style.display='none';this.parentElement.textContent='${e(initials)}'">` : e(initials)}</span>`;
 }
 
 function profileSquircle(profile) {
   const name = profile?.display_name || 'Administrator';
   const parts = name.trim().split(/\s+/).filter(Boolean);
   const initials = parts.slice(0, 2).map(part => part[0] || '').join('').toUpperCase() || 'A';
-  return `<div class="avatar-squircle" id="avatar-squircle-preview">${profile?.avatar_mime ? `<img src="/admin/profile-image?v=${e(profile.updated_at)}" alt="${e(name)} profile image">` : e(initials)}</div>`;
+  const v = profile?.updated_at || Date.now();
+  return `<div class="avatar-squircle" id="avatar-squircle-preview" title="Click to change photo" role="button" tabindex="0">${profile?.avatar_mime ? `<img src="/admin/profile-image?v=${e(v)}" alt="${e(name)} profile image" onerror="this.style.display='none';this.parentElement.textContent='${e(initials)}'">` : e(initials)}</div>`;
 }
 
 function profileSettings(sess) {
@@ -4640,7 +4660,7 @@ function profileSettings(sess) {
             <div class="profile-photo-actions">
               <div class="profile-photo-buttons">
                 <button type="button" class="button secondary" id="btn-upload-avatar">
-                  ${icon('upload')} Change photo
+                  ${icon('image')} Change photo
                 </button>
                 <button type="button" class="button secondary textbutton text-danger" id="btn-remove-avatar" style="${hasAvatar ? '' : 'display:none;'}">
                   ${icon('trash')} Remove
