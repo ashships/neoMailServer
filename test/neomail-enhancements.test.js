@@ -272,4 +272,9 @@ test('neoMail enhancements: clean slugs, dark mode hover, SPA encrypted cache, D
   // 19. Verify removal of old infrastructure footnote across pages
   assert.ok(!domainsHtml.includes('neoMail · Private transactional email infrastructure · UTC'), 'Footnote must be removed from domains page');
   assert.ok(!studioDocsHtml.includes('neoMail · Private transactional email infrastructure · UTC'), 'Footnote must be removed from docs page');
+
+  // 20. Verify Status Footer rendering system and API status
+  assert.ok(domainsHtml.includes('app-footer'), 'Must render application footer');
+  assert.ok(domainsHtml.includes('System: <strong>Operational</strong>'), 'Must render system status');
+  assert.ok(domainsHtml.includes('API v1: <strong>Active · Healthy</strong>'), 'Must render API status');
 });

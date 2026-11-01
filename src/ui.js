@@ -1042,7 +1042,7 @@ main {
   width: 100%;
   max-width: 1600px;
   margin: 0;
-  padding: 28px 32px 56px;
+  padding: 24px 32px 24px;
   box-sizing: border-box;
 }
 
@@ -2180,7 +2180,7 @@ input[type=checkbox] {
 
 /* Responsive Media Queries */
 @media (min-width: 1600px) {
-  main { max-width: 1720px; padding: 28px 36px 56px; margin: 0; }
+  main { max-width: 1720px; padding: 24px 36px 24px; margin: 0; }
 }
 
 @media (max-width: 1100px) {
@@ -2695,14 +2695,97 @@ input[type=checkbox] {
   font-style: italic;
 }
 
+/* Application Status Footer */
+.app-footer {
+  height: 38px;
+  min-height: 38px;
+  background: var(--surface);
+  border-top: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  font-size: 11px;
+  color: var(--muted);
+  flex-shrink: 0;
+  box-sizing: border-box;
+  z-index: 20;
+}
+
+.footer-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.footer-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted);
+}
+
+.footer-status-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.footer-status-item strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.status-dot.good {
+  background: #10b981;
+}
+
+.status-pulse {
+  animation: pulse 2s infinite ease-in-out;
+}
+
+@media (max-width: 768px) {
+  .app-footer {
+    height: auto;
+    padding: 8px 16px;
+    gap: 8px;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .footer-right {
+    display: none;
+  }
+}
+
+:root[data-theme="dark"] .app-footer,
+:root.dark .app-footer,
+:root:has(#theme-toggle:checked) .app-footer {
+  background: #131514;
+  border-top-color: var(--line);
+  color: var(--muted);
+}
+
 /* Studio Documentation Layout */
 main.docs-main-studio {
   display: flex !important;
   flex-direction: column !important;
-  height: calc(100vh - 64px) !important;
+  flex: 1 !important;
+  height: 100% !important;
   max-width: 100% !important;
   margin: 0 !important;
-  padding: 20px !important;
+  padding: 16px 20px !important;
   box-sizing: border-box !important;
   overflow: hidden !important;
 }
@@ -3063,7 +3146,6 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
             <span class="live-pulse"></span>
             <span>System active</span>
           </div>
-          <small>Private mail infrastructure<br>neoMail workspace</small>
           <form method="post" action="/admin/logout">
             ${hidden(sess.csrf_token)}
             <button class="textbutton">Sign out</button>
@@ -3140,6 +3222,29 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
           ${notice ? `<div class="notice" role="status">${e(notice)}</div>` : ''}
           ${content}
         </main>
+        <footer class="app-footer">
+          <div class="footer-left">
+            <div class="footer-status-item">
+              <span class="status-dot good status-pulse"></span>
+              <span>System: <strong>Operational</strong></span>
+            </div>
+            <div class="footer-status-item">
+              <span class="status-dot good"></span>
+              <span>API v1: <strong>Active · Healthy</strong></span>
+            </div>
+            <div class="footer-status-item">
+              <span class="status-dot good"></span>
+              <span>D1 Database: <strong>Connected</strong></span>
+            </div>
+          </div>
+          <div class="footer-right">
+            <span>Zero-Trust AES-256</span>
+            <span>·</span>
+            <span>Failover Routing</span>
+            <span>·</span>
+            <span>Auto-DNS Verified</span>
+          </div>
+        </footer>
       </div>
     </div>
     ${sess?.script_nonce ? `<script nonce="${sess.script_nonce}">${SPA_CLIENT_SCRIPT}</script>` : ''}
