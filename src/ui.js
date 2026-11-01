@@ -6720,7 +6720,74 @@ export function providersView(rows, cfg, sess, limits = {}, usage = {}, userLimi
 
 export function apiClients(clients, sess, createdKey = '') {
   const keyNotice = createdKey ? `<div class="notice">New API key (shown once): <code>${e(createdKey)}</code>. Store it securely; it will not be displayed again.</div>` : '';
-  return `${keyNotice}<section class="panel"><div class="panelhead"><h2>API clients</h2><p>Issue separate bearer tokens for each application. Keys are stored only as hashes.</p></div><div class="tablewrap"><table><thead><tr><th>Name</th><th>Sender</th><th>Status</th><th>Created</th><th>Last used</th><th>Action</th></tr></thead><tbody>${clients.map(c => `<tr><td>${e(c.name)}</td><td>${e(c.sender_address || 'Any active identity')}</td><td>${badge(c.is_active ? 'Active' : 'Revoked')}</td><td>${e(new Date(c.created_at * 1000).toISOString().slice(0, 16).replace('T', ' '))}</td><td>${c.last_used_at ? e(new Date(c.last_used_at * 1000).toISOString().slice(0, 16).replace('T', ' ')) : 'Never'}</td><td>${c.is_active ? `<form method="post" action="/admin/api-clients/revoke">${hidden(sess.csrf_token)}<input type="hidden" name="id" value="${e(c.id)}"><button class="button secondary small">Revoke</button></form>` : ''}</td></tr>`).join('') || `<tr><td colspan="6">No API clients yet.</td></tr>`}</tbody></table></div></section><section class="panel"><div class="panelhead"><h2>Create API client</h2></div><div class="panelbody"><form method="post" action="/admin/api-clients/create">${hidden(sess.csrf_token)}<div class="settingsgrid"><label class="field">Client name<input name="name" required maxlength="80" placeholder="App backend"></label><label class="field">Restricted sender (optional)<input type="email" name="sender_address" maxlength="254" autocomplete="off" spellcheck="false" placeholder="your-sender@your-verified-domain.com"></label></div><button class="button">Create client key</button></form><p class="footnote">Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender.</p></div></section>`;
+  const createPanel = `
+    <section class="panel">
+      <div class="panelhead">
+        <h2>Create API client</h2>
+      </div>
+      <div class="panelbody">
+        <form method="post" action="/admin/api-clients/create">
+          ${hidden(sess.csrf_token)}
+          <div class="settingsgrid">
+            <label class="field">Client name
+              <input name="name" required maxlength="80" placeholder="App backend">
+            </label>
+            <label class="field">Restricted sender (optional)
+              <input type="email" name="sender_address" maxlength="254" autocomplete="off" spellcheck="false" placeholder="your-sender@your-verified-domain.com">
+            </label>
+          </div>
+          <button class="button">Create client key</button>
+        </form>
+        <p class="footnote">Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender.</p>
+      </div>
+    </section>
+  `;
+  const listPanel = `
+    <section class="panel">
+      <div class="panelhead" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2>API clients</h2>
+          <p>Issue separate bearer tokens for each application. Keys are stored only as hashes.</p>
+        </div>
+        <span class="tag" style="font-size:11px">${clients.length} ${clients.length === 1 ? 'client' : 'clients'}</span>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Sender</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th>Last used</th>
+              <th style="text-align:right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${clients.map(c => `
+              <tr>
+                <td><strong>${e(c.name)}</strong></td>
+                <td><code>${e(c.sender_address || 'Any active identity')}</code></td>
+                <td>${badge(c.is_active ? 'Active' : 'Revoked')}</td>
+                <td><span style="color:var(--muted);font-size:12px">${e(new Date(c.created_at * 1000).toISOString().slice(0, 16).replace('T', ' '))}</span></td>
+                <td><span style="color:var(--muted);font-size:12px">${c.last_used_at ? e(new Date(c.last_used_at * 1000).toISOString().slice(0, 16).replace('T', ' ')) : 'Never'}</span></td>
+                <td style="text-align:right">
+                  ${c.is_active ? `
+                    <form method="post" action="/admin/api-clients/revoke" style="display:inline;margin:0" onsubmit="return confirm('Revoke API client ${e(c.name)}?');">
+                      ${hidden(sess.csrf_token)}
+                      <input type="hidden" name="id" value="${e(c.id)}">
+                      <button class="button secondary small">Revoke</button>
+                    </form>
+                  ` : '<span class="muted">—</span>'}
+                </td>
+              </tr>
+            `).join('') || `<tr><td colspan="6">No API clients yet.</td></tr>`}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  `;
+  return `${keyNotice}${createPanel}${listPanel}`;
 }
 
 function renderNoticeText(msg) {
