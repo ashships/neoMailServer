@@ -2688,6 +2688,138 @@ input[type=checkbox] {
   font-style: italic;
 }
 
+/* Studio Documentation Layout */
+main.docs-main-studio {
+  display: flex !important;
+  flex-direction: column !important;
+  height: calc(100vh - 64px) !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 20px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.docs-studio-panel {
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  border: 1px solid var(--line) !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--surface) !important;
+  overflow: hidden !important;
+  box-shadow: none !important;
+}
+
+.docs-studio-body {
+  display: grid;
+  grid-template-columns: 240px 1fr 280px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--bg);
+}
+
+@media (max-width: 1200px) {
+  .docs-studio-body {
+    grid-template-columns: 200px 1fr 240px;
+  }
+}
+
+@media (max-width: 900px) {
+  .docs-studio-body {
+    grid-template-columns: 1fr;
+  }
+  .docs-studio-sidebar-left,
+  .docs-studio-sidebar-right {
+    display: none !important;
+  }
+}
+
+.studio-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.studio-nav-item:hover {
+  background: var(--surface-hover);
+  color: var(--accent);
+}
+
+.studio-nav-item.active {
+  background: var(--tint);
+  color: var(--accent);
+  font-weight: 600;
+  border-color: var(--line);
+}
+
+.studio-nav-item svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.studio-project-card {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  transition: all 0.12s ease;
+}
+
+.studio-project-card:hover {
+  border-color: var(--accent);
+}
+
+.studio-project-card .proj-name {
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.studio-project-card .proj-url {
+  font-size: 11px;
+  font-family: var(--mono);
+  color: var(--muted);
+  margin-top: 3px;
+  word-break: break-all;
+}
+
+.studio-project-card .proj-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 6px;
+  border-top: 1px solid var(--line);
+}
+
+.studio-project-card .proj-tag {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--surface-hover);
+  color: var(--muted);
+}
+
 .editor-statusbar {
   display: flex;
   align-items: center;
@@ -2971,7 +3103,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
             </details>
           </div>
         </header>
-        <main class="main" id="app-main">
+        <main class="main ${view === 'docs' ? 'docs-main-studio' : ''}" id="app-main">
           ${alerts && alerts.length > 0 ? alerts.map(a => `
             <div class="dns-alert-banner" role="alert">
               <div class="dns-alert-icon">${icon('security')}</div>
@@ -3000,7 +3132,6 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
           `}
           ${notice ? `<div class="notice" role="status">${e(notice)}</div>` : ''}
           ${content}
-          <p class="footnote">neoMail · Private transactional email infrastructure · UTC</p>
         </main>
       </div>
     </div>
@@ -3385,70 +3516,181 @@ export function setup(origin, cfg) {
 }
 
 export function docsEditor(content, sess) {
-  return `<section class="panel">
-    <div class="panelhead">
-      <div>
-        <h2>Documentation Content & Live Editor</h2>
-        <p>Edit, format, and preview system documentation published at /docs.</p>
+  return `<section class="panel docs-studio-panel">
+    <div class="panelhead" style="padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0">
+      <div style="display:flex;align-items:center;gap:12px">
+        <span class="tag good" style="font-weight:700;font-size:11px;padding:3px 8px;display:inline-flex;align-items:center;gap:5px">${icon('code')} STUDIO</span>
+        <div>
+          <h2 style="font-size:15px;margin:0;font-weight:700">Documentation Content & Live Editor</h2>
+          <p style="margin:0;font-size:11px;color:var(--muted)">Author and publish system documentation with integrated neoCodebase project data.</p>
+        </div>
       </div>
-      <div class="actions">
+      <div class="actions" style="display:flex;align-items:center;gap:10px">
         <a class="button secondary small" href="/docs" target="_blank">${icon('external')} <span>View public page</span></a>
+        <button class="button small" id="studio-save-top-btn" type="button">${icon('check')} <span>Publish documentation</span></button>
       </div>
     </div>
-    <div class="panelbody">
-      <form method="post" action="/admin/docs/save">
-        ${hidden(sess.csrf_token)}
-        <div class="rich-editor-container">
-          <div class="rich-editor-toolbar" role="toolbar" aria-label="Editor toolbar">
-            <div class="editor-btn-group">
-              <button type="button" class="editor-btn" data-action="h1" title="Heading 1">H1</button>
-              <button type="button" class="editor-btn" data-action="h2" title="Heading 2">H2</button>
-              <button type="button" class="editor-btn" data-action="h3" title="Heading 3">H3</button>
+
+    <div class="docs-studio-body">
+      <!-- LEFT SIDEBAR: Documentation Navigation Links -->
+      <aside class="docs-studio-sidebar-left" style="border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--surface);overflow-y:auto">
+        <div style="padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted)">Docs Structure</span>
+          <span class="tag" style="font-size:10px;padding:2px 6px">10 topics</span>
+        </div>
+        <div class="docs-nav-links" style="padding:8px;display:flex;flex-direction:column;gap:3px">
+          <button type="button" class="studio-nav-item active" data-title="Getting Started" data-snippet="## Getting Started\n\nWelcome to neoMail. Private transactional email infrastructure.">
+            ${icon('zap')} <span>Getting Started</span>
+          </button>
+          <button type="button" class="studio-nav-item" data-title="Quickstart & Setup" data-snippet="## Quickstart & Setup\n\nConnect your application backend using the official SDK or REST API.">
+            ${icon('play')} <span>Quickstart & Setup</span>
+          </button>
+          <button type="button" class="studio-nav-item" data-title="Sending Domains & DNS" data-snippet="## Sending Domains & DNS Verification\n\nAdd TXT verification record:\n- Name: \`_neomail-verification.yourdomain.com\`\n- Value: \`your_verification_token\`">
+            ${icon('globe')} <span>Domains & DNS</span>
+          </button>
+          <button type="button" class="studio-nav-item" data-title="Delivery Providers" data-snippet="## Intelligent Fallback Routing\n\nOutbound emails are dispatched sequentially across enrolled providers (Resend → Brevo → Mailgun → Mailtrap → MailerSend → SMTP).">
+            ${icon('server')} <span>Delivery Providers</span>
+          </button>
+          <button type="button" class="studio-nav-item" data-title="Sender Identities" data-snippet="## Sender Identities\n\nSender identities must belong to a verified domain in your workspace.">
+            ${icon('mail')} <span>Sender Identities</span>
+          </button>
+          <button type="button" class="studio-nav-item" data-title="REST API Reference" data-snippet="## REST API Reference\n\nPOST \`/api/v1/send\` with Bearer token authentication and Idempotency-Key.">
+            ${icon('code')} <span>API Reference</span>
+          </button>
+          <button type="button" class="studio-nav-item" data-title="Zero-Trust Security" data-snippet="## Zero-Trust Security\n\nAccount-isolated provider credentials are encrypted at rest with AES-256-GCM in Cloudflare D1.">
+            ${icon('security')} <span>Zero-Trust Security</span>
+          </button>
+          <button type="button" class="studio-nav-item" data-title="Webhooks & Events" data-snippet="## Webhooks & Event Tracking\n\nReceive real-time delivery status updates, bounces, and complaints.">
+            ${icon('refresh')} <span>Webhooks & Events</span>
+          </button>
+          <button type="button" class="studio-nav-item" data-title="SMTP Relay" data-snippet="## SMTP Direct Relay\n\nConfigure custom SMTP relay on port 465 (Implicit TLS) or 587 (STARTTLS).">
+            ${icon('settings')} <span>SMTP Relay</span>
+          </button>
+          <button type="button" class="studio-nav-item" data-title="Quotas & Limits" data-snippet="## Provider Quotas & Rate Limits\n\nPer-provider sending quotas protect your sender reputation from unexpected surges.">
+            ${icon('list')} <span>Quotas & Limits</span>
+          </button>
+        </div>
+        <div style="margin-top:auto;padding:12px 14px;border-top:1px solid var(--line);background:var(--surface-hover)">
+          <a href="/docs" target="_blank" style="font-size:12px;color:var(--accent);display:flex;align-items:center;gap:6px;font-weight:600">
+            ${icon('external')} <span>Open Public Docs ↗</span>
+          </a>
+        </div>
+      </aside>
+
+      <!-- CENTER: Studio Markdown Editor -->
+      <div class="docs-studio-editor-center" style="display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--surface)">
+        <form id="docs-editor-form" method="post" action="/admin/docs/save" style="display:flex;flex-direction:column;flex:1;min-height:0;margin:0">
+          ${hidden(sess.csrf_token)}
+          <div class="rich-editor-container" style="display:flex;flex-direction:column;flex:1;min-height:0;margin:0;border:0;border-radius:0">
+            <div class="rich-editor-toolbar" role="toolbar" aria-label="Editor toolbar">
+              <div class="editor-btn-group">
+                <button type="button" class="editor-btn" data-action="h1" title="Heading 1">H1</button>
+                <button type="button" class="editor-btn" data-action="h2" title="Heading 2">H2</button>
+                <button type="button" class="editor-btn" data-action="h3" title="Heading 3">H3</button>
+              </div>
+              <div class="editor-btn-group">
+                <button type="button" class="editor-btn" data-action="bold" title="Bold (Ctrl+B)">${icon('bold')}</button>
+                <button type="button" class="editor-btn" data-action="italic" title="Italic (Ctrl+I)">${icon('italic')}</button>
+                <button type="button" class="editor-btn" data-action="strike" title="Strikethrough">~S~</button>
+              </div>
+              <div class="editor-btn-group">
+                <button type="button" class="editor-btn" data-action="quote" title="Quote">${icon('quote')}</button>
+                <button type="button" class="editor-btn" data-action="code" title="Inline code">${icon('code')}</button>
+                <button type="button" class="editor-btn" data-action="codeblock" title="Code block">&lt;/&gt;</button>
+              </div>
+              <div class="editor-btn-group">
+                <button type="button" class="editor-btn" data-action="bullet" title="Bullet list">${icon('list')}</button>
+                <button type="button" class="editor-btn" data-action="link" title="Insert link (Ctrl+K)">${icon('link')}</button>
+                <button type="button" class="editor-btn" data-action="table" title="Insert table template">Table</button>
+                <button type="button" class="editor-btn" data-action="hr" title="Divider">—</button>
+              </div>
+              <div class="editor-btn-group" style="margin-left:auto">
+                <button type="button" id="editor-toggle-preview" class="editor-btn" title="Toggle Slide-out Preview">${icon('eye')} <span>Preview Drawer</span></button>
+              </div>
             </div>
-            <div class="editor-btn-group">
-              <button type="button" class="editor-btn" data-action="bold" title="Bold (Ctrl+B)">${icon('bold')}</button>
-              <button type="button" class="editor-btn" data-action="italic" title="Italic (Ctrl+I)">${icon('italic')}</button>
-              <button type="button" class="editor-btn" data-action="strike" title="Strikethrough">~S~</button>
+
+            <!-- Full-Height Editor Workspace with slide-out overlay preview instead of split-view crowding -->
+            <div id="editor-workspace" class="editor-workspace" style="flex:1;min-height:0;display:flex;position:relative;height:100%">
+              <textarea id="docs-editor-textarea" name="content" class="editor-textarea" maxlength="20000" placeholder="Write documentation here in Markdown or plain text..." style="flex:1;height:100%;min-height:0;resize:none;padding:18px 24px;font-family:var(--mono);font-size:13px;line-height:1.65;border:0;outline:none;background:var(--surface);color:var(--text);box-sizing:border-box">${e(content)}</textarea>
+              <div id="docs-editor-preview" class="editor-preview" style="display:none;position:absolute;top:0;right:0;width:100%;height:100%;background:var(--surface);z-index:20;padding:24px;overflow-y:auto;border-left:1px solid var(--line);box-sizing:border-box" aria-live="polite">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--line)">
+                  <strong>Live Preview</strong>
+                  <button type="button" id="close-preview-btn" class="button secondary small" style="padding:3px 8px">${icon('close')} Close</button>
+                </div>
+                <div id="docs-preview-content"></div>
+              </div>
             </div>
-            <div class="editor-btn-group">
-              <button type="button" class="editor-btn" data-action="quote" title="Quote">${icon('quote')}</button>
-              <button type="button" class="editor-btn" data-action="code" title="Inline code">${icon('code')}</button>
-              <button type="button" class="editor-btn" data-action="codeblock" title="Code block">&lt;/&gt;</button>
-            </div>
-            <div class="editor-btn-group">
-              <button type="button" class="editor-btn" data-action="bullet" title="Bullet list">${icon('list')}</button>
-              <button type="button" class="editor-btn" data-action="link" title="Insert link (Ctrl+K)">${icon('link')}</button>
-              <button type="button" class="editor-btn" data-action="table" title="Insert table template">Table</button>
-              <button type="button" class="editor-btn" data-action="hr" title="Divider">—</button>
-            </div>
-            <div class="editor-btn-group" style="margin-left:auto">
-              <button type="button" id="editor-toggle-preview" class="editor-btn active" title="Toggle Live Preview">${icon('eye')} <span>Preview</span></button>
+
+            <div class="editor-statusbar" style="padding:10px 18px;border-top:1px solid var(--line);background:var(--surface-hover);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
+              <span id="editor-counter">0 words · 0 / 20,000 characters</span>
+              <div style="display:flex;align-items:center;gap:12px">
+                <span class="tag good">${icon('security')} Superadmin Mode · Auto-Sync</span>
+                <button class="button small" type="submit">${icon('check')} <span>Publish documentation</span></button>
+              </div>
             </div>
           </div>
-          <div id="editor-workspace" class="editor-workspace split-view">
-            <textarea id="docs-editor-textarea" name="content" class="editor-textarea" maxlength="20000" placeholder="Write documentation here in Markdown or plain text...">${e(content)}</textarea>
-            <div id="docs-editor-preview" class="editor-preview" aria-live="polite"></div>
+        </form>
+      </div>
+
+      <!-- RIGHT SIDEBAR: neoCodebase Connected Projects Panel -->
+      <aside class="docs-studio-sidebar-right" style="border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--surface);overflow-y:auto">
+        <div style="padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+          <div>
+            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);display:block">Projects & Data</span>
+            <span style="font-size:10px;color:var(--muted)">neoCodebase Workspace</span>
           </div>
-          <div class="editor-statusbar">
-            <span id="editor-counter">0 words · 0 / 20,000 characters</span>
-            <span class="tag good">${icon('security')} Superadmin Mode · Auto-Sync</span>
+          <button type="button" id="btn-toggle-add-proj" class="button secondary small" style="padding:3px 8px;font-size:11px" title="Add project to studio">+ Add</button>
+        </div>
+
+        <!-- Add Project Inline Form (collapsible) -->
+        <div id="add-project-box" style="display:none;padding:12px;background:var(--surface-hover);border-bottom:1px solid var(--line)">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <label style="font-size:11px;font-weight:600">Project Name
+              <input type="text" id="new-proj-name" placeholder="e.g. LMS Backend" required maxlength="50" style="width:100%;padding:5px 8px;font-size:11px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--text);box-sizing:border-box">
+            </label>
+            <label style="font-size:11px;font-weight:600">Base URL / Repo Path
+              <input type="text" id="new-proj-url" placeholder="https://api.yourdomain.com" required maxlength="120" style="width:100%;padding:5px 8px;font-size:11px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--text);box-sizing:border-box">
+            </label>
+            <label style="font-size:11px;font-weight:600">Integration Type
+              <select id="new-proj-type" class="custom-select" style="width:100%;padding:5px 8px;font-size:11px">
+                <option value="API v1 Client">API v1 Client</option>
+                <option value="Webhook Consumer">Webhook Consumer</option>
+                <option value="SMTP Relay">SMTP Relay</option>
+                <option value="Cloudflare Worker">Cloudflare Worker</option>
+              </select>
+            </label>
+            <div style="display:flex;gap:6px;margin-top:4px">
+              <button type="button" id="btn-save-project" class="button small" style="flex:1;padding:4px 8px;font-size:11px">Save Project</button>
+              <button type="button" id="btn-cancel-project" class="button secondary small" style="padding:4px 8px;font-size:11px">Cancel</button>
+            </div>
           </div>
         </div>
-        <div style="display:flex;align-items:center;justify-content:space-between">
-          <p class="footnote" style="margin:0">Documentation is visible to all authenticated administrators and published at <code>/docs</code>.</p>
-          <button class="button" type="submit">${icon('check')} <span>Publish documentation</span></button>
+
+        <!-- Projects List Container -->
+        <div id="studio-projects-container" style="padding:10px;display:flex;flex-direction:column;gap:8px;flex:1"></div>
+
+        <div style="padding:12px 14px;border-top:1px solid var(--line);background:var(--surface-hover);font-size:11px;color:var(--muted)">
+          💡 Click <strong>Insert to Docs</strong> on any project to inject verified endpoint config and headers into your documentation.
         </div>
-      </form>
+      </aside>
     </div>
   </section>
   ${sess?.script_nonce ? `<script nonce="${sess.script_nonce}">
     (function() {
       var ta = document.getElementById('docs-editor-textarea');
       var preview = document.getElementById('docs-editor-preview');
+      var previewContent = document.getElementById('docs-preview-content');
       var counter = document.getElementById('editor-counter');
-      var ws = document.getElementById('editor-workspace');
       var toggleBtn = document.getElementById('editor-toggle-preview');
+      var closePreviewBtn = document.getElementById('close-preview-btn');
+      var saveTopBtn = document.getElementById('studio-save-top-btn');
+      var form = document.getElementById('docs-editor-form');
+
       if (!ta) return;
+
+      if (saveTopBtn && form) {
+        saveTopBtn.addEventListener('click', function() { form.submit(); });
+      }
 
       function renderMarkdown(md) {
         if (!md) return '<p class="muted">No content to preview.</p>';
@@ -3496,7 +3738,9 @@ export function docsEditor(content, sess) {
 
       function update() {
         var val = ta.value;
-        if (preview) preview.innerHTML = renderMarkdown(val);
+        var rendered = renderMarkdown(val);
+        if (previewContent) previewContent.innerHTML = rendered;
+        else if (preview) preview.innerHTML = rendered;
         if (counter) {
           var words = val.trim() ? val.trim().split(/\\s+/).length : 0;
           counter.textContent = words.toLocaleString() + ' words · ' + val.length.toLocaleString() + ' / 20,000 characters';
@@ -3535,12 +3779,136 @@ export function docsEditor(content, sess) {
         });
       });
 
-      if (toggleBtn && ws) {
+      // Navigation Items in Left Sidebar
+      document.querySelectorAll('.studio-nav-item').forEach(function(item) {
+        item.addEventListener('click', function() {
+          document.querySelectorAll('.studio-nav-item').forEach(function(el) { el.classList.remove('active'); });
+          item.classList.add('active');
+          var snippet = item.getAttribute('data-snippet');
+          if (snippet) {
+            insert('\\n\\n' + snippet + '\\n', '');
+          }
+        });
+      });
+
+      // Preview Drawer Toggle
+      if (toggleBtn && preview) {
         toggleBtn.addEventListener('click', function() {
-          ws.classList.toggle('split-view');
-          toggleBtn.classList.toggle('active');
+          var isHidden = preview.style.display === 'none';
+          preview.style.display = isHidden ? 'block' : 'none';
+          toggleBtn.classList.toggle('active', isHidden);
+          update();
         });
       }
+      if (closePreviewBtn && preview) {
+        closePreviewBtn.addEventListener('click', function() {
+          preview.style.display = 'none';
+          if (toggleBtn) toggleBtn.classList.remove('active');
+        });
+      }
+
+      // Projects Management in Right Sidebar
+      var defaultProjects = [
+        { id: 'proj-1', name: 'neoMail Production Worker', url: 'https://mail.neopathshala.com', type: 'Cloudflare Worker', endpoints: ['POST /api/v1/send', 'POST /api/v1/domains/verify'] },
+        { id: 'proj-2', name: 'Nepathshala LMS Core', url: 'https://api.neopathshala.com', type: 'API v1 Client', endpoints: ['POST /webhooks/mail-events'] },
+        { id: 'proj-3', name: 'Transactional Dispatcher', url: 'https://dispatcher.internal', type: 'Microservice Client', endpoints: ['Bearer Auth + Idempotency-Key'] }
+      ];
+
+      function getProjects() {
+        try {
+          var saved = localStorage.getItem('neomail_studio_projects');
+          return saved ? JSON.parse(saved) : defaultProjects;
+        } catch { return defaultProjects; }
+      }
+
+      function saveProjects(projs) {
+        try { localStorage.setItem('neomail_studio_projects', JSON.stringify(projs)); } catch {}
+        renderProjects();
+      }
+
+      function renderProjects() {
+        var container = document.getElementById('studio-projects-container');
+        if (!container) return;
+        var projs = getProjects();
+        container.innerHTML = projs.map(function(p) {
+          return '<div class="studio-project-card" data-id="' + p.id + '">' +
+            '<div class="proj-name"><span>' + p.name + '</span><span class="proj-tag">' + p.type + '</span></div>' +
+            '<div class="proj-url">' + p.url + '</div>' +
+            '<div class="proj-meta">' +
+              '<button type="button" class="button secondary small btn-insert-proj" style="padding:2px 6px;font-size:10px" data-id="' + p.id + '">Insert to Docs</button>' +
+              (p.id.startsWith('user-') ? '<button type="button" class="button danger small btn-del-proj" style="padding:2px 6px;font-size:10px" data-id="' + p.id + '">Delete</button>' : '<span style="font-size:10px;color:var(--accent)">● Verified</span>') +
+            '</div>' +
+          '</div>';
+        }).join('');
+
+        // Attach insert handlers
+        container.querySelectorAll('.btn-insert-proj').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var pid = btn.getAttribute('data-id');
+            var proj = getProjects().find(function(x) { return x.id === pid; });
+            if (proj) {
+              var md = '\\n\\n### ' + proj.name + ' Integration\\n' +
+                '- **Base URL:** \`' + proj.url + '\`\\n' +
+                '- **Integration Mode:** ' + proj.type + '\\n' +
+                (proj.endpoints && proj.endpoints.length ? '- **Available Endpoints:** ' + proj.endpoints.map(function(e) { return '\`' + e + '\`'; }).join(', ') + '\\n' : '') +
+                '- **Authentication:** \`Authorization: Bearer <API_SECRET_KEY>\`\\n' +
+                '- **Idempotency:** \`Idempotency-Key: <UUID>\`\\n';
+              insert(md, '');
+            }
+          });
+        });
+
+        // Attach delete handlers
+        container.querySelectorAll('.btn-del-proj').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var pid = btn.getAttribute('data-id');
+            var remaining = getProjects().filter(function(x) { return x.id !== pid; });
+            saveProjects(remaining);
+          });
+        });
+      }
+
+      var toggleAddBtn = document.getElementById('btn-toggle-add-proj');
+      var addBox = document.getElementById('add-project-box');
+      var cancelAddBtn = document.getElementById('btn-cancel-project');
+      var saveProjBtn = document.getElementById('btn-save-project');
+
+      if (toggleAddBtn && addBox) {
+        toggleAddBtn.addEventListener('click', function() {
+          addBox.style.display = addBox.style.display === 'none' ? 'block' : 'none';
+        });
+      }
+      if (cancelAddBtn && addBox) {
+        cancelAddBtn.addEventListener('click', function() {
+          addBox.style.display = 'none';
+        });
+      }
+      if (saveProjBtn) {
+        saveProjBtn.addEventListener('click', function() {
+          var nameInput = document.getElementById('new-proj-name');
+          var urlInput = document.getElementById('new-proj-url');
+          var typeInput = document.getElementById('new-proj-type');
+          if (!nameInput || !urlInput) return;
+          var name = nameInput.value.trim();
+          var url = urlInput.value.trim();
+          var type = typeInput ? typeInput.value : 'API v1 Client';
+          if (!name || !url) return;
+          var projs = getProjects();
+          projs.push({
+            id: 'user-' + Date.now(),
+            name: name,
+            url: url,
+            type: type,
+            endpoints: ['POST /api/v1/send']
+          });
+          saveProjects(projs);
+          nameInput.value = '';
+          urlInput.value = '';
+          if (addBox) addBox.style.display = 'none';
+        });
+      }
+
+      renderProjects();
 
       ta.addEventListener('input', update);
       ta.addEventListener('keydown', function(e) {
@@ -4100,10 +4468,10 @@ export function domains(rows, sess) {
           ${hidden(sess.csrf_token)}
           <div class="settingsgrid">
             <label class="field">Domain
-              <input name="domain" required maxlength="253" pattern="[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?" title="Letters, digits, dots and hyphens only (e.g. client.example.com)" autocomplete="off" spellcheck="false" placeholder="client.example.com">
+              <input name="domain" required maxlength="253" pattern="[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?" title="Letters, digits, dots and hyphens only (e.g. mail.your-domain.com)" autocomplete="off" spellcheck="false" placeholder="mail.your-domain.com">
             </label>
             <label class="field">Display name
-              <input name="display_name" required maxlength="100" placeholder="Client name">
+              <input name="display_name" required maxlength="100" placeholder="e.g. yourDomain Mail">
             </label>
           </div>
           <button class="button">Add domain</button>

@@ -253,4 +253,23 @@ test('neoMail enhancements: clean slugs, dark mode hover, SPA encrypted cache, D
   assert.equal(tenantDelRes.status, 303);
   const checkTenantDel = await db.prepare("SELECT 1 FROM managed_domains WHERE domain='tenant-to-delete.com'").first();
   assert.ok(!checkTenantDel, 'Tenant domain must be deleted');
+
+  // 17. Verify Add domain placeholders
+  const domainsRes = await call('super@neomail.internal', '/admin/domains', { headers: { cookie: superCookie } });
+  const domainsHtml = await domainsRes.text();
+  assert.ok(domainsHtml.includes('placeholder="mail.your-domain.com"'), 'Domain input must have mail.your-domain.com placeholder');
+  assert.ok(domainsHtml.includes('placeholder="e.g. yourDomain Mail"'), 'Display name input must have e.g. yourDomain Mail placeholder');
+
+  // 18. Verify Docs Studio layout and full-height studio architecture
+  const studioDocsRes = await call('super@neomail.internal', '/admin/docs', { headers: { cookie: superCookie } });
+  const studioDocsHtml = await studioDocsRes.text();
+  assert.ok(studioDocsHtml.includes('docs-main-studio'), 'Docs page main must have docs-main-studio class');
+  assert.ok(studioDocsHtml.includes('docs-studio-sidebar-left'), 'Must render left navigation sidebar');
+  assert.ok(studioDocsHtml.includes('docs-studio-sidebar-right'), 'Must render right projects sidebar');
+  assert.ok(studioDocsHtml.includes('studio-projects-container'), 'Must render projects container');
+  assert.ok(studioDocsHtml.includes('neoCodebase Workspace'), 'Must reference neoCodebase integration');
+
+  // 19. Verify removal of old infrastructure footnote across pages
+  assert.ok(!domainsHtml.includes('neoMail · Private transactional email infrastructure · UTC'), 'Footnote must be removed from domains page');
+  assert.ok(!studioDocsHtml.includes('neoMail · Private transactional email infrastructure · UTC'), 'Footnote must be removed from docs page');
 });
