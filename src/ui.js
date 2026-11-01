@@ -159,21 +159,23 @@ export const faviconUri = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`
 const css = `
 :root {
   color-scheme: light dark;
-  --bg: #f8fafc;
+  --bg: #fbfaf8;
   --surface: #ffffff;
-  --surface-hover: #f1f5f9;
-  --surface-active: #e2e8f0;
-  --text: #0f172a;
-  --text-secondary: #334155;
-  --muted: #64748b;
-  --line: #e2e8f0;
-  --line-strong: #cbd5e1;
+  --surface-hover: #f5f4f0;
+  --surface-active: #edebe6;
+  --text: #212624;
+  --text-secondary: #4a544f;
+  --muted: #69746e;
+  --line: #dfddd7;
+  --line-strong: #d2d0c8;
   --accent: #087d54;
   --accent-hover: #066b47;
   --accent-active: #044e33;
-  --tint: #ecfdf5;
-  --tint-strong: #d1fae5;
+  --accent-fg: #ffffff;
+  --tint: rgba(8, 125, 84, 0.08);
+  --tint-strong: rgba(8, 125, 84, 0.16);
   --tint-text: #065f46;
+  --brand-dark: #063b2c;
   --danger: #dc2626;
   --danger-bg: #fef2f2;
   --danger-line: #fecaca;
@@ -192,7 +194,7 @@ const css = `
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-full: 9999px;
-  --font: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font: var(--font-geist-sans), "Plus Jakarta Sans", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-family: var(--font);
   font-size: 14px;
@@ -200,23 +202,26 @@ const css = `
 
 /* neoPathshala Dark Mode */
 :root[data-theme="dark"],
+:root.dark,
 :root:has(#theme-toggle:checked) {
   color-scheme: dark;
-  --bg: #090d16;
-  --surface: #0f172a;
-  --surface-hover: #1e293b;
-  --surface-active: #334155;
-  --text: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --muted: #94a3b8;
-  --line: #1e293b;
-  --line-strong: #334155;
-  --accent: #10b981;
-  --accent-hover: #34d399;
-  --accent-active: #059669;
-  --tint: rgba(16, 185, 129, 0.15);
-  --tint-strong: rgba(16, 185, 129, 0.3);
+  --bg: #131514;
+  --surface: #1a1d1b;
+  --surface-hover: #242826;
+  --surface-active: #2d3230;
+  --text: #eceae5;
+  --text-secondary: #c8c5bc;
+  --muted: #99a49e;
+  --line: #323734;
+  --line-strong: #454c47;
+  --accent: #34d399;
+  --accent-hover: #5fc38d;
+  --accent-active: #10b981;
+  --accent-fg: #13201a;
+  --tint: rgba(52, 211, 153, 0.12);
+  --tint-strong: rgba(52, 211, 153, 0.22);
   --tint-text: #6ee7b7;
+  --brand-dark: #063b2c;
   --danger: #f87171;
   --danger-bg: rgba(239, 68, 68, 0.15);
   --danger-line: rgba(239, 68, 68, 0.3);
@@ -235,21 +240,23 @@ const css = `
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]):not(:has(#theme-toggle-light:checked)) {
     color-scheme: dark;
-    --bg: #090d16;
-    --surface: #0f172a;
-    --surface-hover: #1e293b;
-    --surface-active: #334155;
-    --text: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --muted: #94a3b8;
-    --line: #1e293b;
-    --line-strong: #334155;
-    --accent: #10b981;
-    --accent-hover: #34d399;
-    --accent-active: #059669;
-    --tint: rgba(16, 185, 129, 0.15);
-    --tint-strong: rgba(16, 185, 129, 0.3);
+    --bg: #131514;
+    --surface: #1a1d1b;
+    --surface-hover: #242826;
+    --surface-active: #2d3230;
+    --text: #eceae5;
+    --text-secondary: #c8c5bc;
+    --muted: #99a49e;
+    --line: #323734;
+    --line-strong: #454c47;
+    --accent: #34d399;
+    --accent-hover: #5fc38d;
+    --accent-active: #10b981;
+    --accent-fg: #13201a;
+    --tint: rgba(52, 211, 153, 0.12);
+    --tint-strong: rgba(52, 211, 153, 0.22);
     --tint-text: #6ee7b7;
+    --brand-dark: #063b2c;
     --danger: #f87171;
     --danger-bg: rgba(239, 68, 68, 0.15);
     --danger-line: rgba(239, 68, 68, 0.3);
@@ -974,26 +981,29 @@ p {
   align-items: center;
   justify-content: center;
   gap: 7px;
-  background: linear-gradient(180deg, #0a8f60 0%, #087d54 100%);
-  border: 1px solid #066d48;
+  background: var(--accent);
+  border: 1px solid var(--accent);
   border-radius: var(--radius-sm);
-  color: #ffffff;
-  padding: 8px 15px;
-  font-size: 12px;
+  color: var(--accent-fg);
+  padding: 9px 18px;
+  font-size: 13px;
   font-weight: 600;
   line-height: 1.25;
   cursor: pointer;
   transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
+  box-shadow: none !important;
 }
 
 .button:hover {
   background: var(--accent-hover);
-  border-color: var(--accent-active);
+  border-color: var(--accent-hover);
+  color: var(--accent-fg);
   transform: translateY(-1px);
 }
 
 .button:active {
+  background: var(--accent-active);
   transform: translateY(0);
 }
 
@@ -1015,26 +1025,24 @@ p {
 }
 
 .button.danger {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #dc2626;
+  background: var(--danger-bg);
+  border: 1px solid var(--danger-line);
+  color: var(--danger);
 }
 
 .button.danger:hover {
-  background: #fee2e2;
-  border-color: #fca5a5;
-  color: #b91c1c;
+  background: var(--danger-line);
+  color: var(--danger);
   transform: translateY(-1px);
 }
 
 .button.danger:active {
   transform: translateY(0);
-  background: #fecaca;
 }
 
 .button.small {
-  padding: 5px 10px;
-  font-size: 11px;
+  padding: 5px 12px;
+  font-size: 11.5px;
   border-radius: var(--radius-xs);
 }
 
@@ -1066,12 +1074,12 @@ p {
 }
 
 .stat:hover {
-  background: #fbfcfd;
+  background: var(--surface-hover);
 }
 
 .statlabel {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 650;
   text-transform: uppercase;
   letter-spacing: 0.6px;
   color: var(--muted);
@@ -1083,12 +1091,12 @@ p {
 .statlabel svg {
   width: 16px;
   height: 16px;
-  color: var(--muted);
+  color: var(--accent);
 }
 
 .statvalue {
-  font-size: 30px;
-  font-weight: 700;
+  font-size: 32px;
+  font-weight: 750;
   letter-spacing: -1px;
   line-height: 1.2;
   margin: 12px 0 6px;
@@ -1098,7 +1106,7 @@ p {
 
 .statnote {
   color: var(--muted);
-  font-size: 11px;
+  font-size: 11.5px;
   display: flex;
   align-items: center;
   gap: 5px;
@@ -1147,8 +1155,8 @@ table {
 }
 
 th {
-  background: #fbfcfb;
-  font-size: 10px;
+  background: var(--surface-hover);
+  font-size: 10.5px;
   text-transform: uppercase;
   letter-spacing: 0.8px;
   font-weight: 650;
@@ -1159,8 +1167,8 @@ th {
 
 td {
   padding: 14px 20px;
-  border-bottom: 1px solid #f1f5f3;
-  font-size: 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5px;
   color: var(--text);
 }
 
@@ -1169,7 +1177,7 @@ tr:last-child td {
 }
 
 tr:hover td {
-  background: #fafcfa;
+  background: var(--surface-hover);
 }
 
 td .muted {
@@ -1202,6 +1210,7 @@ td .muted {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.3px;
+  border: 1px solid var(--line);
 }
 
 .tag.good,
@@ -1210,23 +1219,26 @@ td .muted {
 .tag.Configured,
 .tag.Verified,
 .tag.Active {
-  background: #dcfce7;
-  color: #15803d;
+  background: var(--tint);
+  border-color: var(--tint-strong);
+  color: var(--tint-text);
 }
 
 .tag.warn,
 .tag.Paused,
 .tag.Queued,
 .tag.default {
-  background: #fef3c7;
-  color: #b45309;
+  background: var(--warn-bg);
+  border-color: var(--warn-line);
+  color: var(--warn);
 }
 
 .tag.Failed,
 .tag.Bounced,
 .tag.danger {
-  background: #fee2e2;
-  color: #b91c1c;
+  background: var(--danger-bg);
+  border-color: var(--danger-line);
+  color: var(--danger);
 }
 
 /* Advanced filter bar */
@@ -1237,7 +1249,7 @@ td .muted {
   flex-wrap: wrap;
   padding: 14px 22px;
   border-bottom: 1px solid var(--line);
-  background: #fafbfc;
+  background: var(--surface-hover);
 }
 
 .filter-group {
@@ -2117,30 +2129,30 @@ input[type=checkbox] {
 }
 
 /* Dark mode component enhancements */
-:root[data-theme="dark"] th, :root:has(#theme-toggle:checked) th { background: #0c1322; }
-:root[data-theme="dark"] tr:hover td, :root:has(#theme-toggle:checked) tr:hover td { background: #131d33; }
-:root[data-theme="dark"] td, :root:has(#theme-toggle:checked) td { border-bottom-color: #17233d; }
-:root[data-theme="dark"] .filters, :root:has(#theme-toggle:checked) .filters,
-:root[data-theme="dark"] .pagination, :root:has(#theme-toggle:checked) .pagination { background: #0c1322; }
-:root[data-theme="dark"] pre, :root:has(#theme-toggle:checked) pre { background: #060911; }
-:root[data-theme="dark"] .email-pill, :root:has(#theme-toggle:checked) .email-pill { background: #17223b; border-color: #24355a; color: #e2e8f0; }
-:root[data-theme="dark"] select, :root:has(#theme-toggle:checked) select { background-color: #0f172a; }
-:root[data-theme="dark"] .stat:hover, :root:has(#theme-toggle:checked) .stat:hover { background: #131d33; }
-:root[data-theme="dark"] .provider:hover, :root:has(#theme-toggle:checked) .provider:hover { background: #131d33; }
-:root[data-theme="dark"] .tag.Active, :root:has(#theme-toggle:checked) .tag.Active,
-:root[data-theme="dark"] .tag.good, :root:has(#theme-toggle:checked) .tag.good { background: rgba(16, 185, 129, 0.2); color: #34d399; }
-:root[data-theme="dark"] .tag.Paused, :root:has(#theme-toggle:checked) .tag.Paused,
-:root[data-theme="dark"] .tag.warn, :root:has(#theme-toggle:checked) .tag.warn { background: rgba(245, 158, 11, 0.2); color: #fbbf24; }
-:root[data-theme="dark"] .tag.Failed, :root:has(#theme-toggle:checked) .tag.Failed,
-:root[data-theme="dark"] .tag.danger, :root:has(#theme-toggle:checked) .tag.danger { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-:root[data-theme="dark"] .editor-preview, :root:has(#theme-toggle:checked) .editor-preview { background: #090d16; }
-:root[data-theme="dark"] .routing-card, :root:has(#theme-toggle:checked) .routing-card { background: #0f172a; }
-:root[data-theme="dark"] .routing-card:hover, :root:has(#theme-toggle:checked) .routing-card:hover { background: #131d33; }
-:root[data-theme="dark"] .order-btn, :root:has(#theme-toggle:checked) .order-btn { background: #1e293b; color: #cbd5e1; border-color: #334155; }
-:root[data-theme="dark"] .docs-view-body, :root:has(#theme-toggle:checked) .docs-view-body { background: #0f172a; }
-:root[data-theme="dark"] .compose-quickbtn, :root:has(#theme-toggle:checked) .compose-quickbtn { background: rgba(16, 185, 129, 0.16); border-color: rgba(16, 185, 129, 0.4); color: #34d399; }
-:root[data-theme="dark"] .compose-quickbtn:hover, :root:has(#theme-toggle:checked) .compose-quickbtn:hover { background: #10b981; color: #0f172a; border-color: #10b981; }
-:root[data-theme="dark"] .compose-quickbtn:hover svg, :root:has(#theme-toggle:checked) .compose-quickbtn:hover svg { color: #0f172a; }
+:root[data-theme="dark"] th, :root.dark th, :root:has(#theme-toggle:checked) th { background: var(--surface-hover); }
+:root[data-theme="dark"] tr:hover td, :root.dark tr:hover td, :root:has(#theme-toggle:checked) tr:hover td { background: var(--surface-hover); }
+:root[data-theme="dark"] td, :root.dark td, :root:has(#theme-toggle:checked) td { border-bottom-color: var(--line); }
+:root[data-theme="dark"] .filters, :root.dark .filters, :root:has(#theme-toggle:checked) .filters,
+:root[data-theme="dark"] .pagination, :root.dark .pagination, :root:has(#theme-toggle:checked) .pagination { background: var(--surface-hover); border-color: var(--line); }
+:root[data-theme="dark"] pre, :root.dark pre, :root:has(#theme-toggle:checked) pre { background: var(--bg); border-color: var(--line); color: var(--text); }
+:root[data-theme="dark"] .email-pill, :root.dark .email-pill, :root:has(#theme-toggle:checked) .email-pill { background: var(--surface-hover); border-color: var(--line); color: var(--text-secondary); }
+:root[data-theme="dark"] select, :root.dark select, :root:has(#theme-toggle:checked) select { background-color: var(--surface); color: var(--text); border-color: var(--line); }
+:root[data-theme="dark"] .stat:hover, :root.dark .stat:hover, :root:has(#theme-toggle:checked) .stat:hover { background: var(--surface-hover); }
+:root[data-theme="dark"] .provider:hover, :root.dark .provider:hover, :root:has(#theme-toggle:checked) .provider:hover { background: var(--surface-hover); }
+:root[data-theme="dark"] .tag.Active, :root.dark .tag.Active,
+:root[data-theme="dark"] .tag.good, :root.dark .tag.good, :root:has(#theme-toggle:checked) .tag.good { background: var(--tint); border-color: var(--tint-strong); color: var(--tint-text); }
+:root[data-theme="dark"] .tag.Paused, :root.dark .tag.Paused,
+:root[data-theme="dark"] .tag.warn, :root.dark .tag.warn, :root:has(#theme-toggle:checked) .tag.warn { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn); }
+:root[data-theme="dark"] .tag.Failed, :root.dark .tag.Failed,
+:root[data-theme="dark"] .tag.danger, :root.dark .tag.danger, :root:has(#theme-toggle:checked) .tag.danger { background: var(--danger-bg); border-color: var(--danger-line); color: var(--danger); }
+:root[data-theme="dark"] .editor-preview, :root.dark .editor-preview, :root:has(#theme-toggle:checked) .editor-preview { background: var(--bg); border-color: var(--line); color: var(--text); }
+:root[data-theme="dark"] .routing-card, :root.dark .routing-card, :root:has(#theme-toggle:checked) .routing-card { background: var(--surface); border-color: var(--line); }
+:root[data-theme="dark"] .routing-card:hover, :root.dark .routing-card:hover, :root:has(#theme-toggle:checked) .routing-card:hover { background: var(--surface-hover); }
+:root[data-theme="dark"] .order-btn, :root.dark .order-btn, :root:has(#theme-toggle:checked) .order-btn { background: var(--surface-hover); color: var(--text); border-color: var(--line); }
+:root[data-theme="dark"] .docs-view-body, :root.dark .docs-view-body, :root:has(#theme-toggle:checked) .docs-view-body { background: var(--surface); border-color: var(--line); color: var(--text); }
+:root[data-theme="dark"] .compose-quickbtn, :root.dark .compose-quickbtn, :root:has(#theme-toggle:checked) .compose-quickbtn { background: var(--tint); border-color: var(--accent); color: var(--accent); }
+:root[data-theme="dark"] .compose-quickbtn:hover, :root.dark .compose-quickbtn:hover, :root:has(#theme-toggle:checked) .compose-quickbtn:hover { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+:root[data-theme="dark"] .compose-quickbtn:hover svg, :root.dark .compose-quickbtn:hover svg, :root:has(#theme-toggle:checked) .compose-quickbtn:hover svg { color: var(--accent-fg); }
 
 /* Rich Text Editor */
 .rich-editor-container {
@@ -2458,8 +2470,8 @@ input[type=checkbox] {
 }
 `;
 
-function document(title, content) {
-  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><link rel="icon" type="image/svg+xml" href="${faviconUri}"><title>${e(title)} · neoPathshala Mail</title><style>${css}</style></head><body>${content}</body></html>`;
+function document(title, content, nonce = '', isDark = false) {
+  return `<!doctype html><html lang="en" ${isDark ? 'data-theme="dark" class="dark"' : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#063b2c"><link rel="icon" type="image/svg+xml" href="${faviconUri}"><title>${e(title)} · neoPathshala Mail</title><style>${css}</style>${nonce ? `<script nonce="${nonce}">try{var t=localStorage.getItem('neomail_theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark');}}catch(e){}</script>` : ''}</head><body>${content}</body></html>`;
 }
 
 const navAll = [
@@ -2492,8 +2504,9 @@ export function badge(status) {
 
 export function page(view, title, subtitle, content, sess, notice = '') {
   const base = sess?.role === 'superadmin' ? '/admin' : '/dashboard';
+  const isDark = sess?.theme === 'dark';
   return document(title, `
-    <input type="checkbox" id="theme-toggle" class="theme-toggle-input" aria-label="Toggle dark mode">
+    <input type="checkbox" id="theme-toggle" class="theme-toggle-input" aria-label="Toggle dark mode" ${isDark ? 'checked' : ''}>
     <input type="checkbox" id="drawer-toggle" class="drawer-toggle-input" aria-hidden="true">
     <label for="drawer-toggle" class="drawer-backdrop" aria-label="Close navigation"></label>
     <div class="app">
@@ -2594,17 +2607,19 @@ export function page(view, title, subtitle, content, sess, notice = '') {
               var isDark = e.target.checked;
               localStorage.setItem('neomail_theme', isDark ? 'dark' : 'light');
               document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+              if (isDark) document.documentElement.classList.add('dark');
+              else document.documentElement.classList.remove('dark');
               document.cookie = 'neomail_theme=' + (isDark ? 'dark' : 'light') + '; path=/; max-age=31536000; SameSite=Lax';
             });
           }
         } catch (err) {}
       })();
     </script>` : ''}
-  `);
+  `, sess?.script_nonce, isDark);
 }
 
 export function login(error = '') {
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span>neomail</a><div><div class="orb"><div></div><div></div><div></div></div><h1>Your mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private workspace.</p></div><small>Built for your team. Powered by Cloudflare.</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to NeoMail</h1><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><label class="field">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token"></label><button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p></div></div></div>`);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Pathshala</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoPathshala</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to NeoMail</h1><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><label class="field">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token"></label><button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p></div></div></div>`);
 }
 
 function empty(message = 'Your mail activity will appear here', help = 'Configure a provider and sender identity, then send your first test email.') {
@@ -3304,11 +3319,11 @@ export function users(rows, sess, isSuperadmin = false) {
 }
 
 export function otpRequest(error = '') {
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span>neomail</a><div><div class="orb"><div></div><div></div><div></div></div><h1>Your mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private workspace.</p></div><small>Built for your team. Powered by Cloudflare.</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to NeoMail</h1><p class="sub">Request a one-time code sent to your administrator email.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com"></label><button class="button">Send login code ${icon('arrow')}</button></form></div></div></div>`);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Pathshala</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoPathshala</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to NeoMail</h1><p class="sub">Request a one-time code sent to your administrator email.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com"></label><button class="button">Send login code ${icon('arrow')}</button></form></div></div></div>`);
 }
 
 export function otpVerify(email, error = '') {
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span>neomail</a><div><div class="orb"><div></div><div></div><div></div></div><h1>Your mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private workspace.</p></div><small>Built for your team. Powered by Cloudflare.</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456"></label><button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Pathshala</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoPathshala</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456"></label><button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`);
 }
 
 export function domains(rows, sess) {

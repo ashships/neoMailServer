@@ -430,6 +430,7 @@ async function handler(request, env) {
     return redirect('/admin/login');
   }
   sess.local_dev = local(request, env);
+  sess.theme = cookie(request, 'neomail_theme') || '';
   sess.profile = await getProfile(env, subject);
   if (path === '/admin/profile-image') { requireMethod(request, ['GET']); return profileImage(env, subject); }
   const { values: cfg } = await config(env, request.method === 'POST');

@@ -152,4 +152,17 @@ test('superadmin provider order, adding, credentials, circuit breaker reset and 
   assert.ok(overviewHtml.includes('Overview'));
   assert.ok(overviewHtml.includes('Total messages'));
   assert.ok(overviewHtml.includes('Delivery providers'));
+
+  // 10. Verify neoPathshala theme variables, dark mode preference, and steady layout
+  assert.ok(overviewHtml.includes('--bg: #fbfaf8;'), 'Must use warm parchment background in light theme');
+  assert.ok(overviewHtml.includes('--bg: #131514;'), 'Must use deep forest background in dark theme');
+  assert.ok(overviewHtml.includes('--brand-dark: #063b2c;'), 'Must include brand dark anchor #063b2c');
+  assert.ok(overviewHtml.includes('name="theme-color" content="#063b2c"'), 'Meta theme color must match brand green');
+
+  // Dark mode cookie preference renders checked toggle and data-theme
+  const darkRes = await call('local-admin', '/admin', { headers: { cookie: superCookie + '; neomail_theme=dark' } });
+  assert.equal(darkRes.status, 200);
+  const darkHtml = await darkRes.text();
+  assert.ok(darkHtml.includes('data-theme="dark"'));
+  assert.ok(darkHtml.includes('id="theme-toggle" class="theme-toggle-input" aria-label="Toggle dark mode" checked'));
 });
