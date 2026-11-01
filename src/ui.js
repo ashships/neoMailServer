@@ -4338,6 +4338,25 @@ main.docs-main-studio {
   animation: neomailSteamFloat 2.8s ease-out infinite 1.4s;
 }
 
+@keyframes mascotWave {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  14%, 42%, 70% {
+    transform: rotate(15deg);
+  }
+  28%, 56% {
+    transform: rotate(-8deg);
+  }
+  84% {
+    transform: rotate(0deg);
+  }
+}
+.mascot-waving-arm {
+  transform-origin: 310px 254px;
+  animation: mascotWave 3.5s ease-in-out infinite;
+}
+
 /* Server Activity LEDs */
 @keyframes serverLedBlink {
   0%, 100% { opacity: 1; }
@@ -7875,6 +7894,10 @@ export function errorIllustrationSvg() {
         <stop offset="0%" stop-color="var(--illus-blob)" stop-opacity="1"/>
         <stop offset="100%" stop-color="var(--illus-blob)" stop-opacity="0"/>
       </radialGradient>
+      <linearGradient id="chairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="var(--illus-chair-highlight)"/>
+        <stop offset="100%" stop-color="var(--illus-chair)"/>
+      </linearGradient>
       <linearGradient id="errChairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
         <stop offset="0%" stop-color="var(--illus-chair-highlight)"/>
         <stop offset="100%" stop-color="var(--illus-chair)"/>
@@ -7985,9 +8008,9 @@ export function errorIllustrationSvg() {
       <rect x="134" y="369" width="13" height="4" rx="1.5" fill="var(--illus-server)"/>
     </g>
     <g id="armchair">
-      <path d="M200 280 C185 190, 205 130, 270 130 C335 130, 355 190, 340 280 Z" fill="url(#chairGrad)"/>
-      <path d="M185 240 C180 240, 175 250, 175 270 C175 305, 195 320, 215 320 C222 320, 226 312, 226 300 C226 265, 205 240, 185 240 Z" fill="url(#chairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
-      <path d="M355 240 C360 240, 365 250, 365 270 C365 305, 345 320, 325 320 C318 320, 314 312, 314 300 C314 265, 335 240, 355 240 Z" fill="url(#chairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
+      <path d="M200 280 C185 190, 205 130, 270 130 C335 130, 355 190, 340 280 Z" fill="url(#errChairGrad)"/>
+      <path d="M185 240 C180 240, 175 250, 175 270 C175 305, 195 320, 215 320 C222 320, 226 312, 226 300 C226 265, 205 240, 185 240 Z" fill="url(#errChairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
+      <path d="M355 240 C360 240, 365 250, 365 270 C365 305, 345 320, 325 320 C318 320, 314 312, 314 300 C314 265, 335 240, 355 240 Z" fill="url(#errChairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
       <line x1="234" y1="300" x2="220" y2="368" stroke="var(--illus-chair-legs)" stroke-width="4.5" stroke-linecap="round"/>
       <line x1="306" y1="300" x2="320" y2="368" stroke="var(--illus-chair-legs)" stroke-width="4.5" stroke-linecap="round"/>
       <line x1="217" y1="300" x2="192" y2="374" stroke="var(--illus-chair-legs)" stroke-width="5" stroke-linecap="round"/>
@@ -8009,24 +8032,33 @@ export function errorIllustrationSvg() {
       <path d="M266 244 Q272 250 278 244" stroke="var(--illus-glasses)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
       <ellipse cx="236" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
       <ellipse cx="304" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
-      <path d="M225 270 C216 276, 212 284, 222 288" stroke="var(--illus-arms)" stroke-width="12" stroke-linecap="round" fill="none"/>
-      <g transform="translate(228, 274)">
-        <path d="M0 6 C-9 6, -9 18, 0 18" fill="none" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round"/>
-        <path d="M0 6 C-9 6, -9 18, 0 18" fill="none" stroke="var(--line-strong)" stroke-width="1.3" stroke-linecap="round"/>
-        <rect x="0" y="0" width="20" height="24" rx="4" fill="#ffffff" stroke="var(--line-strong)" stroke-width="1.5"/>
-        <path d="M7 -2 Q10 -6 7 -10" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-1"/>
-        <path d="M14 -3 Q17 -8 14 -13" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-2"/>
+
+      <!-- LEFT ARM & CUP (Hand securely grabbing the steaming cup) -->
+      <path d="M220 262 C210 270, 208 280, 222 284" stroke="var(--illus-arms)" stroke-width="11" stroke-linecap="round" fill="none"/>
+      <g transform="translate(230, 270)">
+        <path d="M0 4 C-8 4, -8 16, 0 16" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M0 4 C-8 4, -8 16, 0 16" fill="none" stroke="var(--line-strong)" stroke-width="1.3" stroke-linecap="round"/>
+        <rect x="0" y="0" width="18" height="22" rx="4" fill="#ffffff" stroke="var(--line-strong)" stroke-width="1.5"/>
+        <path d="M5 -2 Q8 -6 5 -10" stroke="var(--muted)" stroke-width="1.4" stroke-linecap="round" fill="none" class="error-steam-1"/>
+        <path d="M12 -3 Q15 -8 12 -13" stroke="var(--muted)" stroke-width="1.4" stroke-linecap="round" fill="none" class="error-steam-2"/>
       </g>
-      <ellipse cx="224" cy="284" rx="6" ry="7" fill="var(--illus-arms)"/>
-      <path d="M224 278 C220 281, 219 289, 223 293" stroke="var(--illus-arms)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-      <path d="M312 265 C326 270, 334 285, 310 292" stroke="var(--illus-arms)" stroke-width="12" stroke-linecap="round" fill="none"/>
-      <ellipse cx="304" cy="289" rx="6" ry="5" fill="var(--illus-arms)"/>
-      <g transform="translate(306, 280)">
-        <rect x="0" y="2" width="16" height="12" rx="3" fill="#1e293b"/>
-        <circle cx="8" cy="8" r="7" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
-        <line x1="8" y1="8" x2="8" y2="4" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
-        <line x1="8" y1="8" x2="11" y2="8" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
+      <!-- Hand Paw wrapping and gripping the cup -->
+      <ellipse cx="225" cy="281" rx="7" ry="8" fill="var(--illus-arms)"/>
+      <path d="M224 274 C228 273, 233 273, 237 275" stroke="var(--illus-arms)" stroke-width="4.2" stroke-linecap="round" fill="none"/>
+      <path d="M225 280 C230 279, 235 280, 238 282" stroke="var(--illus-arms)" stroke-width="4.2" stroke-linecap="round" fill="none"/>
+      <path d="M224 286 C229 285, 234 286, 236 288" stroke="var(--illus-arms)" stroke-width="4.2" stroke-linecap="round" fill="none"/>
+
+      <!-- RIGHT ARM (Friendly Animated Waving Hand 👋) -->
+      <g class="mascot-waving-arm">
+        <path d="M308 258 C320 252, 328 238, 332 218" stroke="var(--illus-arms)" stroke-width="11" stroke-linecap="round" fill="none"/>
+        <ellipse cx="334" cy="214" rx="7.5" ry="8.5" fill="var(--illus-arms)"/>
+        <circle cx="327" cy="215" r="3.2" fill="var(--illus-arms)"/>
+        <rect x="330" y="202" width="3.5" height="9" rx="1.75" fill="var(--illus-arms)"/>
+        <rect x="334" y="200" width="3.5" height="10" rx="1.75" fill="var(--illus-arms)"/>
+        <rect x="338" y="202" width="3.5" height="8.5" rx="1.75" fill="var(--illus-arms)"/>
       </g>
+
+      <!-- Feet -->
       <ellipse cx="248" cy="326" rx="12" ry="7" fill="var(--illus-arms)"/>
       <ellipse cx="292" cy="326" rx="12" ry="7" fill="var(--illus-arms)"/>
     </g>
