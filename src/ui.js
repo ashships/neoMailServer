@@ -623,17 +623,22 @@ select option::checkmark {
   overscroll-behavior: contain;
   border-right: 1px solid var(--line);
   background: var(--surface);
-  padding: 20px 14px;
+  padding: 0;
   display: flex;
   flex-direction: column;
   z-index: 40;
 }
 
 .sidehead {
+  height: 64px;
+  min-height: 64px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 6px 20px;
+  padding: 0 20px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
 }
 
 .brand {
@@ -698,12 +703,13 @@ select option::checkmark {
   font-weight: 700;
   letter-spacing: 1.2px;
   color: var(--muted);
-  margin: 12px 10px 8px;
+  margin: 16px 18px 8px;
 }
 
 nav {
   display: grid;
   gap: 3px;
+  padding: 0 12px;
 }
 
 .navlink {
@@ -736,7 +742,7 @@ nav {
 
 .sidefoot {
   margin-top: auto;
-  padding: 16px 8px 0;
+  padding: 16px 18px 16px;
   border-top: 1px solid var(--line);
 }
 
@@ -2214,7 +2220,8 @@ input[type=checkbox] {
     opacity: 1;
     pointer-events: auto;
   }
-  .topbar {
+  .topbar,
+  .sidehead {
     height: 60px;
     padding: 0 16px;
   }
