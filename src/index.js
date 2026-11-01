@@ -288,7 +288,7 @@ async function handler(request, env) {
 
         if (!authorized) {
           await audit(env, request, 'AUTH_REJECTED_UNREGISTERED', { subject: emailAddr });
-          return reply(ui.otpRequest('Account not registered. Only administrator accounts provisioned by the superadmin can access this panel.', isDark), 403);
+          return reply(ui.otpRequest('Account not registered.', isDark), 403);
         }
 
         const existing = await env.DB.prepare('SELECT created_at FROM admin_otps WHERE subject=?').bind(emailAddr).first().catch(() => null);
@@ -423,7 +423,7 @@ async function handler(request, env) {
         const userAccount = await env.DB.prepare('SELECT role, is_active FROM admin_users WHERE subject=?').bind(emailAddr).first();
         if (!userAccount || userAccount.is_active !== 1) {
           await audit(env, request, 'AUTH_VERIFY_UNREGISTERED', { subject: emailAddr });
-          throw new HttpError(403, 'Account not registered. Only administrator accounts provisioned by the superadmin can access this panel.');
+          throw new HttpError(403, 'Account not registered.');
         }
 
         const targetRole = userAccount.role;

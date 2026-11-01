@@ -66,8 +66,8 @@ test('auth security: only superadmin-provisioned accounts can request OTP and lo
 
     assert.equal(unregReq.status, 403, 'Unregistered user must be rejected with 403');
     const unregHtml = await unregReq.text();
-    assert.ok(unregHtml.includes('Account not registered'), 'Must display "Account not registered"');
-    assert.ok(unregHtml.includes('superadmin'), 'Must state accounts must be provisioned by superadmin');
+    assert.ok(unregHtml.includes('<div class="notice error" role="alert">Account not registered.</div>'), 'Must display "Account not registered." error banner');
+    assert.ok(!unregHtml.includes('provisioned by the superadmin'), 'Must not disclose provisioning or internal roles');
     assert.equal(dispatchedEmails.length, 0, 'ZERO emails must be dispatched to unregistered users — saves quota!');
 
     const attackerOtp = await db.prepare('SELECT * FROM admin_otps WHERE subject=?').bind('attacker@evil.com').first();
