@@ -169,7 +169,7 @@ function lucideSvgUri(iconName, stroke = '#64748b', strokeWidth = 2) {
 
 const chevronDownUri = lucideSvgUri('chevron', '#64748b', 2);
 const checkUri = lucideSvgUri('check', '#087d54', 2.5);
-const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 290" width="32" height="32" fill="none"><defs><linearGradient id="nm-top-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="35%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-left-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="50%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-right-grad" x1="0%" y1="40%" x2="100%" y2="70%"><stop offset="0%" stop-color="#033b28"/><stop offset="18%" stop-color="#055f42"/><stop offset="65%" stop-color="#087d54"/><stop offset="100%" stop-color="#0ea868"/></linearGradient><clipPath id="nm-envelope-clip"><rect x="0" y="0" width="450" height="290" rx="45" ry="45"/></clipPath></defs><g clip-path="url(#nm-envelope-clip)"><rect x="0" y="0" width="450" height="290" fill="#ffffff"/><path d="M 45 0 L 405 0 C 429.9 0 448.9 19 449.2 35 C 375 65 295 115 225 145 C 157 116 82 61 12 36 C 18 20 29 9 45 0 Z" fill="url(#nm-top-grad)"/><path d="M 0 45 C 0 20.1 20.1 0 45 0 C 29 9 18 20 12 36 C 82 96 162 156 228 209 C 200 205 180 201 165 199 C 125 214 85 264 45 290 C 20.1 290 0 270 0 245 Z" fill="url(#nm-bot-left-grad)"/><path d="M 228 209 C 298 178 378 88 450 62 L 450 245 C 450 270 429.9 290 405 290 L 300 290 C 255 274 210 209 165 199 C 180 201 200 205 228 209 Z" fill="url(#nm-bot-right-grad)"/><path d="M 12 36 C 82 61 157 116 225 145 C 295 115 375 65 449.2 35 C 449.8 40 450 45 450 48 L 450 62 C 378 88 298 178 228 209 C 162 156 82 96 12 36 Z" fill="#ffffff"/></g><circle cx="410" cy="40" r="28" fill="#34d399"/><rect width="0" height="0" fill="#087d54"/></svg>`;
+const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 290" width="32" height="32" fill="none"><defs><linearGradient id="nm-top-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="35%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-left-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="50%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-right-grad" x1="0%" y1="40%" x2="100%" y2="70%"><stop offset="0%" stop-color="#033b28"/><stop offset="18%" stop-color="#055f42"/><stop offset="65%" stop-color="#087d54"/><stop offset="100%" stop-color="#0ea868"/></linearGradient><clipPath id="nm-envelope-clip"><rect x="0" y="0" width="450" height="290" rx="45" ry="45"/></clipPath></defs><g clip-path="url(#nm-envelope-clip)"><rect x="0" y="0" width="450" height="290" fill="#ffffff"/><path d="M 45 0 L 405 0 C 429.9 0 448.9 19 449.2 35 C 375 65 295 115 225 145 C 157 116 82 61 12 36 C 18 20 29 9 45 0 Z" fill="url(#nm-top-grad)"/><path d="M 0 45 C 0 20.1 20.1 0 45 0 C 29 9 18 20 12 36 C 82 96 162 156 228 209 C 200 205 180 201 165 199 C 125 214 85 264 45 290 C 20.1 290 0 270 0 245 Z" fill="url(#nm-bot-left-grad)"/><path d="M 228 209 C 298 178 378 88 450 62 L 450 245 C 450 270 429.9 290 405 290 L 300 290 C 255 274 210 209 165 199 C 180 201 200 205 228 209 Z" fill="url(#nm-bot-right-grad)"/><path d="M 12 36 C 82 61 157 116 225 145 C 295 115 375 65 449.2 35 C 449.8 40 450 45 450 48 L 450 62 C 378 88 298 178 228 209 C 162 156 82 96 12 36 Z" fill="#ffffff"/></g><circle cx="410" cy="40" r="28" fill='#34d399'/><rect width="0" height="0" fill='#087d54'/></svg>`;
 export { faviconSvg };
 export const faviconUri = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
 
@@ -226,11 +226,13 @@ const css = `
   --illus-chair-highlight: #2a5247;
   --illus-mascot: #8ba59e;
   --illus-mascot-dark: #6e8a83;
+  --illus-arms: #182620;
   --illus-glasses: #142822;
   --illus-plant-dark: #064e3b;
   --illus-plant-light: #10b981;
   --illus-pot: #e5e7eb;
-  --illus-wood: #b45309;
+  --illus-wood: #c25e00;
+  --illus-wood-dark: #8c4200;
   --illus-table: #d97706;
   --illus-blob: rgba(8, 125, 84, 0.09);
   --illus-clock-rim: #374151;
@@ -285,11 +287,13 @@ const css = `
   --illus-chair-highlight: #23483e;
   --illus-mascot: #7c9891;
   --illus-mascot-dark: #5e7972;
+  --illus-arms: #0d1b15;
   --illus-glasses: #0a1612;
   --illus-plant-dark: #065f46;
   --illus-plant-light: #34d399;
   --illus-pot: #374151;
-  --illus-wood: #92400e;
+  --illus-wood: #b45309;
+  --illus-wood-dark: #78350f;
   --illus-table: #b45309;
   --illus-blob: rgba(16, 185, 129, 0.09);
   --illus-clock-rim: #9ca3af;
@@ -333,11 +337,13 @@ const css = `
     --illus-chair-highlight: #23483e;
     --illus-mascot: #7c9891;
     --illus-mascot-dark: #5e7972;
+    --illus-arms: #0d1b15;
     --illus-glasses: #0a1612;
     --illus-plant-dark: #065f46;
     --illus-plant-light: #34d399;
     --illus-pot: #374151;
-    --illus-wood: #92400e;
+    --illus-wood: #b45309;
+    --illus-wood-dark: #78350f;
     --illus-table: #b45309;
     --illus-blob: rgba(16, 185, 129, 0.09);
     --illus-clock-rim: #9ca3af;
@@ -707,19 +713,19 @@ select option::checkmark {
 }
 
 .brandmark {
-  background: linear-gradient(135deg, var(--accent) 0%, #065f46 100%);
-  color: white;
-  display: grid;
-  place-items: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: 34px;
   height: 34px;
-  border-radius: var(--radius-sm);
   flex-shrink: 0;
 }
 
 .brandmark svg {
-  width: 20px;
-  height: 20px;
+  width: 32px;
+  height: auto;
+  max-height: 24px;
+  display: block;
 }
 
 .brand-text {
@@ -1755,6 +1761,19 @@ details {
   padding: 14px 20px;
 }
 
+table details {
+  border-top: none !important;
+  padding: 0 !important;
+}
+
+table details > summary {
+  list-style: none;
+}
+
+table details > summary::-webkit-details-marker {
+  display: none;
+}
+
 summary {
   cursor: pointer;
   font-size: 12px;
@@ -2265,6 +2284,74 @@ input[type=checkbox] {
   margin-top: 0;
   padding: 6px 9px;
   font-size: 12px;
+}
+
+.user-actions-row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.user-edit-popover {
+  position: relative;
+  display: inline-block;
+  border: none !important;
+  padding: 0 !important;
+}
+
+.user-edit-popover > summary {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.user-edit-popover > summary::-webkit-details-marker {
+  display: none;
+}
+
+.user-edit-popover .popover-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  left: auto;
+  min-width: 280px;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  padding: 14px 16px;
+  z-index: 100;
+  text-align: left;
+  box-shadow: none !important;
+  animation: dropMenuIn 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.user-edit-popover .popover-dropdown form {
+  margin-top: 0 !important;
+}
+
+.user-edit-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.user-edit-title svg {
+  width: 14px;
+  height: 14px;
+  color: var(--accent);
+}
+
+.users-tablewrap {
+  overflow-x: auto;
+  min-height: 200px;
 }
 
 .email-pill {
@@ -3906,28 +3993,20 @@ main.docs-main-studio {
   }
 }
 .error-page-time {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
   font-size: 15px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+.error-page-time strong {
   font-weight: 600;
   color: var(--text);
-  margin-top: 4px;
+  letter-spacing: 0.2px;
 }
 @media (max-width: 860px) {
   .error-page-time {
-    justify-content: center;
+    text-align: center;
   }
-}
-.error-page-time-counter {
-  font-family: var(--mono);
-  font-weight: 700;
-  color: var(--accent);
-  background: var(--tint);
-  border: 1px solid var(--tint-strong);
-  padding: 3px 10px;
-  border-radius: var(--radius-sm);
-  letter-spacing: 0.3px;
 }
 .error-page-actions {
   display: flex;
@@ -3949,17 +4028,21 @@ main.docs-main-studio {
 }
 .error-page-svg {
   width: 100%;
-  max-width: 460px;
+  max-width: 480px;
   height: auto;
   overflow: visible;
 }
-@keyframes neomailClockSweep {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+@keyframes mascotBlink {
+  0%, 90%, 100% {
+    transform: scaleY(1);
+  }
+  93%, 95% {
+    transform: scaleY(0.08);
+  }
 }
-.error-clock-sweep {
-  transform-origin: 400px 75px;
-  animation: neomailClockSweep 60s linear infinite;
+.mascot-blinking-eyes {
+  transform-origin: 270px 225px;
+  animation: mascotBlink 4.2s ease-in-out infinite;
 }
 @keyframes neomailSteamFloat {
   0% { opacity: 0; transform: translateY(0) scaleX(0.8); }
@@ -4006,7 +4089,15 @@ export function badge(status) {
   return `<span class="tag ${cls} ${e(s)}">${e(s)}</span>`;
 }
 
-export function page(view, title, subtitle, content, sess, notice = '', alerts = []) {
+function formatCredit(credit = 'Developed by SoftLaya Tech') {
+  const safe = e(credit || 'Developed by SoftLaya Tech');
+  if (safe.startsWith('Developed by ')) {
+    return 'Developed by <strong>' + safe.slice(13) + '</strong>';
+  }
+  return safe;
+}
+
+export function page(view, title, subtitle, content, sess, notice = '', alerts = [], footerCredit = 'Developed by SoftLaya Tech') {
   const base = sess?.role === 'superadmin' ? '/admin' : '/dashboard';
   const isDark = sess?.theme === 'dark';
   return document(title, `
@@ -4018,7 +4109,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
       <aside class="sidebar">
         <div class="sidehead">
           <a class="brand" href="${base}">
-            <span class="brandmark">${icon('mail')}</span>
+            <span class="brandmark">${neomailLogoSvg}</span>
             <div class="brand-text">
               <span class="brand-title">neo<span>Mailer</span></span><span style="display:none">neo<span>Mailer</span></span>
               <span class="brand-sub">Mail Infrastructure</span>
@@ -4030,7 +4121,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
         <nav>${navFor(sess?.role).map(([id, label]) => `<a class="navlink ${id === view ? 'active' : ''}" ${id === view ? 'aria-current="page"' : ''} href="${base}/${id}">${icon(id)}<span>${label}</span></a>`).join('')}</nav>
         <div class="sidefoot">
           <a class="navlink side-docs-link" href="/docs" target="_blank">${icon('docs')}<span>Documentation ↗</span></a>
-          <div class="sidefoot-credit">Developed by <strong>SoftLaya Tech</strong></div>
+          <div class="sidefoot-credit">${formatCredit(footerCredit)}</div>
         </div>
       </aside>
       <div class="workspace">
@@ -4119,7 +4210,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
             </div>
           </div>
           <div class="footer-right">
-            <span>Developed by <strong>SoftLaya Tech</strong></span>
+            <span>${formatCredit(footerCredit)}</span>
             <span>·</span>
             <span>Zero-Trust AES-256</span>
           </div>
@@ -4130,7 +4221,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
   `, sess?.script_nonce, isDark);
 }
 
-export function login(error = '', isDark = false, showRegister = true) {
+export function login(error = '', isDark = false, showRegister = true, footerCredit = 'Developed by SoftLaya Tech') {
   const renderedError = error ? renderNoticeText(error) : '';
   const registerModal = showRegister ? `
     <p class="footnote" style="margin-top:20px;text-align:center">
@@ -4170,7 +4261,7 @@ export function login(error = '', isDark = false, showRegister = true) {
       </div>
     </dialog>
   ` : '';
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p><form method="post" action="/login"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p>${registerModal}</div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${neomailLogoSvg}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · ${e(footerCredit)}</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p><form method="post" action="/login"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p>${registerModal}</div></div></div>`, '', isDark);
 }
 
 function empty(message = 'Your mail activity will appear here', help = 'Configure a provider and sender identity, then send your first test email.') {
@@ -5833,13 +5924,11 @@ export function publicDocs(content, isDark = false) {
     .docs-brand .brandmark {
       width: 32px;
       height: 32px;
-      border-radius: 8px;
-      background: var(--accent);
-      color: #fff;
-      display: grid;
-      place-items: center;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
-    .docs-brand .brandmark svg { width: 18px; height: 18px; }
+    .docs-brand .brandmark svg { width: 30px; height: auto; max-height: 22px; display: block; }
     .docs-brand .badge {
       font-size: 10px;
       padding: 2px 6px;
@@ -6082,7 +6171,7 @@ export function publicDocs(content, isDark = false) {
   <header class="docs-navbar">
     <div style="display:flex;align-items:center;gap:16px">
       <a class="docs-brand" href="/">
-        <span class="brandmark">${icon('mail')}</span>
+        <span class="brandmark">${neomailLogoSvg}</span>
         <span>neoMailer <span class="badge">Docs</span></span>
       </a>
       <span class="tag good" style="font-size:11px;padding:3px 8px;display:inline-flex;align-items:center;gap:5px">
@@ -6626,8 +6715,134 @@ export function users(rows, sess, isSuperadmin = false, accessRequests = []) {
     </section>
   ` : '';
 
-  const addForm = isSuperadmin ? `<section class="panel"><div class="panelhead"><h2>Add administrator</h2></div><div class="panelbody"><form method="post" action="/admin/users/add">${hidden(sess.csrf_token)}<div class="settingsgrid"><label class="field">Access subject (email)<input type="email" name="subject" required maxlength="254" autocomplete="off" spellcheck="false" placeholder="you@example.com"></label><label class="field">Role<select name="role" class="custom-select"><option value="admin">Admin</option></select></label></div><button class="button">Add user</button></form><p class="footnote">Admins receive a fully isolated workspace of their own. They never gain superadmin powers.</p></div></section>` : '';
-  return `${requestsPanel}<section class="panel"><div class="panelhead"><h2>Administrator accounts</h2><p>Cloudflare Access identities authorized to use this console.</p></div><div class="tablewrap"><table><thead><tr><th>Subject</th><th>Role</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody>${rows.map(r => `<tr><td>${e(r.subject)}</td><td>${e(r.role)}</td><td>${badge(r.is_active ? 'Active' : 'Revoked')}</td><td>${e(new Date(r.created_at * 1000).toISOString().slice(0, 16).replace('T', ' '))}</td><td>${isSuperadmin && r.role !== 'superadmin' && r.subject !== sess.subject ? `<details><summary>Edit</summary><form method="post" action="/admin/users/update">${hidden(sess.csrf_token)}<input type="hidden" name="old_subject" value="${e(r.subject)}"><label class="field">Subject<input name="new_subject" value="${e(r.subject)}" required maxlength="254"></label><label class="field">Role<select name="role" class="custom-select"><option value="admin" ${r.role === 'admin' ? 'selected' : ''}>Admin</option></select></label><button class="button secondary small">Save</button></form></details><form method="post" action="/admin/users/revoke">${hidden(sess.csrf_token)}<input type="hidden" name="subject" value="${e(r.subject)}"><button class="button secondary small">Revoke</button></form>` : ''}</td></tr>`).join('') || '<tr><td colspan="5">No users.</td></tr>'}</tbody></table></div></section>${addForm}`;
+  const addForm = isSuperadmin ? `
+    <section class="panel">
+      <div class="panelhead">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div class="brandmark" style="width:32px;height:32px;padding:0;background:var(--tint);color:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center">${icon('users')}</div>
+          <div>
+            <h2>Add administrator</h2>
+            <p style="font-size:12px;color:var(--muted);margin:2px 0 0">Provision an isolated workspace for a team member</p>
+          </div>
+        </div>
+      </div>
+      <div class="panelbody">
+        <form method="post" action="/admin/users/add">
+          ${hidden(sess.csrf_token)}
+          <div class="settingsgrid">
+            <label class="field">Access subject (email)
+              <input type="email" name="subject" required maxlength="254" autocomplete="off" spellcheck="false" placeholder="you@example.com">
+            </label>
+            <label class="field">Role
+              <select name="role" class="custom-select">
+                <option value="admin">Admin</option>
+              </select>
+            </label>
+          </div>
+          <button class="button">${icon('plus')}<span>Add user</span></button>
+        </form>
+        <p class="footnote">Admins receive a fully isolated workspace of their own. They never gain superadmin powers.</p>
+      </div>
+    </section>
+  ` : '';
+
+  const clickScript = sess?.script_nonce ? `<script nonce="${e(sess.script_nonce)}">
+document.addEventListener('click', function(ev) {
+  if (!ev.target.closest('.user-edit-popover')) {
+    document.querySelectorAll('.user-edit-popover[open]').forEach(function(el) {
+      el.removeAttribute('open');
+    });
+  }
+});
+</script>` : '';
+
+  return `
+    ${requestsPanel}
+    <section class="panel">
+      <div class="panelhead" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px">
+        <div>
+          <h2>Administrator accounts</h2>
+          <p>Cloudflare Access identities authorized to use this console.</p>
+        </div>
+        <span class="tag" style="font-size:11px">${rows.length} ${rows.length === 1 ? 'account' : 'accounts'}</span>
+      </div>
+      <div class="tablewrap users-tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Subject</th>
+              <th>Role</th>
+              <th>Status</th>
+              <th>Created</th>
+              <th style="text-align:right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => `
+              <tr>
+                <td>
+                  <div style="display:flex;align-items:center;gap:10px">
+                    <div style="width:28px;height:28px;border-radius:50%;background:var(--tint);color:var(--accent);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:11.5px;border:1px solid var(--tint-strong);flex-shrink:0">
+                      ${e(initial(r.subject))}
+                    </div>
+                    <div>
+                      <div style="font-weight:600;color:var(--text);font-size:13px">${e(r.subject)}</div>
+                      ${r.subject === sess.subject ? `<div style="font-size:10.5px;color:var(--accent);font-weight:550">Active session</div>` : ''}
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <code style="font-size:11.5px;padding:2px 7px;background:var(--surface-hover);border:1px solid var(--line);border-radius:4px;font-family:var(--mono);text-transform:uppercase">${e(r.role)}</code>
+                </td>
+                <td>${badge(r.is_active ? 'Active' : 'Revoked')}</td>
+                <td><span style="color:var(--muted);font-size:12px">${e(new Date(r.created_at * 1000).toISOString().slice(0, 16).replace('T', ' '))}</span></td>
+                <td style="text-align:right">
+                  ${isSuperadmin && r.role !== 'superadmin' && r.subject !== sess.subject ? `
+                    <div class="user-actions-row">
+                      <details class="user-edit-popover">
+                        <summary class="button secondary small" title="Edit administrator">${icon('edit')}<span>Edit</span></summary>
+                        <div class="popover-dropdown">
+                          <div class="user-edit-title">
+                            ${icon('users')}
+                            <span>Edit administrator</span>
+                          </div>
+                          <form method="post" action="/admin/users/update" style="margin:0">
+                            ${hidden(sess.csrf_token)}
+                            <input type="hidden" name="old_subject" value="${e(r.subject)}">
+                            <label class="field" style="margin-bottom:10px">
+                              <span>Subject (email)</span>
+                              <input name="new_subject" value="${e(r.subject)}" required maxlength="254" autocomplete="off" spellcheck="false" style="font-size:12px;padding:6px 9px;width:100%">
+                            </label>
+                            <label class="field" style="margin-bottom:14px">
+                              <span>Role</span>
+                              <select name="role" class="custom-select" style="width:100%;font-size:12px">
+                                <option value="admin" ${r.role === 'admin' ? 'selected' : ''}>Admin</option>
+                              </select>
+                            </label>
+                            <div style="display:flex;justify-content:flex-end;gap:6px">
+                              <button type="button" class="button secondary small" onclick="this.closest('details').removeAttribute('open')">Cancel</button>
+                              <button type="submit" class="button small">Save</button>
+                            </div>
+                          </form>
+                        </div>
+                      </details>
+                      <form method="post" action="/admin/users/revoke" style="display:inline;margin:0" onsubmit="return confirm('Revoke console access for ${e(r.subject)}?');">
+                        ${hidden(sess.csrf_token)}
+                        <input type="hidden" name="subject" value="${e(r.subject)}">
+                        <button type="submit" class="button danger small" title="Revoke administrator access">${icon('trash')}<span>Revoke</span></button>
+                      </form>
+                    </div>
+                  ` : (r.subject === sess.subject ? `<span class="tag default" style="font-size:10.5px">Current session</span>` : (r.role === 'superadmin' ? `<span class="tag good" style="font-size:10.5px">Superadmin</span>` : `<span class="muted">—</span>`))}
+                </td>
+              </tr>
+            `).join('') || '<tr><td colspan="5">No users.</td></tr>'}
+          </tbody>
+        </table>
+      </div>
+    </section>
+    ${addForm}
+    ${clickScript}
+  `;
 }
 
 export function otpRequest(error = '', isDark = false, emailVal = '', showRegister = true, notice = '') {
@@ -6671,12 +6886,12 @@ export function otpRequest(error = '', isDark = false, emailVal = '', showRegist
     </dialog>
   ` : '';
 
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Request a one-time code sent to your administrator email.</p>${notice ? `<div class="notice" role="status" style="border-color:var(--accent);color:var(--accent);margin-bottom:16px">${icon('check')}<span>${e(notice)}</span></div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com" value="${e(emailVal)}" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Send login code ${icon('arrow')}</button></form>${registerModal}</div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${neomailLogoSvg}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Request a one-time code sent to your administrator email.</p>${notice ? `<div class="notice" role="status" style="border-color:var(--accent);color:var(--accent);margin-bottom:16px">${icon('check')}<span>${e(notice)}</span></div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com" value="${e(emailVal)}" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Send login code ${icon('arrow')}</button></form>${registerModal}</div></div></div>`, '', isDark);
 }
 
 export function otpVerify(email, error = '', isDark = false) {
   const renderedError = error ? renderNoticeText(error) : '';
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p><form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${neomailLogoSvg}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p><form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`, '', isDark);
 }
 
 export function domains(rows, sess) {
@@ -7048,7 +7263,7 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
       <div class="error-page-card">
         <div class="error-page-content">
           <a class="error-page-brand" href="/admin">
-            <span class="brandmark">${icon('mail')}</span>
+            <span class="brandmark">${neomailLogoSvg}</span>
             <div class="brand-text">
               <span class="brand-title">neo<span>Mail</span></span>
               <span class="brand-sub">Mail Infrastructure</span>
