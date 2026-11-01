@@ -169,11 +169,12 @@ function lucideSvgUri(iconName, stroke = '#64748b', strokeWidth = 2) {
 
 const chevronDownUri = lucideSvgUri('chevron', '#64748b', 2);
 const checkUri = lucideSvgUri('check', '#087d54', 2.5);
-const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 290" width="32" height="32" fill="none"><defs><linearGradient id="nm-top-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="35%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-left-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="50%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-right-grad" x1="0%" y1="40%" x2="100%" y2="70%"><stop offset="0%" stop-color="#033b28"/><stop offset="18%" stop-color="#055f42"/><stop offset="65%" stop-color="#087d54"/><stop offset="100%" stop-color="#0ea868"/></linearGradient><clipPath id="nm-envelope-clip"><rect x="0" y="0" width="450" height="290" rx="45" ry="45"/></clipPath></defs><g clip-path="url(#nm-envelope-clip)"><rect x="0" y="0" width="450" height="290" fill="#ffffff"/><path d="M 45 0 L 405 0 C 429.9 0 448.9 19 449.2 35 C 375 65 295 115 225 145 C 157 116 82 61 12 36 C 18 20 29 9 45 0 Z" fill="url(#nm-top-grad)"/><path d="M 0 45 C 0 20.1 20.1 0 45 0 C 29 9 18 20 12 36 C 82 96 162 156 228 209 C 200 205 180 201 165 199 C 125 214 85 264 45 290 C 20.1 290 0 270 0 245 Z" fill="url(#nm-bot-left-grad)"/><path d="M 228 209 C 298 178 378 88 450 62 L 450 245 C 450 270 429.9 290 405 290 L 300 290 C 255 274 210 209 165 199 C 180 201 200 205 228 209 Z" fill="url(#nm-bot-right-grad)"/><path d="M 12 36 C 82 61 157 116 225 145 C 295 115 375 65 449.2 35 C 449.8 40 450 45 450 48 L 450 62 C 378 88 298 178 228 209 C 162 156 82 96 12 36 Z" fill="#ffffff"/></g><circle cx="410" cy="40" r="28" fill='#34d399'/><rect width="0" height="0" fill='#087d54'/></svg>`;
+const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="32" height="32" fill="none"><defs><linearGradient id="nm-top-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="35%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-left-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="50%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-right-grad" x1="0%" y1="40%" x2="100%" y2="70%"><stop offset="0%" stop-color="#033b28"/><stop offset="18%" stop-color="#055f42"/><stop offset="65%" stop-color="#087d54"/><stop offset="100%" stop-color="#0ea868"/></linearGradient><clipPath id="nm-envelope-clip"><rect x="0" y="0" width="450" height="290" rx="45" ry="45"/></clipPath></defs><rect x="16" y="16" width="480" height="480" rx="120" fill="#ffffff" stroke="#cbd5e1" stroke-width="8"/><g transform="translate(76, 150) scale(0.80)"><g clip-path="url(#nm-envelope-clip)"><rect x="0" y="0" width="450" height="290" fill="#ffffff"/><path d="M 45 0 L 405 0 C 429.9 0 448.9 19 449.2 35 C 375 65 295 115 225 145 C 157 116 82 61 12 36 C 18 20 29 9 45 0 Z" fill="url(#nm-top-grad)"/><path d="M 0 45 C 0 20.1 20.1 0 45 0 C 29 9 18 20 12 36 C 82 96 162 156 228 209 C 200 205 180 201 165 199 C 125 214 85 264 45 290 C 20.1 290 0 270 0 245 Z" fill="url(#nm-bot-left-grad)"/><path d="M 228 209 C 298 178 378 88 450 62 L 450 245 C 450 270 429.9 290 405 290 L 300 290 C 255 274 210 209 165 199 C 180 201 200 205 228 209 Z" fill="url(#nm-bot-right-grad)"/><path d="M 12 36 C 82 61 157 116 225 145 C 295 115 375 65 449.2 35 C 449.8 40 450 45 450 48 L 450 62 C 378 88 298 178 228 209 C 162 156 82 96 12 36 Z" fill="#ffffff"/></g><circle cx="410" cy="40" r="28" fill='#34d399'/><rect width="0" height="0" fill='#087d54'/></g></svg>`;
 export { faviconSvg };
 export const faviconUri = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
 
-export const neomailLogoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 290" width="32" height="21" fill="none" aria-hidden="true" style="display:block"><defs><linearGradient id="nml-top-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="35%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nml-bot-left-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="50%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nml-bot-right-grad" x1="0%" y1="40%" x2="100%" y2="70%"><stop offset="0%" stop-color="#033b28"/><stop offset="18%" stop-color="#055f42"/><stop offset="65%" stop-color="#087d54"/><stop offset="100%" stop-color="#0ea868"/></linearGradient><clipPath id="nml-envelope-clip"><rect x="0" y="0" width="450" height="290" rx="45" ry="45"/></clipPath></defs><g clip-path="url(#nml-envelope-clip)"><rect x="0" y="0" width="450" height="290" fill="#ffffff"/><path d="M 45 0 L 405 0 C 429.9 0 448.9 19 449.2 35 C 375 65 295 115 225 145 C 157 116 82 61 12 36 C 18 20 29 9 45 0 Z" fill="url(#nml-top-grad)"/><path d="M 0 45 C 0 20.1 20.1 0 45 0 C 29 9 18 20 12 36 C 82 96 162 156 228 209 C 200 205 180 201 165 199 C 125 214 85 264 45 290 C 20.1 290 0 270 0 245 Z" fill="url(#nml-bot-left-grad)"/><path d="M 228 209 C 298 178 378 88 450 62 L 450 245 C 450 270 429.9 290 405 290 L 300 290 C 255 274 210 209 165 199 C 180 201 200 205 228 209 Z" fill="url(#nml-bot-right-grad)"/><path d="M 12 36 C 82 61 157 116 225 145 C 295 115 375 65 449.2 35 C 449.8 40 450 45 450 48 L 450 62 C 378 88 298 178 228 209 C 162 156 82 96 12 36 Z" fill="#ffffff"/></g></svg>`;
+export const neomailerLogoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 290" width="32" height="21" fill="none" aria-hidden="true" style="display:block"><defs><linearGradient id="nml-top-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="35%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nml-bot-left-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="50%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nml-bot-right-grad" x1="0%" y1="40%" x2="100%" y2="70%"><stop offset="0%" stop-color="#033b28"/><stop offset="18%" stop-color="#055f42"/><stop offset="65%" stop-color="#087d54"/><stop offset="100%" stop-color="#0ea868"/></linearGradient><clipPath id="nml-envelope-clip"><rect x="0" y="0" width="450" height="290" rx="45" ry="45"/></clipPath></defs><g clip-path="url(#nml-envelope-clip)"><rect x="0" y="0" width="450" height="290" fill="#ffffff"/><path d="M 45 0 L 405 0 C 429.9 0 448.9 19 449.2 35 C 375 65 295 115 225 145 C 157 116 82 61 12 36 C 18 20 29 9 45 0 Z" fill="url(#nml-top-grad)"/><path d="M 0 45 C 0 20.1 20.1 0 45 0 C 29 9 18 20 12 36 C 82 96 162 156 228 209 C 200 205 180 201 165 199 C 125 214 85 264 45 290 C 20.1 290 0 270 0 245 Z" fill="url(#nml-bot-left-grad)"/><path d="M 228 209 C 298 178 378 88 450 62 L 450 245 C 450 270 429.9 290 405 290 L 300 290 C 255 274 210 209 165 199 C 180 201 200 205 228 209 Z" fill="url(#nml-bot-right-grad)"/><path d="M 12 36 C 82 61 157 116 225 145 C 295 115 375 65 449.2 35 C 449.8 40 450 45 450 48 L 450 62 C 378 88 298 178 228 209 C 162 156 82 96 12 36 Z" fill="#ffffff"/></g></svg>`;
+export const neomailLogoSvg = neomailerLogoSvg;
 
 const css = `
 @font-face {
@@ -430,9 +431,10 @@ body {
 
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
-button, a, input, select, textarea { outline-offset: 3px; }
+button, a { outline-offset: 3px; }
 button { cursor: pointer; }
-button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible { outline: 2px solid var(--accent); }
+button:focus-visible, a:focus-visible { outline: 2px solid var(--accent); }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; }
 svg { width: 18px; height: 18px; flex-shrink: 0; }
 
 /* Customizable select API & custom dropdown styling */
@@ -468,8 +470,7 @@ select:hover {
 select:focus,
 select:focus-visible {
   border-color: var(--accent);
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline: none;
 }
 
 @supports (appearance: base-select) {
@@ -1562,8 +1563,7 @@ input, select, textarea {
 
 input:focus, select:focus, textarea:focus {
   border-color: var(--accent);
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
+  outline: none;
 }
 
 textarea {
@@ -1897,13 +1897,12 @@ iframe {
   margin-bottom: 16px;
 }
 
-input[aria-invalid="true"] {
-  border-color: var(--danger);
-}
-
-input[aria-invalid="true"]:focus {
-  border-color: var(--danger);
-  box-shadow: 0 0 0 3px var(--danger-line);
+input[aria-invalid="true"],
+input[aria-invalid="true"]:focus,
+input[aria-invalid="true"]:focus-visible {
+  border-color: var(--danger) !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .logininner .button {
@@ -2032,7 +2031,8 @@ input[aria-invalid="true"]:focus {
   text-underline-offset: 3px;
 }
 
-dialog.login-modal {
+dialog.login-modal,
+dialog.admin-modal {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   padding: 0;
@@ -2040,11 +2040,17 @@ dialog.login-modal {
   color: var(--text);
   max-width: 440px;
   width: 90vw;
-  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  box-shadow: none !important;
   margin: auto;
 }
 
-dialog.login-modal::backdrop {
+dialog.login-modal[open],
+dialog.admin-modal[open] {
+  animation: dropMenuIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+dialog.login-modal::backdrop,
+dialog.admin-modal::backdrop {
   background: rgba(0, 0, 0, 0.65);
   backdrop-filter: blur(2px);
 }
@@ -4024,6 +4030,11 @@ main.docs-main-studio {
   margin-top: 8px;
   flex-wrap: wrap;
 }
+.error-page-actions .button {
+  padding: 11px 26px;
+  font-weight: 700;
+  font-size: 14px;
+}
 @media (max-width: 860px) {
   .error-page-actions {
     justify-content: center;
@@ -4063,6 +4074,49 @@ main.docs-main-studio {
 }
 .error-steam-2 {
   animation: neomailSteamFloat 2.8s ease-out infinite 1.4s;
+}
+
+/* Natural plant & leaf swaying animation */
+@keyframes leafSwayLeft {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(-3.5deg); }
+}
+@keyframes leafSwayRight {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(3.2deg); }
+}
+@keyframes leafSwayGentle {
+  0%, 100% { transform: rotate(0deg); }
+  35% { transform: rotate(2deg); }
+  75% { transform: rotate(-2deg); }
+}
+@keyframes succulentSway {
+  0%, 100% { transform: rotate(0deg); }
+  50% { transform: rotate(2.5deg); }
+}
+.plant-leaf-1 {
+  transform-origin: 445px 320px;
+  animation: leafSwayLeft 5.5s ease-in-out infinite;
+}
+.plant-leaf-2 {
+  transform-origin: 445px 320px;
+  animation: leafSwayGentle 6.2s ease-in-out infinite 0.4s;
+}
+.plant-leaf-3 {
+  transform-origin: 445px 320px;
+  animation: leafSwayRight 4.8s ease-in-out infinite 0.8s;
+}
+.plant-leaf-4 {
+  transform-origin: 445px 320px;
+  animation: leafSwayLeft 5.0s ease-in-out infinite 1.2s;
+}
+.plant-leaf-5 {
+  transform-origin: 445px 320px;
+  animation: leafSwayRight 5.8s ease-in-out infinite 0.6s;
+}
+.succulent-sway {
+  transform-origin: 109px 272px;
+  animation: succulentSway 4.5s ease-in-out infinite;
 }
 `;
 
@@ -4130,7 +4184,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
         <nav>${navFor(sess?.role).map(([id, label]) => `<a class="navlink ${id === view ? 'active' : ''}" ${id === view ? 'aria-current="page"' : ''} href="${base}/${id}">${icon(id)}<span>${label}</span></a>`).join('')}</nav>
         <div class="sidefoot">
           <a class="navlink side-docs-link" href="/docs" target="_blank">${icon('docs')}<span>Documentation ↗</span></a>
-          <div class="sidefoot-credit">${formatCredit(footerCredit)}</div>
+          <div class="sidefoot-credit">${formatCredit(sess?.footerCredit || footerCredit)}</div>
         </div>
       </aside>
       <div class="workspace">
@@ -4195,8 +4249,12 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
               <p class="sub">${e(subtitle)}</p>
             </div>
             <div class="actions">
-              <a class="button secondary spa-refresh-btn" id="spa-refresh-link" href="${base}/${view}">${icon('refresh')} Refresh</a>
-              <a class="button" href="${base}/compose">${icon('mail')} Send a test</a>
+              ${view === 'users' ? (sess?.role === 'superadmin' ? `
+                <button type="button" class="button" onclick="document.getElementById('addAdminModal')?.showModal()">${icon('plus')} Add admin</button>
+              ` : '') : `
+                <a class="button secondary spa-refresh-btn" id="spa-refresh-link" href="${base}/${view}">${icon('refresh')} Refresh</a>
+                <a class="button" href="${base}/compose">${icon('mail')} Send a test</a>
+              `}
             </div>
           </div>
           `}
@@ -4219,7 +4277,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
             </div>
           </div>
           <div class="footer-right">
-            <span>${formatCredit(footerCredit)}</span>
+            <span>${formatCredit(sess?.footerCredit || footerCredit)}</span>
             <span>·</span>
             <span>Zero-Trust AES-256</span>
           </div>
@@ -5845,7 +5903,7 @@ function inlineDocFmt(str) {
     .replace(/\x60([^\x60]+)\x60/g, '<code class="inline-code">$1</code>');
 }
 
-export function publicDocs(content, isDark = false) {
+export function publicDocs(content, isDark = false, footerCredit = 'Developed by SoftLaya Tech') {
   const defaultContent = `# neoMailer Documentation\n\nWelcome to **neoMailer** — hardened transactional email infrastructure designed for high deliverability, automated fallback routing, and zero-trust tenant isolation.\n\n> [!NOTE]\n> All tenant API keys and provider credentials are encrypted at rest with AES-256-GCM in Cloudflare D1.\n\n## Getting Started\n\nneoMailer provides a unified REST API and native SMTP relay that routes outbound transactional emails across multiple tier-1 providers with automated failover:\n\n- **Primary Provider**: Resend / Brevo\n- **Fallback Chain**: Resend → Brevo → Mailgun → Mailtrap → MailerSend → Custom SMTP\n- **Zero Downtime**: Circuit breakers automatically isolate unhealthy providers\n\n## System Guide\n\nConnect your application backend using the official REST API or native SMTP credentials.\n\n\`\`\`javascript\n// Node.js Dispatch Example\nconst response = await fetch('https://mail.neopathshala.com/api/v1/send', {\n  method: 'POST',\n  headers: {\n    'Authorization': 'Bearer ' + process.env.NEOMAILER_API_KEY,\n    'Content-Type': 'application/json',\n    'Idempotency-Key': 'order:10294:invoice'\n  },\n  body: JSON.stringify({\n    from: 'support@mail.neopathshala.com',\n    to: 'customer@example.com',\n    subject: 'Your Invoice #10294 is Ready',\n    html: '<p>Thank you for your order! Your receipt is attached.</p>'\n  })\n});\n\`\`\`\n\n## Sending Domains & DNS\n\nBefore sending, configure these standard DNS verification records:\n\n| Record Type | Hostname | Value | Purpose |\n| ----------- | -------- | ----- | ------- |\n| TXT | \`_neomail-verification\` | \`[domain_token]\` | Domain Ownership & Anti-Scam Protection |\n| TXT | \`@\` | \`v=spf1 include:mail.neopathshala.com ~all\` | SPF Alignment |\n| CNAME | \`default._domainkey\` | \`dkim.mail.neopathshala.com\` | DKIM Signature |\n| TXT | \`_dmarc\` | \`v=DMARC1; p=reject; sp=reject;\` | DMARC Enforcement |\n\n> [!TIP]\n> neoMailer continuously monitors your domain DNS. If verification fails or records are tampered with, sending is paused automatically to protect your reputation.\n\n## REST API Reference\n\n### POST \`/api/v1/send\`\n\nDispatches an email through the optimal healthy provider.\n\n#### Request Headers\n\n- \`Authorization: Bearer <API_KEY>\` *(Required)*\n- \`Content-Type: application/json\` *(Required)*\n- \`Idempotency-Key: <unique_string>\` *(Recommended)*\n\n#### Response Schema\n\n\`\`\`json\n{\n  \"status\": \"success\",\n  \"id\": \"msg_90f23d8c11e74a6b\",\n  \"provider\": \"resend\",\n  \"transmission_status\": \"Delivered\",\n  \"timestamp\": 1730462400\n}\n\`\`\`\n\n## Provider Quotas & Rate Limits\n\nPer-user quotas prevent sudden spikes from degrading sender score.\n\n- [x] **Resend**: Tier 1 primary delivery\n- [x] **Brevo**: Global & EU transactional mail\n- [x] **Mailgun**: High-volume failover burst capacity\n- [x] **Mailtrap**: Production failover and sandbox staging\n- [x] **MailerSend**: Template fallback\n- [x] **SMTP Relay**: Port 465 (TLS) & 587 (STARTTLS)\n\n## Zero-Trust Security\n\n- **Session Binding**: Cryptographic SHA-256 session tokens with Cloudflare Access identity binding.\n- **Encrypted Storage**: Provider credentials and tenant secrets are sealed with authenticated AES-256-GCM.\n- **Immutable Auditing**: Every administrative change and dispatch event is logged.`;
 
   const md = content && content.trim() ? content : defaultContent;
@@ -6257,7 +6315,7 @@ export function publicDocs(content, isDark = false) {
 
   <!-- FOOTER -->
   <footer class="docs-footer">
-    <p>neoMailer · Hardened Transactional Email Infrastructure · Developed by SoftLaya Tech</p>
+    <p>neoMailer · Hardened Transactional Email Infrastructure · ${e(footerCredit)}</p>
   </footer>
 
   <script>
@@ -6724,35 +6782,39 @@ export function users(rows, sess, isSuperadmin = false, accessRequests = []) {
     </section>
   ` : '';
 
-  const addForm = isSuperadmin ? `
-    <section class="panel">
-      <div class="panelhead">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div class="brandmark" style="width:32px;height:32px;padding:0;background:var(--tint);color:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center">${icon('users')}</div>
-          <div>
-            <h2>Add administrator</h2>
-            <p style="font-size:12px;color:var(--muted);margin:2px 0 0">Provision an isolated workspace for a team member</p>
+  const addModal = isSuperadmin ? `
+    <dialog id="addAdminModal" class="login-modal admin-modal" onclick="if(event.target===this)this.close()">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="brandmark" style="width:32px;height:32px;padding:0;background:var(--tint);color:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center">${icon('users')}</div>
+            <div>
+              <h2 style="font-size:15px;margin:0;font-weight:700">Add Administrator</h2>
+              <p style="font-size:11px;color:var(--muted);margin:2px 0 0">Provision an isolated workspace for a team member</p>
+            </div>
           </div>
+          <button type="button" class="modal-close-btn" onclick="document.getElementById('addAdminModal').close()" aria-label="Close modal">&times;</button>
         </div>
-      </div>
-      <div class="panelbody">
-        <form method="post" action="/admin/users/add">
+        <form method="post" action="/admin/users/add" class="modal-body">
           ${hidden(sess.csrf_token)}
-          <div class="settingsgrid">
-            <label class="field">Access subject (email)
-              <input type="email" name="subject" required maxlength="254" autocomplete="off" spellcheck="false" placeholder="you@example.com">
-            </label>
-            <label class="field">Role
-              <select name="role" class="custom-select">
-                <option value="admin">Admin</option>
-              </select>
-            </label>
+          <label class="field" style="margin-bottom:12px">
+            <span style="font-size:11px;font-weight:600;display:block;margin-bottom:4px">Access subject (email)</span>
+            <input type="email" name="subject" required maxlength="254" autocomplete="off" spellcheck="false" placeholder="you@example.com" style="width:100%">
+          </label>
+          <label class="field" style="margin-bottom:14px">
+            <span style="font-size:11px;font-weight:600;display:block;margin-bottom:4px">Role</span>
+            <select name="role" class="custom-select" style="width:100%">
+              <option value="admin">Admin</option>
+            </select>
+          </label>
+          <p class="footnote" style="margin:0 0 16px 0;font-size:11px;color:var(--muted)">Admins receive a fully isolated workspace of their own. They never gain superadmin powers.</p>
+          <div style="display:flex;justify-content:flex-end;gap:10px">
+            <button type="button" class="button secondary" onclick="document.getElementById('addAdminModal').close()">Cancel</button>
+            <button type="submit" class="button">${icon('plus')} Add user</button>
           </div>
-          <button class="button">${icon('plus')}<span>Add user</span></button>
         </form>
-        <p class="footnote">Admins receive a fully isolated workspace of their own. They never gain superadmin powers.</p>
       </div>
-    </section>
+    </dialog>
   ` : '';
 
   const clickScript = sess?.script_nonce ? `<script nonce="${e(sess.script_nonce)}">
@@ -6849,12 +6911,12 @@ document.addEventListener('click', function(ev) {
         </table>
       </div>
     </section>
-    ${addForm}
+    ${addModal}
     ${clickScript}
   `;
 }
 
-export function otpRequest(error = '', isDark = false, emailVal = '', showRegister = true, notice = '') {
+export function otpRequest(error = '', isDark = false, emailVal = '', showRegister = true, notice = '', footerCredit = 'Developed by SoftLaya Tech') {
   const renderedError = error ? renderNoticeText(error) : '';
   const registerModal = showRegister ? `
     <p class="footnote" style="margin-top:20px;text-align:center">
@@ -6895,12 +6957,12 @@ export function otpRequest(error = '', isDark = false, emailVal = '', showRegist
     </dialog>
   ` : '';
 
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${neomailLogoSvg}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Request a one-time code sent to your administrator email.</p>${notice ? `<div class="notice" role="status" style="border-color:var(--accent);color:var(--accent);margin-bottom:16px">${icon('check')}<span>${e(notice)}</span></div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com" value="${e(emailVal)}" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Send login code ${icon('arrow')}</button></form>${registerModal}</div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${neomailLogoSvg}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · ${e(footerCredit)}</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Request a one-time code sent to your administrator email.</p>${notice ? `<div class="notice" role="status" style="border-color:var(--accent);color:var(--accent);margin-bottom:16px">${icon('check')}<span>${e(notice)}</span></div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com" value="${e(emailVal)}" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Send login code ${icon('arrow')}</button></form>${registerModal}</div></div></div>`, '', isDark);
 }
 
-export function otpVerify(email, error = '', isDark = false) {
+export function otpVerify(email, error = '', isDark = false, footerCredit = 'Developed by SoftLaya Tech') {
   const renderedError = error ? renderNoticeText(error) : '';
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${neomailLogoSvg}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p><form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${neomailLogoSvg}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · ${e(footerCredit)}</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p><form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}<button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`, '', isDark);
 }
 
 export function domains(rows, sess) {

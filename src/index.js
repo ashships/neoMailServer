@@ -134,10 +134,11 @@ async function handler(request, env) {
   }
   if (path === '/docs') {
     requireMethod(request, ['GET']);
+    const { values: cfg } = await config(env);
     const row = await env.DB.prepare("SELECT value FROM app_settings WHERE name='DOCS_CONTENT'").first();
     const content = row?.value || 'NeoMail documentation. Configure your deployment and providers in the admin panel.';
     const isDark = cookie(request, 'neomail_theme') === 'dark';
-    return reply(ui.publicDocs(content, isDark), 200, { 'Content-Type': 'text/html; charset=utf-8' });
+    return reply(ui.publicDocs(content, isDark, cfg.FOOTER_CREDIT), 200, { 'Content-Type': 'text/html; charset=utf-8' });
   }
   if (path === '/health') {
     requireMethod(request, ['GET']);
@@ -273,9 +274,9 @@ async function handler(request, env) {
       if (otpLoginConfigured(env) && url.searchParams.get('mode') !== 'token') {
         const email = (url.searchParams.get('email') || '').slice(0, 254);
         const pending = email ? await env.DB.prepare('SELECT 1 FROM admin_otps WHERE subject=? AND expires_at>unixepoch()').bind(email).first() : null;
-        return reply(pending ? ui.otpVerify(email, '', isDark) : ui.otpRequest('', isDark, '', showReg));
+        return reply(pending ? ui.otpVerify(email, '', isDark, cfg.FOOTER_CREDIT) : ui.otpRequest('', isDark, '', showReg, '', cfg.FOOTER_CREDIT));
       }
-      return reply((local(request, env) || tokenLoginConfigured(env)) ? ui.login('', isDark, showReg) : ui.accessLogin());
+      return reply((local(request, env) || tokenLoginConfigured(env)) ? ui.login('', isDark, showReg, cfg.FOOTER_CREDIT) : ui.accessLogin());
     }
     sameOrigin(request);
     const { values: cfg } = await config(env, request.method === 'POST');
@@ -290,7 +291,7 @@ async function handler(request, env) {
       const organization = text(data.get('organization') || '', 120);
       const notes = text(data.get('notes') || '', 500);
       if (!clientName || !clientEmail) {
-        return reply(ui.otpRequest('Please provide your full name and a valid email address.', isDark, clientEmail || '', true), 422);
+        return reply(ui.otpRequest('Please provide your full name and a valid email address.', isDark, clientEmail || '', true, '', cfg.FOOTER_CREDIT), 422);
       }
       await rate(env, 'reg-req:ip:' + ip, 5, 3600);
 
@@ -320,7 +321,7 @@ async function handler(request, env) {
 
       await audit(env, request, 'ACCESS_REQUEST_SUBMITTED', { email: clientEmail, name: clientName, organization });
 
-      return reply(ui.otpRequest('', isDark, '', true, 'Thank you! Your access request has been submitted. Our workspace administrator will review it shortly.'));
+      return reply(ui.otpRequest('', isDark, '', true, 'Thank you! Your access request has been submitted. Our workspace administrator will review it shortly.', cfg.FOOTER_CREDIT));
     }
     if (otpLoginConfigured(env) && data.get('step')) {
       const step = data.get('step');
@@ -340,13 +341,13 @@ async function handler(request, env) {
         if (!authorized) {
           await audit(env, request, 'AUTH_REJECTED_UNREGISTERED', { subject: emailAddr });
           const showReg = cfg.PUBLIC_REGISTRATION !== 'false';
-          return reply(ui.otpRequest("No account found with this email. Please check your email address or contact your workspace administrator for access.", isDark, emailAddr, showReg), 403);
+          return reply(ui.otpRequest("We couldn't find an account. Please check your email address or contact your workspace administrator for access.", isDark, emailAddr, showReg, '', cfg.FOOTER_CREDIT), 403);
         }
 
         const existing = await env.DB.prepare('SELECT created_at FROM admin_otps WHERE subject=?').bind(emailAddr).first().catch(() => null);
         const nowSec = now();
         if (existing && nowSec - existing.created_at < 60) {
-          return reply(ui.otpVerify(emailAddr, '', isDark));
+          return reply(ui.otpVerify(emailAddr, '', isDark, cfg.FOOTER_CREDIT));
         }
         {
           const otpBytes = new Uint32Array(1); crypto.getRandomValues(otpBytes); const code = String(100000 + (otpBytes[0] % 900000));
@@ -449,7 +450,7 @@ async function handler(request, env) {
           }
           await audit(env, request, 'OTP_SENT', { subject: emailAddr });
         }
-        return reply(ui.otpVerify(emailAddr, '', isDark));
+        return reply(ui.otpVerify(emailAddr, '', isDark, cfg.FOOTER_CREDIT));
       }
       if (step === 'verify') {
         const emailAddr = email(data.get('email'));
@@ -475,7 +476,7 @@ async function handler(request, env) {
         const userAccount = await env.DB.prepare('SELECT role, is_active FROM admin_users WHERE subject=?').bind(emailAddr).first();
         if (!userAccount || userAccount.is_active !== 1) {
           await audit(env, request, 'AUTH_VERIFY_UNREGISTERED', { subject: emailAddr });
-          throw new HttpError(403, "No account found with this email. Please check your email address or contact your workspace administrator for access.");
+          throw new HttpError(403, "We couldn't find an account. Please check your email address or contact your workspace administrator for access.");
         }
 
         const targetRole = userAccount.role;
@@ -496,7 +497,7 @@ async function handler(request, env) {
     await rate(env, 'login:subject:' + (subject || 'token'), +cfg.MAX_LOGIN_ATTEMPTS, 60);
     const data2 = data;
     try { await reauthenticate(request, env, data2); } catch (e) {
-      await audit(env, request, 'AUTH_FAILURE'); return reply((local(request, env) || tokenLoginConfigured(env) || otpLoginConfigured(env)) ? ui.login('Sign-in failed. Check your administrator token.', isDark) : ui.accessLogin(), e.status || 401);
+      await audit(env, request, 'AUTH_FAILURE'); return reply((local(request, env) || tokenLoginConfigured(env) || otpLoginConfigured(env)) ? ui.login('Sign-in failed. Check your administrator token.', isDark, true, cfg.FOOTER_CREDIT) : ui.accessLogin(), e.status || 401);
     }
     // Token sign-in has no per-user identity of its own. Bind the session to the
     // first active superadmin; the deployment identity is used only during the
@@ -530,6 +531,7 @@ async function handler(request, env) {
     return profileImage(env, targetSubject);
   }
   const { values: cfg } = await config(env, request.method === 'POST');
+  sess.footerCredit = cfg.FOOTER_CREDIT;
   if (request.method === 'POST') {
     const isProfilePost = path === '/admin/profile' || path === '/dashboard/profile';
     const data = isProfilePost ? await profileForm(request) : await form(request); await csrf(request, data, sess);
