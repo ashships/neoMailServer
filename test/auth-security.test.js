@@ -66,10 +66,13 @@ test('auth security: only superadmin-provisioned accounts can request OTP and lo
 
     assert.equal(unregReq.status, 403, 'Unregistered user must be rejected with 403');
     const unregHtml = await unregReq.text();
-    assert.ok(unregHtml.includes('No account found with this email. Please check your email address or contact your <a href="mailto:aashish@neopathshala.com">workspace administrator</a> for access.'), 'Must display custom error message with mailto link');
+    assert.ok(unregHtml.includes('We couldn\'t find an account. Please check your email address or contact your <a href="mailto:aashish@neopathshala.com">workspace administrator</a> for access.'), 'Must display custom error message with mailto link');
     assert.ok(unregHtml.includes('class="notice error" role="alert"'), 'Must have notice error banner');
+    assert.ok(!unregHtml.includes('class="notice error" role="alert"><svg'), 'Notice error banner must not display an icon');
     assert.ok(unregHtml.indexOf('Administrator email') < unregHtml.indexOf('notice error'), 'Error must be displayed below the email input field');
     assert.ok(unregHtml.includes('value="attacker@evil.com"'), 'Must retain entered email in field');
+    assert.ok(unregHtml.includes('aria-invalid="true"'), 'Invalid email input must have aria-invalid');
+    assert.ok(unregHtml.includes('Developed by SoftLaya Tech'), 'Must render Developed by SoftLaya Tech footer credit');
     assert.ok(unregHtml.includes('Request client access'), 'Must display client registration request link');
     assert.ok(unregHtml.includes('dialog id="regModal"'), 'Must have client registration modal dialog');
     assert.ok(!unregHtml.includes('provisioned by the superadmin'), 'Must not disclose provisioning or internal roles');
@@ -127,7 +130,7 @@ test('auth security: only superadmin-provisioned accounts can request OTP and lo
     assert.equal(revokedReq.status, 403);
     assert.equal(dispatchedEmails.length, 0, 'Revoked user must NOT receive OTP email');
     const revokedHtml = await revokedReq.text();
-    assert.ok(revokedHtml.includes("No account found with this email"));
+    assert.ok(revokedHtml.includes("We couldn't find an account"));
     assert.ok(revokedHtml.includes('mailto:aashish@neopathshala.com'));
 
     // 7. CLIENT REGISTRATION REQUEST FLOW
@@ -180,6 +183,19 @@ test('auth security: only superadmin-provisioned accounts can request OTP and lo
       }),
     }), env);
     assert.equal(blockedReg.status, 403, 'Must reject registration request when disabled');
+
+    // 9. SUPERADMIN CAN CUSTOMIZE FOOTER CREDIT VIA SETTINGS
+    await db.prepare("INSERT INTO app_settings (name, value, is_secret, updated_at) VALUES ('FOOTER_CREDIT', 'Custom Agency Devs', 0, unixepoch()) ON CONFLICT(name) DO UPDATE SET value='Custom Agency Devs'").run();
+
+    const customCreditLogin = await worker.fetch(new Request('https://mail.neopathshala.com/login'), env);
+    const customCreditHtml = await customCreditLogin.text();
+    assert.ok(customCreditHtml.includes('Custom Agency Devs'), 'Sign-in page must reflect customized FOOTER_CREDIT');
+    assert.ok(!customCreditHtml.includes('Developed by SoftLaya Tech'), 'Old credit should be replaced by customized FOOTER_CREDIT');
+
+    // 10. NO DOUBLE BORDER ON INPUT FOCUS
+    assert.ok(customCreditHtml.includes('input[aria-invalid="true"]:focus'), 'Must have invalid input focus style');
+    assert.ok(customCreditHtml.includes('outline: none !important;'), 'Must suppress outline to prevent double border');
+    assert.ok(customCreditHtml.includes('box-shadow: none !important;'), 'Must suppress box-shadow to prevent double border');
 
   } finally {
     globalThis.fetch = originalFetch;
