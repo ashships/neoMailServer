@@ -245,5 +245,42 @@ export const SPA_CLIENT_SCRIPT = String.raw`
   if (initialMain) {
     cacheView(window.location.pathname, initialMain.innerHTML, document.title, initialCrumb ? initialCrumb.innerHTML : '');
   }
+
+  // Download and cache fonts into localStorage as base64 data URIs so on every refresh they load instantly (0ms)
+  async function cacheFontsLocally() {
+    try {
+      if (localStorage.getItem('neomail_font_css')) return;
+      const pjsUrl = 'https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2';
+      const jbmUrl = 'https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwgknk-6nFg.woff2';
+      const [r1, r2] = await Promise.all([fetch(pjsUrl), fetch(jbmUrl)]);
+      if (!r1.ok || !r2.ok) return;
+      const [b1, b2] = await Promise.all([r1.arrayBuffer(), r2.arrayBuffer()]);
+
+      function bufToB64(buf) {
+        const u8 = new Uint8Array(buf);
+        let bin = '';
+        const chunk = 8192;
+        for (let i = 0; i < u8.length; i += chunk) {
+          bin += String.fromCharCode.apply(null, u8.subarray(i, i + chunk));
+        }
+        return btoa(bin);
+      }
+
+      const pjsB64 = bufToB64(b1);
+      const jbmB64 = bufToB64(b2);
+
+      const fontCss = '@font-face{font-family:\'Plus Jakarta Sans\';font-style:normal;font-weight:300 800;font-display:block;src:url(data:font/woff2;base64,' + pjsB64 + ') format(\'woff2\');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}' +
+        '@font-face{font-family:\'JetBrains Mono\';font-style:normal;font-weight:400 600;font-display:block;src:url(data:font/woff2;base64,' + jbmB64 + ') format(\'woff2\');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD;}';
+
+      localStorage.setItem('neomail_font_css', fontCss);
+      if (!document.getElementById('neomail-fonts-cached')) {
+        const s = document.createElement('style');
+        s.id = 'neomail-fonts-cached';
+        s.textContent = fontCss;
+        document.head.appendChild(s);
+      }
+    } catch (e) {}
+  }
+  cacheFontsLocally();
 })();
 `;

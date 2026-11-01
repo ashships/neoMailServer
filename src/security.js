@@ -3,7 +3,7 @@ export class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 export const headers = {
-  'Content-Security-Policy': "default-src 'none'; connect-src 'self'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data:; frame-src 'self'; script-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+  'Content-Security-Policy': "default-src 'none'; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data:; frame-src 'self'; script-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
   'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY',
   // no-referrer turns Origin into "null" on browser form POSTs, breaking CSRF checks.
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains', 'Referrer-Policy': 'same-origin',
