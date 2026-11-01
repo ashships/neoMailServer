@@ -236,13 +236,14 @@ async function handler(request, env) {
   if (!dashboardMode && path.startsWith('/admin') && role !== 'superadmin' && path !== '/admin/login' && !tenantForm) return redirect('/dashboard' + (url.search || ''));
   if (path === '/admin/login') {
     requireMethod(request, ['GET', 'POST']);
+    const isDark = cookie(request, 'neomail_theme') === 'dark';
     if (request.method === 'GET') {
       if (otpLoginConfigured(env) && url.searchParams.get('mode') !== 'token') {
         const email = (url.searchParams.get('email') || '').slice(0, 254);
         const pending = email ? await env.DB.prepare('SELECT 1 FROM admin_otps WHERE subject=? AND expires_at>unixepoch()').bind(email).first() : null;
-        return reply(pending ? ui.otpVerify(email) : ui.otpRequest());
+        return reply(pending ? ui.otpVerify(email, '', isDark) : ui.otpRequest('', isDark));
       }
-      return reply((local(request, env) || tokenLoginConfigured(env)) ? ui.login() : ui.accessLogin());
+      return reply((local(request, env) || tokenLoginConfigured(env)) ? ui.login('', isDark) : ui.accessLogin());
     }
     sameOrigin(request);
     const { values: cfg } = await config(env, request.method === 'POST');
@@ -264,7 +265,7 @@ async function handler(request, env) {
         const existing = await env.DB.prepare('SELECT created_at FROM admin_otps WHERE subject=?').bind(emailAddr).first().catch(() => null);
         const nowSec = now();
         if (existing && nowSec - existing.created_at < 60) {
-          return reply(ui.otpVerify(emailAddr));
+          return reply(ui.otpVerify(emailAddr, '', isDark));
         }
         if (authorized) {
           const otpBytes = new Uint32Array(1); crypto.getRandomValues(otpBytes); const code = String(100000 + (otpBytes[0] % 900000));
@@ -367,7 +368,7 @@ async function handler(request, env) {
           }
           await audit(env, request, 'OTP_SENT', { subject: emailAddr });
         }
-        return reply(ui.otpVerify(emailAddr));
+        return reply(ui.otpVerify(emailAddr, '', isDark));
       }
       if (step === 'verify') {
         const emailAddr = email(data.get('email'));
@@ -404,7 +405,7 @@ async function handler(request, env) {
     await rate(env, 'login:subject:' + (subject || 'token'), +cfg.MAX_LOGIN_ATTEMPTS, 60);
     const data2 = data;
     try { await reauthenticate(request, env, data2); } catch (e) {
-      await audit(env, request, 'AUTH_FAILURE'); return reply((local(request, env) || tokenLoginConfigured(env) || otpLoginConfigured(env)) ? ui.login('Sign-in failed. Check your administrator token.') : ui.accessLogin(), e.status || 401);
+      await audit(env, request, 'AUTH_FAILURE'); return reply((local(request, env) || tokenLoginConfigured(env) || otpLoginConfigured(env)) ? ui.login('Sign-in failed. Check your administrator token.', isDark) : ui.accessLogin(), e.status || 401);
     }
     // Token sign-in has no per-user identity of its own. Bind the session to the
     // first active superadmin; the deployment identity is used only during the

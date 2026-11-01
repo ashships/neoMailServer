@@ -194,8 +194,8 @@ const css = `
   --radius-md: 10px;
   --radius-lg: 14px;
   --radius-full: 9999px;
-  --font: var(--font-geist-sans), "Plus Jakarta Sans", "Geist", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --font: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Inter", "Helvetica Neue", Arial, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-family: var(--font);
   font-size: 14px;
 }
@@ -206,18 +206,18 @@ const css = `
 :root:has(#theme-toggle:checked) {
   color-scheme: dark;
   --bg: #131514;
-  --surface: #1a1d1b;
-  --surface-hover: #242826;
-  --surface-active: #2d3230;
-  --text: #eceae5;
-  --text-secondary: #c8c5bc;
-  --muted: #99a49e;
-  --line: #323734;
-  --line-strong: #454c47;
+  --surface: #1a1e1c;
+  --surface-hover: #242927;
+  --surface-active: #2e3532;
+  --text: #f0ede6;
+  --text-secondary: #c5cbc7;
+  --muted: #8d9a92;
+  --line: #2b332f;
+  --line-strong: #3d4842;
   --accent: #34d399;
-  --accent-hover: #5fc38d;
+  --accent-hover: #5eead4;
   --accent-active: #10b981;
-  --accent-fg: #13201a;
+  --accent-fg: #0d1f17;
   --tint: rgba(52, 211, 153, 0.12);
   --tint-strong: rgba(52, 211, 153, 0.22);
   --tint-text: #6ee7b7;
@@ -241,18 +241,18 @@ const css = `
   :root:not([data-theme="light"]):not(:has(#theme-toggle-light:checked)) {
     color-scheme: dark;
     --bg: #131514;
-    --surface: #1a1d1b;
-    --surface-hover: #242826;
-    --surface-active: #2d3230;
-    --text: #eceae5;
-    --text-secondary: #c8c5bc;
-    --muted: #99a49e;
-    --line: #323734;
-    --line-strong: #454c47;
+    --surface: #1a1e1c;
+    --surface-hover: #242927;
+    --surface-active: #2e3532;
+    --text: #f0ede6;
+    --text-secondary: #c5cbc7;
+    --muted: #8d9a92;
+    --line: #2b332f;
+    --line-strong: #3d4842;
     --accent: #34d399;
-    --accent-hover: #5fc38d;
+    --accent-hover: #5eead4;
     --accent-active: #10b981;
-    --accent-fg: #13201a;
+    --accent-fg: #0d1f17;
     --tint: rgba(52, 211, 153, 0.12);
     --tint-strong: rgba(52, 211, 153, 0.22);
     --tint-text: #6ee7b7;
@@ -278,8 +278,54 @@ html, body {
   overflow: hidden;
 }
 
-* { box-sizing: border-box; }
-body { margin: 0; background: var(--bg); color: var(--text); line-height: 1.5; -webkit-font-smoothing: antialiased; }
+* {
+  box-sizing: border-box;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--muted);
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11", "ss01";
+  letter-spacing: -0.011em;
+}
+
+::selection {
+  background: var(--tint-strong);
+  color: var(--accent);
+}
+
+:root[data-theme="dark"] ::selection,
+:root.dark ::selection,
+:root:has(#theme-toggle:checked) ::selection {
+  background: rgba(52, 211, 153, 0.28);
+  color: #f0ede6;
+}
+
 a { color: inherit; text-decoration: none; }
 button, input, select, textarea { font: inherit; }
 button, a, input, select, textarea { outline-offset: 3px; }
@@ -938,35 +984,42 @@ main {
 }
 
 h1 {
-  font-size: 26px;
-  letter-spacing: -0.8px;
-  margin: 0 0 4px;
+  font-size: 24px;
+  letter-spacing: -0.032em;
+  margin: 0 0 6px;
   font-weight: 700;
   color: var(--text);
+  line-height: 1.22;
 }
 
 h2 {
   font-size: 15px;
-  letter-spacing: -0.2px;
+  letter-spacing: -0.02em;
   margin: 0;
   font-weight: 650;
   color: var(--text);
+  line-height: 1.35;
 }
 
 h3 {
-  font-size: 13px;
+  font-size: 13.5px;
+  letter-spacing: -0.015em;
   margin: 0;
   font-weight: 600;
+  color: var(--text);
 }
 
 p {
   margin: 6px 0;
   color: var(--muted);
+  line-height: 1.55;
 }
 
 .sub {
   font-size: 13px;
   color: var(--muted);
+  line-height: 1.45;
+  letter-spacing: -0.008em;
 }
 
 .actions {
@@ -1081,7 +1134,7 @@ p {
   font-size: 11px;
   font-weight: 650;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.06em;
   color: var(--muted);
   display: flex;
   justify-content: space-between;
@@ -1097,10 +1150,10 @@ p {
 .statvalue {
   font-size: 32px;
   font-weight: 750;
-  letter-spacing: -1px;
-  line-height: 1.2;
+  letter-spacing: -0.035em;
+  line-height: 1.15;
   margin: 12px 0 6px;
-  font-variant-numeric: tabular-nums;
+  font-variant-numeric: tabular-nums lining-nums;
   color: var(--text);
 }
 
@@ -1152,13 +1205,14 @@ table {
   width: 100%;
   text-align: left;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 th {
   background: var(--surface-hover);
   font-size: 10.5px;
   text-transform: uppercase;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.06em;
   font-weight: 650;
   color: var(--muted);
   padding: 12px 20px;
@@ -1168,8 +1222,9 @@ th {
 td {
   padding: 14px 20px;
   border-bottom: 1px solid var(--line);
-  font-size: 12.5px;
+  font-size: 13px;
   color: var(--text);
+  font-variant-numeric: tabular-nums;
 }
 
 tr:last-child td {
@@ -1413,7 +1468,7 @@ textarea {
 .notice.warn {
   background: var(--warn-bg);
   border-color: var(--warn-line);
-  color: #92400e;
+  color: var(--warn);
 }
 
 .notice.error {
@@ -1438,7 +1493,7 @@ textarea {
 }
 
 .provider:hover {
-  background: #fafbfc;
+  background: var(--surface-hover);
 }
 
 .providerleft {
@@ -1479,7 +1534,7 @@ textarea {
   border-top: 1px solid var(--line);
   font-size: 11px;
   color: var(--muted);
-  background: #fafbfc;
+  background: var(--surface-hover);
 }
 
 .split {
@@ -1885,7 +1940,7 @@ input[type=checkbox] {
   align-items: center;
   gap: 6px;
   padding: 4px 10px;
-  background: #f1f5f9;
+  background: var(--surface-hover);
   border: 1px solid var(--line);
   border-radius: var(--radius-xs);
   font-family: var(--mono);
@@ -1905,7 +1960,7 @@ input[type=checkbox] {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #16a34a;
+  background: var(--accent);
 }
 
 .tag.Paused::before {
@@ -1914,7 +1969,7 @@ input[type=checkbox] {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #d97706;
+  background: var(--warn);
 }
 
 .identity-actions {
@@ -2129,14 +2184,16 @@ input[type=checkbox] {
 }
 
 /* Dark mode component enhancements */
-:root[data-theme="dark"] th, :root.dark th, :root:has(#theme-toggle:checked) th { background: var(--surface-hover); }
+:root[data-theme="dark"] th, :root.dark th, :root:has(#theme-toggle:checked) th { background: var(--surface-hover); color: var(--muted); border-bottom-color: var(--line); }
 :root[data-theme="dark"] tr:hover td, :root.dark tr:hover td, :root:has(#theme-toggle:checked) tr:hover td { background: var(--surface-hover); }
-:root[data-theme="dark"] td, :root.dark td, :root:has(#theme-toggle:checked) td { border-bottom-color: var(--line); }
+:root[data-theme="dark"] td, :root.dark td, :root:has(#theme-toggle:checked) td { border-bottom-color: var(--line); color: var(--text); }
 :root[data-theme="dark"] .filters, :root.dark .filters, :root:has(#theme-toggle:checked) .filters,
-:root[data-theme="dark"] .pagination, :root.dark .pagination, :root:has(#theme-toggle:checked) .pagination { background: var(--surface-hover); border-color: var(--line); }
-:root[data-theme="dark"] pre, :root.dark pre, :root:has(#theme-toggle:checked) pre { background: var(--bg); border-color: var(--line); color: var(--text); }
-:root[data-theme="dark"] .email-pill, :root.dark .email-pill, :root:has(#theme-toggle:checked) .email-pill { background: var(--surface-hover); border-color: var(--line); color: var(--text-secondary); }
+:root[data-theme="dark"] .pagination, :root.dark .pagination, :root:has(#theme-toggle:checked) .pagination { background: var(--surface-hover); border-color: var(--line); color: var(--muted); }
+:root[data-theme="dark"] pre, :root.dark pre, :root:has(#theme-toggle:checked) pre { background: #0c0e0d; border-color: var(--line); color: var(--text); }
+:root[data-theme="dark"] code, :root.dark code, :root:has(#theme-toggle:checked) code { color: #86efac; }
+:root[data-theme="dark"] .email-pill, :root.dark .email-pill, :root:has(#theme-toggle:checked) .email-pill { background: var(--surface-hover); border-color: var(--line); color: var(--text); }
 :root[data-theme="dark"] select, :root.dark select, :root:has(#theme-toggle:checked) select { background-color: var(--surface); color: var(--text); border-color: var(--line); }
+:root[data-theme="dark"] select option, :root.dark select option, :root:has(#theme-toggle:checked) select option { background: var(--surface); color: var(--text); }
 :root[data-theme="dark"] .stat:hover, :root.dark .stat:hover, :root:has(#theme-toggle:checked) .stat:hover { background: var(--surface-hover); }
 :root[data-theme="dark"] .provider:hover, :root.dark .provider:hover, :root:has(#theme-toggle:checked) .provider:hover { background: var(--surface-hover); }
 :root[data-theme="dark"] .tag.Active, :root.dark .tag.Active,
@@ -2145,7 +2202,7 @@ input[type=checkbox] {
 :root[data-theme="dark"] .tag.warn, :root.dark .tag.warn, :root:has(#theme-toggle:checked) .tag.warn { background: var(--warn-bg); border-color: var(--warn-line); color: var(--warn); }
 :root[data-theme="dark"] .tag.Failed, :root.dark .tag.Failed,
 :root[data-theme="dark"] .tag.danger, :root.dark .tag.danger, :root:has(#theme-toggle:checked) .tag.danger { background: var(--danger-bg); border-color: var(--danger-line); color: var(--danger); }
-:root[data-theme="dark"] .editor-preview, :root.dark .editor-preview, :root:has(#theme-toggle:checked) .editor-preview { background: var(--bg); border-color: var(--line); color: var(--text); }
+:root[data-theme="dark"] .editor-preview, :root.dark .editor-preview, :root:has(#theme-toggle:checked) .editor-preview { background: #0c0e0d; border-color: var(--line); color: var(--text); }
 :root[data-theme="dark"] .routing-card, :root.dark .routing-card, :root:has(#theme-toggle:checked) .routing-card { background: var(--surface); border-color: var(--line); }
 :root[data-theme="dark"] .routing-card:hover, :root.dark .routing-card:hover, :root:has(#theme-toggle:checked) .routing-card:hover { background: var(--surface-hover); }
 :root[data-theme="dark"] .order-btn, :root.dark .order-btn, :root:has(#theme-toggle:checked) .order-btn { background: var(--surface-hover); color: var(--text); border-color: var(--line); }
@@ -2153,6 +2210,9 @@ input[type=checkbox] {
 :root[data-theme="dark"] .compose-quickbtn, :root.dark .compose-quickbtn, :root:has(#theme-toggle:checked) .compose-quickbtn { background: var(--tint); border-color: var(--accent); color: var(--accent); }
 :root[data-theme="dark"] .compose-quickbtn:hover, :root.dark .compose-quickbtn:hover, :root:has(#theme-toggle:checked) .compose-quickbtn:hover { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
 :root[data-theme="dark"] .compose-quickbtn:hover svg, :root.dark .compose-quickbtn:hover svg, :root:has(#theme-toggle:checked) .compose-quickbtn:hover svg { color: var(--accent-fg); }
+:root[data-theme="dark"] .logininner .button, :root.dark .logininner .button, :root:has(#theme-toggle:checked) .logininner .button { background: var(--accent); color: var(--accent-fg); }
+:root[data-theme="dark"] input::placeholder, :root.dark input::placeholder, :root:has(#theme-toggle:checked) input::placeholder,
+:root[data-theme="dark"] textarea::placeholder, :root.dark textarea::placeholder, :root:has(#theme-toggle:checked) textarea::placeholder { color: var(--muted); opacity: 0.6; }
 
 /* Rich Text Editor */
 .rich-editor-container {
@@ -2357,8 +2417,8 @@ input[type=checkbox] {
 }
 
 .routing-rank.primary {
-  background: linear-gradient(135deg, var(--accent) 0%, #065f46 100%);
-  color: white;
+  background: var(--accent);
+  color: var(--accent-fg);
 }
 
 .routing-meta strong {
@@ -2471,7 +2531,7 @@ input[type=checkbox] {
 `;
 
 function document(title, content, nonce = '', isDark = false) {
-  return `<!doctype html><html lang="en" ${isDark ? 'data-theme="dark" class="dark"' : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#063b2c"><link rel="icon" type="image/svg+xml" href="${faviconUri}"><title>${e(title)} · neoPathshala Mail</title><style>${css}</style>${nonce ? `<script nonce="${nonce}">try{var t=localStorage.getItem('neomail_theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark');}}catch(e){}</script>` : ''}</head><body>${content}</body></html>`;
+  return `<!doctype html><html lang="en" ${isDark ? 'data-theme="dark" class="dark"' : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#063b2c"><link rel="icon" type="image/svg+xml" href="${faviconUri}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"><title>${e(title)} · neoPathshala Mail</title><style>${css}</style>${nonce ? `<script nonce="${nonce}">try{var t=localStorage.getItem('neomail_theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark');}}catch(e){}</script>` : ''}</head><body>${content}</body></html>`;
 }
 
 const navAll = [
@@ -2618,8 +2678,8 @@ export function page(view, title, subtitle, content, sess, notice = '') {
   `, sess?.script_nonce, isDark);
 }
 
-export function login(error = '') {
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Pathshala</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoPathshala</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to NeoMail</h1><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><label class="field">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token"></label><button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p></div></div></div>`);
+export function login(error = '', isDark = false) {
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Pathshala</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoPathshala</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to NeoMail</h1><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><label class="field">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token"></label><button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p></div></div></div>`, '', isDark);
 }
 
 function empty(message = 'Your mail activity will appear here', help = 'Configure a provider and sender identity, then send your first test email.') {
@@ -3318,12 +3378,12 @@ export function users(rows, sess, isSuperadmin = false) {
   return `<section class="panel"><div class="panelhead"><h2>Administrator accounts</h2><p>Cloudflare Access identities authorized to use this console.</p></div><div class="tablewrap"><table><thead><tr><th>Subject</th><th>Role</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody>${rows.map(r => `<tr><td>${e(r.subject)}</td><td>${e(r.role)}</td><td>${badge(r.is_active ? 'Active' : 'Revoked')}</td><td>${e(new Date(r.created_at * 1000).toISOString().slice(0, 16).replace('T', ' '))}</td><td>${isSuperadmin && r.role !== 'superadmin' && r.subject !== sess.subject ? `<details><summary>Edit</summary><form method="post" action="/admin/users/update">${hidden(sess.csrf_token)}<input type="hidden" name="old_subject" value="${e(r.subject)}"><label class="field">Subject<input name="new_subject" value="${e(r.subject)}" required maxlength="254"></label><label class="field">Role<select name="role" class="custom-select"><option value="admin" ${r.role === 'admin' ? 'selected' : ''}>Admin</option></select></label><button class="button secondary small">Save</button></form></details><form method="post" action="/admin/users/revoke">${hidden(sess.csrf_token)}<input type="hidden" name="subject" value="${e(r.subject)}"><button class="button secondary small">Revoke</button></form>` : ''}</td></tr>`).join('') || '<tr><td colspan="5">No users.</td></tr>'}</tbody></table></div></section>${addForm}`;
 }
 
-export function otpRequest(error = '') {
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Pathshala</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoPathshala</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to NeoMail</h1><p class="sub">Request a one-time code sent to your administrator email.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com"></label><button class="button">Send login code ${icon('arrow')}</button></form></div></div></div>`);
+export function otpRequest(error = '', isDark = false) {
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Pathshala</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoPathshala</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to NeoMail</h1><p class="sub">Request a one-time code sent to your administrator email.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com"></label><button class="button">Send login code ${icon('arrow')}</button></form></div></div></div>`, '', isDark);
 }
 
-export function otpVerify(email, error = '') {
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Pathshala</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoPathshala</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456"></label><button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`);
+export function otpVerify(email, error = '', isDark = false) {
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Pathshala</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoPathshala</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456"></label><button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`, '', isDark);
 }
 
 export function domains(rows, sess) {
@@ -3334,7 +3394,7 @@ export function domains(rows, sess) {
 }
 
 export function errorPage(message, status) {
-  return document('Request could not complete', `<div class="login" style="grid-template-columns:1fr;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px"><div class="panel" style="max-width:540px;width:100%;margin:0"><div class="panelhead" style="background:#fee2e2;border-color:#fecaca"><div style="display:flex;align-items:center;gap:10px"><span class="tag danger" style="font-size:12px;padding:4px 8px">${status}</span><h2 style="color:#b91c1c">Request could not complete</h2></div></div><div class="panelbody"><p style="font-size:14px;color:var(--text);margin-bottom:20px">${e(message)}</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="button" href="/admin">Return to workspace</a><a class="button secondary" href="/login">Back to Sign In</a></div></div></div></div>`);
+  return document('Request could not complete', `<div class="login" style="grid-template-columns:1fr;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px"><div class="panel" style="max-width:540px;width:100%;margin:0"><div class="panelhead" style="background:var(--danger-bg);border-color:var(--danger-line)"><div style="display:flex;align-items:center;gap:10px"><span class="tag danger" style="font-size:12px;padding:4px 8px">${status}</span><h2 style="color:var(--danger)">Request could not complete</h2></div></div><div class="panelbody"><p style="font-size:14px;color:var(--text);margin-bottom:20px">${e(message)}</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="button" href="/admin">Return to workspace</a><a class="button secondary" href="/login">Back to Sign In</a></div></div></div></div>`);
 }
 
 export function accessLogin() {
