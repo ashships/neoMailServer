@@ -66,11 +66,13 @@ test('auth security: only superadmin-provisioned accounts can request OTP and lo
 
     assert.equal(unregReq.status, 403, 'Unregistered user must be rejected with 403');
     const unregHtml = await unregReq.text();
-    assert.ok(unregHtml.includes("We couldn&#39;t find an account associated with this email address. Please check your email address."), 'Must display friendly error banner');
+    assert.ok(unregHtml.includes('No account found with this email. Please check your email address or contact your <a href="mailto:aashish@neopathshala.com">workspace administrator</a> for access.'), 'Must display custom error message with mailto link');
     assert.ok(unregHtml.includes('class="notice error" role="alert"'), 'Must have notice error banner');
     assert.ok(unregHtml.includes('<svg'), 'Must have alert icon in error banner');
     assert.ok(unregHtml.indexOf('Administrator email') < unregHtml.indexOf('notice error'), 'Error must be displayed below the email input field');
     assert.ok(unregHtml.includes('value="attacker@evil.com"'), 'Must retain entered email in field');
+    assert.ok(unregHtml.includes('Request client access'), 'Must display client registration request link');
+    assert.ok(unregHtml.includes('dialog id="regModal"'), 'Must have client registration modal dialog');
     assert.ok(!unregHtml.includes('provisioned by the superadmin'), 'Must not disclose provisioning or internal roles');
     assert.equal(dispatchedEmails.length, 0, 'ZERO emails must be dispatched to unregistered users — saves quota!');
 
@@ -126,7 +128,59 @@ test('auth security: only superadmin-provisioned accounts can request OTP and lo
     assert.equal(revokedReq.status, 403);
     assert.equal(dispatchedEmails.length, 0, 'Revoked user must NOT receive OTP email');
     const revokedHtml = await revokedReq.text();
-    assert.ok(revokedHtml.includes("We couldn&#39;t find an account associated with this email address"));
+    assert.ok(revokedHtml.includes("No account found with this email"));
+    assert.ok(revokedHtml.includes('mailto:aashish@neopathshala.com'));
+
+    // 7. CLIENT REGISTRATION REQUEST FLOW
+    // Client fills registration request form
+    const regReq = await worker.fetch(new Request('https://mail.neopathshala.com/login', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        origin: 'https://mail.neopathshala.com',
+        'cf-connecting-ip': '10.0.0.6',
+      },
+      body: new URLSearchParams({
+        step: 'register_request',
+        name: 'Prospective Client',
+        email: 'newclient@startup.io',
+        organization: 'Startup Inc',
+        notes: 'Need transactional sending for SaaS',
+      }),
+    }), env);
+
+    assert.equal(regReq.status, 200, 'Registration request should succeed with 200');
+    const regHtml = await regReq.text();
+    assert.ok(regHtml.includes('Your access request has been submitted'), 'Must display confirmation message');
+
+    const reqRow = await db.prepare("SELECT * FROM access_requests WHERE email='newclient@startup.io'").first();
+    assert.ok(reqRow, 'Request must be saved in database');
+    assert.equal(reqRow.name, 'Prospective Client');
+    assert.equal(reqRow.status, 'pending');
+
+    // 8. ADMIN CAN HIDE REGISTRATION LINK (TOGGLE SETTING)
+    await db.prepare("INSERT INTO app_settings (name, value, is_secret, updated_at) VALUES ('PUBLIC_REGISTRATION', 'false', 0, unixepoch()) ON CONFLICT(name) DO UPDATE SET value='false'").run();
+
+    const getHiddenLogin = await worker.fetch(new Request('https://mail.neopathshala.com/login'), env);
+    const hiddenHtml = await getHiddenLogin.text();
+    assert.ok(!hiddenHtml.includes('Request client access'), 'Registration link must be hidden when PUBLIC_REGISTRATION is false');
+    assert.ok(!hiddenHtml.includes('dialog id="regModal"'), 'Registration modal must not be present');
+
+    // Disallowed registration when disabled
+    const blockedReg = await worker.fetch(new Request('https://mail.neopathshala.com/login', {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        origin: 'https://mail.neopathshala.com',
+        'cf-connecting-ip': '10.0.0.7',
+      },
+      body: new URLSearchParams({
+        step: 'register_request',
+        name: 'Another Client',
+        email: 'another@startup.io',
+      }),
+    }), env);
+    assert.equal(blockedReg.status, 403, 'Must reject registration request when disabled');
 
   } finally {
     globalThis.fetch = originalFetch;

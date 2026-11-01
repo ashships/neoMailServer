@@ -2827,6 +2827,148 @@ input[type=checkbox] {
   height: 14px;
 }
 
+/* Studio Header Action Buttons with Elevated Height & Polish */
+.studio-action-btn {
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  border-radius: 8px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 8px !important;
+  box-sizing: border-box !important;
+  cursor: pointer !important;
+  text-decoration: none !important;
+  transition: all 0.15s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  box-shadow: none !important;
+}
+
+.studio-action-btn.secondary {
+  background: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--line) !important;
+}
+
+.studio-action-btn.secondary:hover {
+  background: var(--surface-hover) !important;
+  border-color: var(--line-strong) !important;
+  color: var(--text) !important;
+  transform: translateY(-1px) !important;
+}
+
+.studio-action-btn:hover {
+  transform: translateY(-1px) !important;
+}
+
+.studio-action-btn:active {
+  transform: translateY(0) !important;
+}
+
+.studio-preview-segmented {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  min-height: 38px;
+  max-height: 38px;
+  background: var(--surface-hover);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 3px;
+  box-sizing: border-box;
+  gap: 2px;
+}
+
+.studio-seg-btn {
+  height: 30px;
+  min-height: 30px;
+  max-height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+  user-select: none;
+  line-height: 1;
+  box-sizing: border-box;
+}
+
+.studio-seg-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.studio-seg-btn:hover {
+  color: var(--text);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+:root[data-theme="dark"] .studio-seg-btn:hover,
+:root.dark .studio-seg-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.studio-seg-btn.active {
+  background: var(--surface) !important;
+  color: var(--accent) !important;
+  border: 1px solid var(--line) !important;
+  font-weight: 700 !important;
+  box-shadow: none !important;
+}
+
+.studio-popover-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px;
+  min-width: 210px;
+  z-index: 1000;
+  box-shadow: none !important;
+}
+
+.studio-menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.12s ease, color 0.12s ease;
+  box-sizing: border-box;
+}
+
+.studio-menu-item:hover {
+  background: var(--surface-hover);
+  color: var(--accent);
+}
+
+.studio-menu-item svg {
+  width: 14px;
+  height: 14px;
+}
+
 .editor-workspace {
   display: grid;
   grid-template-columns: 1fr;
@@ -3916,8 +4058,47 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
   `, sess?.script_nonce, isDark);
 }
 
-export function login(error = '', isDark = false) {
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p><form method="post" action="/login"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token" ${error ? 'aria-invalid="true"' : ''}></label>${error ? `<div class="notice error" role="alert">${icon('alert')}<span>${e(error)}</span></div>` : ''}<button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p></div></div></div>`, '', isDark);
+export function login(error = '', isDark = false, showRegister = true) {
+  const renderedError = error ? renderNoticeText(error) : '';
+  const registerModal = showRegister ? `
+    <p class="footnote" style="margin-top:20px;text-align:center">
+      Need a workspace account? <button type="button" class="textbutton-link" onclick="document.getElementById('regModal').showModal()">Request client access</button>
+    </p>
+    <dialog id="regModal" class="login-modal" onclick="if(event.target===this)this.close()">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="brandmark" style="width:32px;height:32px;padding:0;background:var(--tint);color:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center">${icon('users')}</div>
+            <div>
+              <h2 style="font-size:15px;margin:0;font-weight:700">Request Client Access</h2>
+              <p style="font-size:11px;color:var(--muted);margin:2px 0 0">Apply for a verified workspace account</p>
+            </div>
+          </div>
+          <button type="button" class="modal-close-btn" onclick="document.getElementById('regModal').close()" aria-label="Close modal">&times;</button>
+        </div>
+        <form method="post" action="/login" class="modal-body">
+          <input type="hidden" name="step" value="register_request">
+          <label class="field">Full name
+            <input type="text" name="name" required maxlength="80" placeholder="Jane Doe" autocomplete="name">
+          </label>
+          <label class="field">Work email address
+            <input type="email" name="email" required maxlength="254" placeholder="you@company.com" autocomplete="email">
+          </label>
+          <label class="field">Organization / Company
+            <input type="text" name="organization" required maxlength="120" placeholder="e.g. Acme Technologies">
+          </label>
+          <label class="field">Intended sending use case (optional)
+            <textarea name="notes" rows="2" maxlength="500" placeholder="e.g. Transactional alerts, receipts, notification infrastructure..."></textarea>
+          </label>
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
+            <button type="button" class="button secondary" onclick="document.getElementById('regModal').close()">Cancel</button>
+            <button type="submit" class="button">Submit access request</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+  ` : '';
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p><form method="post" action="/login"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${icon('alert')}<span>${renderedError}</span></div>` : ''}<button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p>${registerModal}</div></div></div>`, '', isDark);
 }
 
 function empty(message = 'Your mail activity will appear here', help = 'Configure a provider and sender identity, then send your first test email.') {
@@ -4302,9 +4483,35 @@ export function docsEditor(content, sess) {
           <p style="margin:0;font-size:11px;color:var(--muted)">Author and publish system documentation with live Blob preview and integrated neoCodebase data.</p>
         </div>
       </div>
-      <div class="actions" style="display:flex;align-items:center;gap:10px">
-        <a class="button secondary small" href="/docs" target="_blank">${icon('external')} <span>View public page</span></a>
-        <button class="button small" id="studio-save-top-btn" type="button">${icon('check')} <span>Publish documentation</span></button>
+      <div class="actions" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+        <!-- Preview Options & Mode Switcher -->
+        <div class="studio-preview-options-container" style="display:inline-flex;align-items:center;gap:6px">
+          <div class="studio-preview-segmented" role="group" aria-label="Editor preview mode">
+            <button type="button" class="studio-seg-btn" id="top-btn-mode-edit" title="Editor only">${icon('code')} <span>Edit</span></button>
+            <button type="button" class="studio-seg-btn active" id="top-btn-mode-split" title="Side-by-side Split View"><span>Split</span></button>
+            <button type="button" class="studio-seg-btn" id="top-btn-mode-preview" title="Full Live Preview">${icon('eye')} <span>Preview</span></button>
+          </div>
+          <div style="position:relative">
+            <button type="button" class="button secondary studio-action-btn" id="top-btn-preview-options" title="More preview options" style="padding:0 10px;width:38px;min-width:38px" aria-label="More preview options">
+              <span style="font-size:11px;display:flex;align-items:center;justify-content:center">▾</span>
+            </button>
+            <div id="top-preview-menu" class="studio-popover-menu">
+              <button type="button" class="studio-menu-item" id="menu-open-blob">${icon('external')} <span>Open Blob in new tab</span></button>
+              <button type="button" class="studio-menu-item" id="menu-toggle-engine">${icon('refresh')} <span>Toggle Iframe / DOM</span></button>
+              <button type="button" class="studio-menu-item" id="menu-copy-blob-url">${icon('copy')} <span>Copy Blob URL</span></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- View -->
+        <a class="button secondary studio-action-btn" href="/docs" target="_blank" title="View published documentation page">
+          ${icon('external')} <span>View</span>
+        </a>
+
+        <!-- Publish -->
+        <button class="button studio-action-btn" id="studio-save-top-btn" type="button" title="Publish documentation changes">
+          ${icon('check')} <span>Publish</span>
+        </button>
       </div>
     </div>
 
@@ -4635,21 +4842,29 @@ export function docsEditor(content, sess) {
       function setViewMode(mode) {
         if (!workspace) return;
         workspace.classList.remove('split-view', 'preview-mode', 'edit-mode');
+        document.querySelectorAll('.studio-seg-btn').forEach(function(b) { b.classList.remove('active'); });
         if (modeEditBtn) modeEditBtn.classList.remove('active');
         if (modeSplitBtn) modeSplitBtn.classList.remove('active');
         if (modePreviewBtn) modePreviewBtn.classList.remove('active');
 
+        var topEdit = document.getElementById('top-btn-mode-edit');
+        var topSplit = document.getElementById('top-btn-mode-split');
+        var topPreview = document.getElementById('top-btn-mode-preview');
+
         if (mode === 'edit') {
           workspace.classList.add('edit-mode');
           if (modeEditBtn) modeEditBtn.classList.add('active');
+          if (topEdit) topEdit.classList.add('active');
           if (preview) preview.style.display = 'none';
         } else if (mode === 'preview') {
           workspace.classList.add('preview-mode');
           if (modePreviewBtn) modePreviewBtn.classList.add('active');
+          if (topPreview) topPreview.classList.add('active');
           if (preview) preview.style.display = 'flex';
         } else {
           workspace.classList.add('split-view');
           if (modeSplitBtn) modeSplitBtn.classList.add('active');
+          if (topSplit) topSplit.classList.add('active');
           if (preview) preview.style.display = 'flex';
         }
         update();
@@ -4658,6 +4873,52 @@ export function docsEditor(content, sess) {
       if (modeEditBtn) modeEditBtn.addEventListener('click', function() { setViewMode('edit'); });
       if (modeSplitBtn) modeSplitBtn.addEventListener('click', function() { setViewMode('split'); });
       if (modePreviewBtn) modePreviewBtn.addEventListener('click', function() { setViewMode('preview'); });
+
+      var topEdit = document.getElementById('top-btn-mode-edit');
+      var topSplit = document.getElementById('top-btn-mode-split');
+      var topPreview = document.getElementById('top-btn-mode-preview');
+      if (topEdit) topEdit.addEventListener('click', function() { setViewMode('edit'); });
+      if (topSplit) topSplit.addEventListener('click', function() { setViewMode('split'); });
+      if (topPreview) topPreview.addEventListener('click', function() { setViewMode('preview'); });
+
+      var topPreviewMenuBtn = document.getElementById('top-btn-preview-options');
+      var topPreviewMenu = document.getElementById('top-preview-menu');
+      if (topPreviewMenuBtn && topPreviewMenu) {
+        topPreviewMenuBtn.addEventListener('click', function(ev) {
+          ev.stopPropagation();
+          var isOpen = topPreviewMenu.style.display === 'block';
+          topPreviewMenu.style.display = isOpen ? 'none' : 'block';
+        });
+        document.addEventListener('click', function(ev) {
+          if (!topPreviewMenu.contains(ev.target) && ev.target !== topPreviewMenuBtn) {
+            topPreviewMenu.style.display = 'none';
+          }
+        });
+      }
+
+      var menuOpenBlob = document.getElementById('menu-open-blob');
+      if (menuOpenBlob) {
+        menuOpenBlob.addEventListener('click', function() {
+          if (currentBlobUrl) window.open(currentBlobUrl, '_blank');
+          if (topPreviewMenu) topPreviewMenu.style.display = 'none';
+        });
+      }
+
+      var menuToggleEngine = document.getElementById('menu-toggle-engine');
+      if (menuToggleEngine && toggleIframeBtn) {
+        menuToggleEngine.addEventListener('click', function() {
+          toggleIframeBtn.click();
+          if (topPreviewMenu) topPreviewMenu.style.display = 'none';
+        });
+      }
+
+      var menuCopyBlobUrl = document.getElementById('menu-copy-blob-url');
+      if (menuCopyBlobUrl && copyBlobBtn) {
+        menuCopyBlobUrl.addEventListener('click', function() {
+          copyBlobBtn.click();
+          if (topPreviewMenu) topPreviewMenu.style.display = 'none';
+        });
+      }
 
       function renderMarkdown(md) {
         if (!md) return '<p class="muted">No content to preview.</p>';
@@ -5916,9 +6177,9 @@ export function docsViewer(content, sess) {
     <div class="panelhead">
       <div>
         <h2>Documentation & System Guide</h2>
-        <p>Reference guide for neoMailer transactional mail infrastructure.</p>
+        <p>Reference guide for neoMail transactional mail infrastructure.</p>
       </div>
-      <a class="button secondary small" href="/docs" target="_blank">${icon('external')} <span>View public page</span></a>
+      <a class="button secondary studio-action-btn" href="/docs" target="_blank">${icon('external')} <span>View</span></a>
     </div>
     <div class="panelbody">
       <div class="docs-view-body">

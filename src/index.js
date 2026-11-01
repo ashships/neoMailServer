@@ -260,17 +260,60 @@ async function handler(request, env) {
     requireMethod(request, ['GET', 'POST']);
     const isDark = cookie(request, 'neomail_theme') === 'dark';
     if (request.method === 'GET') {
+      const { values: cfg } = await config(env);
+      const showReg = cfg.PUBLIC_REGISTRATION !== 'false';
       if (otpLoginConfigured(env) && url.searchParams.get('mode') !== 'token') {
         const email = (url.searchParams.get('email') || '').slice(0, 254);
         const pending = email ? await env.DB.prepare('SELECT 1 FROM admin_otps WHERE subject=? AND expires_at>unixepoch()').bind(email).first() : null;
-        return reply(pending ? ui.otpVerify(email, '', isDark) : ui.otpRequest('', isDark));
+        return reply(pending ? ui.otpVerify(email, '', isDark) : ui.otpRequest('', isDark, '', showReg));
       }
-      return reply((local(request, env) || tokenLoginConfigured(env)) ? ui.login('', isDark) : ui.accessLogin());
+      return reply((local(request, env) || tokenLoginConfigured(env)) ? ui.login('', isDark, showReg) : ui.accessLogin());
     }
     sameOrigin(request);
     const { values: cfg } = await config(env, request.method === 'POST');
     await rate(env, 'login:ip:' + ip, +cfg.MAX_LOGIN_ATTEMPTS, 60);
     const data = await form(request);
+    if (data.get('step') === 'register_request') {
+      if (cfg.PUBLIC_REGISTRATION === 'false') {
+        throw new HttpError(403, 'Public registration is currently disabled.');
+      }
+      const clientName = text(data.get('name'), 80);
+      const clientEmail = email(data.get('email'));
+      const organization = text(data.get('organization') || '', 120);
+      const notes = text(data.get('notes') || '', 500);
+      if (!clientName || !clientEmail) {
+        return reply(ui.otpRequest('Please provide your full name and a valid email address.', isDark, clientEmail || '', true), 422);
+      }
+      await rate(env, 'reg-req:ip:' + ip, 5, 3600);
+
+      try {
+        await env.DB.prepare(`CREATE TABLE IF NOT EXISTS access_requests (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          email TEXT NOT NULL,
+          organization TEXT,
+          notes TEXT,
+          status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'approved', 'rejected')),
+          created_at INTEGER NOT NULL,
+          ip_address TEXT
+        )`).run();
+      } catch {}
+
+      const reqId = crypto.randomUUID();
+      await env.DB.prepare('INSERT INTO access_requests (id, name, email, organization, notes, status, created_at, ip_address) VALUES (?, ?, ?, ?, ?, ?, unixepoch(), ?)')
+        .bind(reqId, clientName, clientEmail, organization, notes, 'pending', ip)
+        .run();
+
+      try {
+        await env.DB.prepare('INSERT INTO admin_alerts (id, owner_subject, domain, type, message, is_read, created_at) VALUES (?, ?, ?, ?, ?, 0, unixepoch())')
+          .bind(crypto.randomUUID(), 'local-admin', clientEmail, 'access_request', `New registration request from ${clientName} (${clientEmail}) for ${organization || 'Individual Workspace'}`)
+          .run();
+      } catch {}
+
+      await audit(env, request, 'ACCESS_REQUEST_SUBMITTED', { email: clientEmail, name: clientName, organization });
+
+      return reply(ui.otpRequest('', isDark, '', true, 'Thank you! Your access request has been submitted. Our workspace administrator will review it shortly.'));
+    }
     if (otpLoginConfigured(env) && data.get('step')) {
       const step = data.get('step');
       if (step === 'request') {
@@ -288,7 +331,8 @@ async function handler(request, env) {
 
         if (!authorized) {
           await audit(env, request, 'AUTH_REJECTED_UNREGISTERED', { subject: emailAddr });
-          return reply(ui.otpRequest("We couldn't find an account associated with this email address. Please check your email address.", isDark, emailAddr), 403);
+          const showReg = cfg.PUBLIC_REGISTRATION !== 'false';
+          return reply(ui.otpRequest("No account found with this email. Please check your email address or contact your workspace administrator for access.", isDark, emailAddr, showReg), 403);
         }
 
         const existing = await env.DB.prepare('SELECT created_at FROM admin_otps WHERE subject=?').bind(emailAddr).first().catch(() => null);
@@ -423,7 +467,7 @@ async function handler(request, env) {
         const userAccount = await env.DB.prepare('SELECT role, is_active FROM admin_users WHERE subject=?').bind(emailAddr).first();
         if (!userAccount || userAccount.is_active !== 1) {
           await audit(env, request, 'AUTH_VERIFY_UNREGISTERED', { subject: emailAddr });
-          throw new HttpError(403, "We couldn't find an account associated with this email address. Please check your email address.");
+          throw new HttpError(403, "No account found with this email. Please check your email address or contact your workspace administrator for access.");
         }
 
         const targetRole = userAccount.role;
@@ -752,6 +796,26 @@ async function handler(request, env) {
       ]);
       await audit(env, request, 'ADMIN_USER_REVOKED', { subject: target }); return redirect('/admin?view=users&notice=' + encodeURIComponent('Administrator revoked.'));
     }
+    if (path === '/admin/users/approve-request') {
+      if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
+      const reqId = data.get('request_id');
+      const targetEmail = email(data.get('email'));
+      if (!targetEmail) throw new HttpError(422, 'Valid applicant email required.');
+      await env.DB.prepare('INSERT INTO admin_users (subject,role,is_active,created_at,created_by) VALUES (?,?,1,unixepoch(),?) ON CONFLICT(subject) DO UPDATE SET is_active=1').bind(targetEmail, 'admin', subject).run();
+      if (reqId) {
+        await env.DB.prepare("UPDATE access_requests SET status='approved' WHERE id=?").bind(reqId).run().catch(() => {});
+      }
+      await audit(env, request, 'ACCESS_REQUEST_APPROVED', { subject: targetEmail, approved_by: subject });
+      return redirect('/admin?view=users&notice=' + encodeURIComponent(`Account approved for ${targetEmail}. They can now sign in.`));
+    }
+    if (path === '/admin/users/reject-request') {
+      if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
+      const reqId = data.get('request_id');
+      if (reqId) {
+        await env.DB.prepare("UPDATE access_requests SET status='rejected' WHERE id=?").bind(reqId).run().catch(() => {});
+      }
+      return redirect('/admin?view=users&notice=' + encodeURIComponent('Registration request dismissed.'));
+    }
     if (path === '/admin/domains/create' || path === '/dashboard/domains/create') {
       const domain = hostname(data.get('domain') || '');
       if (!domain) throw new HttpError(422, 'Enter a valid domain such as client.example.com.');
@@ -1006,7 +1070,8 @@ async function handler(request, env) {
     title='Admin users'; subtitle='Manage administrator identities authorized through Cloudflare Access.';
     const role = await adminRole(env, sess.access_subject || subject);
     const users = await rows(env, 'SELECT subject,role,is_active,created_at FROM admin_users ORDER BY created_at');
-    content = ui.users(users, sess, role === 'superadmin');
+    const accessReqs = role === 'superadmin' ? await rows(env, "SELECT id, name, email, organization, notes, created_at FROM access_requests WHERE status='pending' ORDER BY created_at DESC").catch(() => []) : [];
+    content = ui.users(users, sess, role === 'superadmin', accessReqs);
   } else if (view === 'domains') {
     title='Domains'; subtitle='Track client sending domains and DNS onboarding.';
     sess.script_nonce=crypto.randomUUID();

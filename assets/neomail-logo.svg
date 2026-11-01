@@ -21,44 +21,54 @@
       <stop offset="65%" stop-color="#087d54" />
       <stop offset="100%" stop-color="#0ea868" />
     </linearGradient>
+
+    <!-- Precise outer rounded envelope mask (R = 45) -->
+    <clipPath id="nm-envelope-clip">
+      <rect x="0" y="0" width="450" height="290" rx="45" ry="45" />
+    </clipPath>
   </defs>
 
-  <!-- Top Envelope Flap -->
-  <path d="M 45 0
-           L 405 0
-           C 429.9 0 450 20 450 44
-           L 450 35
-           C 375 65 295 115 225 145
-           C 157 116 82 61 12 36
-           C 18 20 29 9 45 0 Z"
-        fill="url(#nm-top-grad)" />
+  <g clip-path="url(#nm-envelope-clip)">
+    <!-- Solid White Base for Bottom Cutout & Inner Symmetry -->
+    <rect x="0" y="0" width="450" height="290" fill="#ffffff" />
 
-  <!-- Bottom Left Pillar + Peak -->
-  <path d="M 0 45
-           C 0 20.1 20.1 0 45 0
-           C 29 9 18 20 12 36
-           C 82 96 162 156 228 209
-           C 200 205 180 201 165 199
-           C 125 214 85 264 45 289
-           C 20.1 289 0 268 0 244 Z"
-        fill="url(#nm-bot-left-grad)" />
+    <!-- Top Envelope Flap -->
+    <path d="M 45 0
+             L 405 0
+             C 429.9 0 448.9 19 449.2 35
+             C 375 65 295 115 225 145
+             C 157 116 82 61 12 36
+             C 18 20 29 9 45 0 Z"
+          fill="url(#nm-top-grad)" />
 
-  <!-- Bottom Right Pillar -->
-  <path d="M 228 209
-           C 298 178 378 88 450 55
-           L 450 244
-           C 450 268 429.9 289 405 289
-           L 300 289
-           C 255 274 210 209 165 199
-           C 180 201 200 205 228 209 Z"
-        fill="url(#nm-bot-right-grad)" />
+    <!-- Bottom Left Pillar + Peak -->
+    <path d="M 0 45
+             C 0 20.1 20.1 0 45 0
+             C 29 9 18 20 12 36
+             C 82 96 162 156 228 209
+             C 200 205 180 201 165 199
+             C 125 214 85 264 45 290
+             C 20.1 290 0 270 0 245 Z"
+          fill="url(#nm-bot-left-grad)" />
 
-  <!-- White Checkmark Ribbon -->
-  <path d="M 12 36
-           C 82 61 157 116 225 145
-           C 295 115 375 65 450 35
-           L 450 55
-           C 378 88 298 178 228 209
-           C 162 156 82 96 12 36 Z"
-        fill="#ffffff" />
+    <!-- Bottom Right Pillar -->
+    <path d="M 228 209
+             C 298 178 378 88 450 62
+             L 450 245
+             C 450 270 429.9 290 405 290
+             L 300 290
+             C 255 274 210 209 165 199
+             C 180 201 200 205 228 209 Z"
+          fill="url(#nm-bot-right-grad)" />
+
+    <!-- White Checkmark Ribbon -->
+    <path d="M 12 36
+             C 82 61 157 116 225 145
+             C 295 115 375 65 449.2 35
+             C 449.8 40 450 45 450 48
+             L 450 62
+             C 378 88 298 178 228 209
+             C 162 156 82 96 12 36 Z"
+          fill="#ffffff" />
+  </g>
 </svg>
