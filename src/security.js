@@ -3,7 +3,7 @@ export class HttpError extends Error {
   constructor(status, message) { super(message); this.status = status; }
 }
 export const headers = {
-  'Content-Security-Policy': "default-src 'none'; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'self'; script-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
+  'Content-Security-Policy': "default-src 'none'; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'self' blob:; script-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
   'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY',
   // no-referrer turns Origin into "null" on browser form POSTs, breaking CSRF checks.
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains', 'Referrer-Policy': 'same-origin',
@@ -171,10 +171,14 @@ export async function access(request, env) {
   // administrator once the directory has been provisioned. Database errors are
   // treated as denial, never as permission.
   if (env.DB) {
-    let count;
-    try { count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n'); }
-    catch { throw new HttpError(403, 'Administrator directory unavailable.'); }
-    if ((count?.n || 0) > 0) {
+    let count = 0;
+    try {
+      const countRes = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first();
+      count = countRes !== null && typeof countRes === 'object' ? Number(countRes.n ?? 0) : Number(countRes || 0);
+    } catch {
+      throw new HttpError(403, 'Administrator directory unavailable.');
+    }
+    if (count > 0) {
       let account;
       try { account = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=? AND is_active=1').bind(claims.sub).first(); }
       catch { throw new HttpError(403, 'Administrator directory unavailable.'); }

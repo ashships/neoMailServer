@@ -42,6 +42,16 @@ function subjectValue(value) {
   if (!subject || subject.length > 254 || /[\x00-\x1f\x7f]/.test(subject)) throw new HttpError(422, 'A valid administrator subject is required.');
   return subject;
 }
+async function getAdminCount(env) {
+  if (!env.DB) return 0;
+  try {
+    const res = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first();
+    if (res === null || res === undefined) return 0;
+    return typeof res === 'object' ? Number(res.n ?? 0) : Number(res || 0);
+  } catch {
+    return 0;
+  }
+}
 async function adminRole(env, subject) {
   if (!subject) return null;
   // The loopback development identity is the only implicit superadmin, and only
@@ -49,17 +59,17 @@ async function adminRole(env, subject) {
   if (subject === 'local-admin' && env.LOCAL_DEV === 'true') return 'superadmin';
   if (!env.DB) return null;
   try {
-    const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
+    const count = await getAdminCount(env);
     // An empty directory is the one-time bootstrap path. Once any administrator
-    // exists, every subject must have an active row with an explicit role.
-    if ((count || 0) === 0) return 'superadmin';
+    // exists, every subject must have an explicit role.
+    if (count === 0) return 'superadmin';
     const row = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=? AND is_active=1').bind(subject).first();
     return row?.role || null;
   } catch { return null; } // Fail closed on database errors: no role means no tenant or superadmin powers.
 }
 async function sessionSubject(env) {
-  const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
-  if ((count || 0) === 0) return 'local-admin';
+  const count = await getAdminCount(env);
+  if (count === 0) return 'local-admin';
   const row = await env.DB.prepare("SELECT subject FROM admin_users WHERE role='superadmin' AND is_active=1 ORDER BY created_at LIMIT 1").first();
   if (!row?.subject) throw new HttpError(403, 'No active superadmin is provisioned for token sign-in.');
   return row.subject;
@@ -126,8 +136,8 @@ async function handler(request, env) {
     requireMethod(request, ['GET']);
     const row = await env.DB.prepare("SELECT value FROM app_settings WHERE name='DOCS_CONTENT'").first();
     const content = row?.value || 'NeoMail documentation. Configure your deployment and providers in the admin panel.';
-    const html = '<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light dark"><title>NeoMail Documentation</title><style>body{font-family:Inter,system-ui,-apple-system,sans-serif;max-width:920px;margin:40px auto;padding:0 24px;line-height:1.7;color:#0f172a;background:#f8fafc}@media(prefers-color-scheme:dark){body{background:#090d16;color:#f8fafc;}}h1{color:#087d54;letter-spacing:-0.8px;font-size:32px;margin-bottom:8px;}h2{color:#0f172a;border-bottom:1px solid #e2e8f0;padding-bottom:8px;margin-top:28px;}@media(prefers-color-scheme:dark){h2{color:#f8fafc;border-color:#1e293b;}}pre{background:#f1f5f9;border:1px solid #e2e8f0;padding:16px;border-radius:8px;overflow-x:auto;font-family:ui-monospace,monospace;font-size:13px;}@media(prefers-color-scheme:dark){pre{background:#0f172a;border-color:#1e293b;color:#f8fafc;}}code{background:#e2e8f0;padding:2px 6px;border-radius:4px;font-family:ui-monospace,monospace;}@media(prefers-color-scheme:dark){code{background:#1e293b;color:#34d399;}}a{color:#087d54;}</style></head><body><h1>NeoMail Documentation</h1><pre style="white-space:pre-wrap;background:transparent;border:0;padding:0;font-family:inherit;font-size:15px;line-height:1.7">' + content.replace(/&/g,'&amp;').replace(/</g,'&lt;') + '</pre></body></html>';
-    return reply(html, 200, { 'Content-Type': 'text/html; charset=utf-8' });
+    const isDark = cookie(request, 'neomail_theme') === 'dark';
+    return reply(ui.publicDocs(content, isDark), 200, { 'Content-Type': 'text/html; charset=utf-8' });
   }
   if (path === '/health') { requireMethod(request, ['GET']); return reply({ status: 'ok', service: 'neomail' }); }
   if (path === '/favicon.ico' || path === '/favicon.svg') {
@@ -271,15 +281,22 @@ async function handler(request, env) {
         // Hard cap on outbound login mail per IP so the OTP endpoint cannot be used
         // to bomb a mailbox or burn provider quota.
         await rate(env, 'otp:request:' + ip, 10, 3600);
-        const allowed = await env.DB.prepare('SELECT 1 FROM admin_users WHERE subject=? AND is_active=1').bind(emailAddr).first().catch(() => null);
-        const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n').catch(() => null);
-        const authorized = (count?.n || 0) === 0 || !!allowed;
+        const totalAdmins = await getAdminCount(env);
+        const allowedUser = await env.DB.prepare('SELECT role, is_active FROM admin_users WHERE subject=?').bind(emailAddr).first().catch(() => null);
+        const isBootstrap = totalAdmins === 0;
+        const authorized = isBootstrap || (allowedUser && allowedUser.is_active === 1);
+
+        if (!authorized) {
+          await audit(env, request, 'AUTH_REJECTED_UNREGISTERED', { subject: emailAddr });
+          return reply(ui.otpRequest('Account not registered. Only administrator accounts provisioned by the superadmin can access this panel.', isDark), 403);
+        }
+
         const existing = await env.DB.prepare('SELECT created_at FROM admin_otps WHERE subject=?').bind(emailAddr).first().catch(() => null);
         const nowSec = now();
         if (existing && nowSec - existing.created_at < 60) {
           return reply(ui.otpVerify(emailAddr, '', isDark));
         }
-        if (authorized) {
+        {
           const otpBytes = new Uint32Array(1); crypto.getRandomValues(otpBytes); const code = String(100000 + (otpBytes[0] % 900000));
           const saltBytes = new Uint8Array(16); crypto.getRandomValues(saltBytes);
           const salt = [...saltBytes].map(b => b.toString(16).padStart(2, '0')).join('');
@@ -398,11 +415,21 @@ async function handler(request, env) {
           throw new HttpError(403, 'Invalid or expired login code.');
         }
         await env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(emailAddr).run();
-        const count = await env.DB.prepare('SELECT COUNT(*) AS n FROM admin_users').first('n');
-        if ((count?.n || 0) === 0) {
-          await env.DB.prepare('INSERT OR IGNORE INTO admin_users (subject,role,is_active,created_at) VALUES (?,?,1,unixepoch())').bind(emailAddr, 'superadmin').run();
+        const totalAdmins = await getAdminCount(env);
+        if (totalAdmins === 0) {
+          await env.DB.prepare('INSERT OR IGNORE INTO admin_users (subject,role,is_active,created_at,created_by) VALUES (?,?,1,unixepoch(),?)').bind(emailAddr, 'superadmin', 'bootstrap').run();
         }
-        const targetRole = await adminRole(env, emailAddr);
+
+        const userAccount = await env.DB.prepare('SELECT role, is_active FROM admin_users WHERE subject=?').bind(emailAddr).first();
+        if (!userAccount || userAccount.is_active !== 1) {
+          await audit(env, request, 'AUTH_VERIFY_UNREGISTERED', { subject: emailAddr });
+          throw new HttpError(403, 'Account not registered. Only administrator accounts provisioned by the superadmin can access this panel.');
+        }
+
+        const targetRole = userAccount.role;
+        if (targetRole !== 'superadmin' && targetRole !== 'admin') {
+          throw new HttpError(403, 'Account role not permitted.');
+        }
         const token = crypto.randomUUID(), csrfToken = crypto.randomUUID();
         const prior = cookie(request, '__Host-neomail');
         await env.DB.batch([

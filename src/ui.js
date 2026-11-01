@@ -45,6 +45,7 @@ import {
   Camera,
   Image,
   Upload,
+  Quote,
 } from 'lucide';
 
 const icons = {
@@ -90,6 +91,7 @@ const icons = {
   Camera,
   Image,
   Upload,
+  Quote,
 };
 
 const iconMap = {
@@ -135,6 +137,7 @@ const iconMap = {
   camera: 'Camera',
   image: 'Image',
   upload: 'Upload',
+  quote: 'Quote',
 };
 
 function initial(name) {
@@ -2639,11 +2642,53 @@ input[type=checkbox] {
 .editor-workspace {
   display: grid;
   grid-template-columns: 1fr;
-  min-height: 420px;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  height: 100%;
 }
 
 .editor-workspace.split-view {
-  grid-template-columns: 1fr 1fr;
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
+}
+
+.editor-workspace.split-view #docs-editor-textarea {
+  border-right: 1px solid var(--line);
+}
+
+.editor-workspace.split-view .editor-preview {
+  display: flex !important;
+  position: relative !important;
+  width: auto !important;
+  height: 100% !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  z-index: 1 !important;
+  max-height: none !important;
+}
+
+.editor-workspace.preview-mode {
+  grid-template-columns: 1fr !important;
+}
+
+.editor-workspace.preview-mode #docs-editor-textarea {
+  display: none !important;
+}
+
+.editor-workspace.preview-mode .editor-preview {
+  display: flex !important;
+  position: relative !important;
+  width: 100% !important;
+  height: 100% !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  z-index: 1 !important;
+  max-height: none !important;
+}
+
+.editor-workspace.edit-mode .editor-preview {
+  display: none !important;
 }
 
 .editor-textarea {
@@ -2657,11 +2702,12 @@ input[type=checkbox] {
   line-height: 1.6;
   background: var(--surface);
   color: var(--text);
-  resize: vertical;
+  resize: none;
   outline: none;
   box-shadow: none;
   border-radius: 0;
   margin: 0;
+  box-sizing: border-box;
 }
 
 .editor-textarea:focus {
@@ -2671,46 +2717,203 @@ input[type=checkbox] {
 
 .editor-preview {
   display: none;
-  padding: 16px 24px;
+  padding: 0;
   background: var(--bg);
   border-left: 1px solid var(--line);
   overflow-y: auto;
-  max-height: 600px;
   line-height: 1.6;
   font-size: 13px;
+  box-sizing: border-box;
 }
 
 .editor-workspace.split-view .editor-preview {
+  display: flex;
+}
+
+.blob-preview-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 16px;
+  background: var(--surface-hover);
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.blob-preview-bar code {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--accent);
+  background: var(--surface);
+  padding: 3px 8px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 340px;
+}
+
+.docs-preview-body {
+  padding: 20px 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+/* Callouts & Alert Cards */
+.docs-callout {
+  padding: 12px 16px;
+  margin: 16px 0;
+  border-radius: 8px;
+  border-left: 4px solid;
+  font-size: 13px;
+}
+.docs-callout.callout-note {
+  background: rgba(16, 185, 129, 0.08);
+  border-color: #10b981;
+  color: var(--text);
+}
+.docs-callout.callout-tip {
+  background: rgba(59, 130, 246, 0.08);
+  border-color: #3b82f6;
+  color: var(--text);
+}
+.docs-callout.callout-warning {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: #f59e0b;
+  color: var(--text);
+}
+.docs-callout.callout-important {
+  background: rgba(239, 68, 68, 0.08);
+  border-color: #ef4444;
+  color: var(--text);
+}
+.callout-header {
+  font-weight: 700;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Code Cards */
+.docs-code-card {
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #0f1412;
+}
+.code-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 12px;
+  background: #151c19;
+  border-bottom: 1px solid #23302a;
+  font-size: 11px;
+  font-family: var(--mono);
+}
+.code-lang {
+  color: #10b981;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+.btn-copy-code {
+  background: transparent;
+  border: 1px solid #2c3c35;
+  color: #a3b8af;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 11px;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+.btn-copy-code:hover {
+  background: #10b981;
+  color: #fff;
+  border-color: #10b981;
+}
+.docs-code-card pre {
+  margin: 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-family: var(--mono);
+  font-size: 12px;
+  line-height: 1.6;
+  color: #e5ece8;
+  background: transparent;
+  border: 0;
+}
+
+/* Tables */
+.table-container {
+  overflow-x: auto;
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.table-container table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.table-container th {
+  background: var(--surface-hover);
+  padding: 10px 14px;
+  text-align: left;
+  font-weight: 600;
+  border-bottom: 1px solid var(--line);
+}
+.table-container td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.table-container tr:last-child td {
+  border-bottom: 0;
+}
+
+/* Task Checklists */
+.task-item {
+  list-style-type: none !important;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 4px 0;
+}
+.task-item input[type="checkbox"] {
+  accent-color: var(--accent);
+  margin: 0;
+  cursor: default;
+}
+.task-item.checked {
+  color: var(--muted);
+  text-decoration: line-through;
+}
+
+.docs-inline-img {
+  max-width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  margin: 12px 0;
   display: block;
 }
 
-.editor-preview h1, .editor-preview h2, .editor-preview h3 {
-  margin-top: 16px;
-  margin-bottom: 8px;
-}
-.editor-preview p {
-  margin: 8px 0;
-  color: var(--text);
-}
-.editor-preview code {
-  background: var(--surface-hover);
-  padding: 2px 6px;
-  border-radius: 4px;
-  border: 1px solid var(--line);
-}
-.editor-preview pre {
-  margin: 12px 0;
-}
-.editor-preview ul, .editor-preview ol {
-  padding-left: 24px;
-  margin: 8px 0;
-}
-.editor-preview blockquote {
-  border-left: 3px solid var(--accent);
-  padding-left: 12px;
-  margin: 12px 0;
+.anchor-link {
   color: var(--muted);
-  font-style: italic;
+  opacity: 0.3;
+  text-decoration: none;
+  font-size: 0.85em;
+  margin-left: 6px;
+  transition: opacity 0.12s ease, color 0.12s ease;
+}
+.anchor-link:hover {
+  opacity: 1;
+  color: var(--accent);
 }
 
 /* Application Status Footer */
@@ -3652,7 +3855,7 @@ export function docsEditor(content, sess) {
         <span class="tag good" style="font-weight:700;font-size:11px;padding:3px 8px;display:inline-flex;align-items:center;gap:5px">${icon('code')} STUDIO</span>
         <div>
           <h2 style="font-size:15px;margin:0;font-weight:700">Documentation Content & Live Editor</h2>
-          <p style="margin:0;font-size:11px;color:var(--muted)">Author and publish system documentation with integrated neoCodebase project data.</p>
+          <p style="margin:0;font-size:11px;color:var(--muted)">Author and publish system documentation with live Blob preview and integrated neoCodebase data.</p>
         </div>
       </div>
       <div class="actions" style="display:flex;align-items:center;gap:10px">
@@ -3712,47 +3915,140 @@ export function docsEditor(content, sess) {
         <form id="docs-editor-form" method="post" action="/admin/docs/save" style="display:flex;flex-direction:column;flex:1;min-height:0;margin:0">
           ${hidden(sess.csrf_token)}
           <div class="rich-editor-container" style="display:flex;flex-direction:column;flex:1;min-height:0;margin:0;border:0;border-radius:0">
+            <!-- EXTENDED TOOLBAR WITH MODERN FEATURES -->
             <div class="rich-editor-toolbar" role="toolbar" aria-label="Editor toolbar">
-              <div class="editor-btn-group">
-                <button type="button" class="editor-btn" data-action="h1" title="Heading 1">H1</button>
-                <button type="button" class="editor-btn" data-action="h2" title="Heading 2">H2</button>
-                <button type="button" class="editor-btn" data-action="h3" title="Heading 3">H3</button>
+              <!-- Headings -->
+              <div class="editor-btn-group" title="Headings">
+                <button type="button" class="editor-btn" data-action="h1" title="Heading 1 (#)">H1</button>
+                <button type="button" class="editor-btn" data-action="h2" title="Heading 2 (##)">H2</button>
+                <button type="button" class="editor-btn" data-action="h3" title="Heading 3 (###)">H3</button>
+                <button type="button" class="editor-btn" data-action="h4" title="Heading 4 (####)">H4</button>
               </div>
-              <div class="editor-btn-group">
+
+              <!-- Inline Styles -->
+              <div class="editor-btn-group" title="Text Styles">
                 <button type="button" class="editor-btn" data-action="bold" title="Bold (Ctrl+B)">${icon('bold')}</button>
                 <button type="button" class="editor-btn" data-action="italic" title="Italic (Ctrl+I)">${icon('italic')}</button>
-                <button type="button" class="editor-btn" data-action="strike" title="Strikethrough">~S~</button>
+                <button type="button" class="editor-btn" data-action="strike" title="Strikethrough (~~)">~S~</button>
+                <button type="button" class="editor-btn" data-action="underline" title="Underline (&lt;u&gt;)"><u>U</u></button>
+                <button type="button" class="editor-btn" data-action="code" title="Inline code (\`)">${icon('code')}</button>
               </div>
-              <div class="editor-btn-group">
-                <button type="button" class="editor-btn" data-action="quote" title="Quote">${icon('quote')}</button>
-                <button type="button" class="editor-btn" data-action="code" title="Inline code">${icon('code')}</button>
-                <button type="button" class="editor-btn" data-action="codeblock" title="Code block">&lt;/&gt;</button>
+
+              <!-- Callouts / Admonitions -->
+              <div class="editor-btn-group" title="Callouts & Quotes">
+                <button type="button" class="editor-btn" data-action="callout-note" title="Note Callout (&gt; [!NOTE])">[!NOTE]</button>
+                <button type="button" class="editor-btn" data-action="callout-tip" title="Tip Callout (&gt; [!TIP])">[!TIP]</button>
+                <button type="button" class="editor-btn" data-action="callout-warn" title="Warning Callout (&gt; [!WARNING])">[!WARN]</button>
+                <button type="button" class="editor-btn" data-action="quote" title="Blockquote (&gt;)">${icon('quote')}</button>
               </div>
-              <div class="editor-btn-group">
-                <button type="button" class="editor-btn" data-action="bullet" title="Bullet list">${icon('list')}</button>
+
+              <!-- Lists & Codeblocks -->
+              <div class="editor-btn-group" title="Lists & Code">
+                <button type="button" class="editor-btn" data-action="bullet" title="Bullet list (-)">${icon('list')}</button>
+                <button type="button" class="editor-btn" data-action="number" title="Numbered list (1.)">1.</button>
+                <button type="button" class="editor-btn" data-action="task" title="Task checklist (- [ ])">[✓]</button>
+                <button type="button" class="editor-btn" data-action="codeblock" title="Code block (\`\`\`)">&lt;/&gt;</button>
+              </div>
+
+              <!-- Links, Media, Tables & Dividers -->
+              <div class="editor-btn-group" title="Media & Layout">
                 <button type="button" class="editor-btn" data-action="link" title="Insert link (Ctrl+K)">${icon('link')}</button>
+                <button type="button" class="editor-btn" data-action="image" title="Insert markdown image">${icon('image')}</button>
+                <button type="button" class="editor-btn" id="btn-upload-image-asset" title="Upload local image & show Blob preview URL">${icon('upload')} Asset</button>
                 <button type="button" class="editor-btn" data-action="table" title="Insert table template">Table</button>
-                <button type="button" class="editor-btn" data-action="hr" title="Divider">—</button>
+                <button type="button" class="editor-btn" data-action="hr" title="Divider (---)">—</button>
               </div>
-              <div class="editor-btn-group" style="margin-left:auto">
-                <button type="button" id="editor-toggle-preview" class="editor-btn" title="Toggle Slide-out Preview">${icon('eye')} <span>Preview Drawer</span></button>
+
+              <!-- Utilities: Find/Replace, Copy, Help -->
+              <div class="editor-btn-group" title="Editor Tools">
+                <button type="button" class="editor-btn" id="btn-toggle-find" title="Find & Replace (Ctrl+F)">${icon('search')}</button>
+                <button type="button" class="editor-btn" id="btn-copy-markdown" title="Copy Raw Markdown">${icon('copy')} MD</button>
+                <button type="button" class="editor-btn" id="btn-copy-html" title="Copy Rendered HTML">${icon('code')} HTML</button>
+                <button type="button" class="editor-btn" id="btn-toggle-cheatsheet" title="Markdown Quick Reference">?</button>
+              </div>
+
+              <!-- View Modes: Edit / Split View / Preview -->
+              <div class="editor-btn-group" style="margin-left:auto" title="View Mode">
+                <button type="button" id="mode-edit-btn" class="editor-btn" title="Editor only">Edit</button>
+                <button type="button" id="mode-split-btn" class="editor-btn active" title="Side-by-side Split View">Split View</button>
+                <button type="button" id="mode-preview-btn" class="editor-btn" title="Preview with Live Blob URL">${icon('eye')} Preview</button>
+                <button type="button" id="editor-toggle-preview" class="editor-btn" style="display:none" title="Toggle Slide-out Preview">${icon('eye')} <span>Preview Drawer</span></button>
               </div>
             </div>
 
-            <!-- Full-Height Editor Workspace with slide-out overlay preview instead of split-view crowding -->
-            <div id="editor-workspace" class="editor-workspace" style="flex:1;min-height:0;display:flex;position:relative;height:100%">
-              <textarea id="docs-editor-textarea" name="content" class="editor-textarea" maxlength="20000" placeholder="Write documentation here in Markdown or plain text..." style="flex:1;height:100%;min-height:0;resize:none;padding:18px 24px;font-family:var(--mono);font-size:13px;line-height:1.65;border:0;outline:none;background:var(--surface);color:var(--text);box-sizing:border-box">${e(content)}</textarea>
-              <div id="docs-editor-preview" class="editor-preview" style="display:none;position:absolute;top:0;right:0;width:100%;height:100%;background:var(--surface);z-index:20;padding:24px;overflow-y:auto;border-left:1px solid var(--line);box-sizing:border-box" aria-live="polite">
-                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--line)">
-                  <strong>Live Preview</strong>
-                  <button type="button" id="close-preview-btn" class="button secondary small" style="padding:3px 8px">${icon('close')} Close</button>
+            <!-- COLLAPSIBLE SEARCH & REPLACE BAR -->
+            <div id="editor-search-replace-bar" style="display:none;padding:8px 14px;background:var(--surface-hover);border-bottom:1px solid var(--line);align-items:center;gap:10px;flex-wrap:wrap">
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:11px;font-weight:600;color:var(--muted)">Find:</span>
+                <input type="text" id="find-input" placeholder="Search in text..." style="padding:4px 8px;font-size:12px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--text);width:160px">
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <span style="font-size:11px;font-weight:600;color:var(--muted)">Replace:</span>
+                <input type="text" id="replace-input" placeholder="Replace with..." style="padding:4px 8px;font-size:12px;border:1px solid var(--line);border-radius:4px;background:var(--surface);color:var(--text);width:160px">
+              </div>
+              <div style="display:flex;align-items:center;gap:6px">
+                <button type="button" id="btn-find-next" class="button secondary small" style="padding:3px 8px;font-size:11px">Next</button>
+                <button type="button" id="btn-replace-one" class="button secondary small" style="padding:3px 8px;font-size:11px">Replace</button>
+                <button type="button" id="btn-replace-all" class="button secondary small" style="padding:3px 8px;font-size:11px">Replace All</button>
+                <span id="find-count-pill" class="tag" style="font-size:10px;padding:2px 6px">0 matches</span>
+              </div>
+              <button type="button" id="btn-close-find" class="button secondary small iconb" style="margin-left:auto;padding:3px 6px" title="Close search">${icon('close')}</button>
+            </div>
+
+            <!-- COLLAPSIBLE MARKDOWN CHEATSHEET REFERENCE -->
+            <div id="editor-cheatsheet-bar" style="display:none;padding:12px 16px;background:var(--surface-hover);border-bottom:1px solid var(--line);font-size:12px">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                <strong style="color:var(--accent)">Markdown Quick Reference</strong>
+                <button type="button" id="btn-close-cheatsheet" class="button secondary small iconb" style="padding:2px 6px">${icon('close')}</button>
+              </div>
+              <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:12px;font-family:var(--mono);font-size:11px">
+                <div><code># Heading 1</code><br><code>## Heading 2</code><br><code>### Heading 3</code></div>
+                <div><code>**bold text**</code><br><code>*italic text*</code><br><code>~~strikethrough~~</code></div>
+                <div><code>&gt; [!NOTE] Alert</code><br><code>&gt; [!TIP] ProTip</code><br><code>&gt; [!WARNING] Warning</code></div>
+                <div><code>- [ ] Task checkbox</code><br><code>\`\`\`javascript\ncode\n\`\`\`</code><br><code>| A | B |\n| - | - |</code></div>
+              </div>
+            </div>
+
+            <!-- ASSET FILE UPLOAD INPUT (HIDDEN) -->
+            <input type="file" id="editor-image-file-input" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" style="display:none">
+
+            <!-- FULL-HEIGHT EDITOR WORKSPACE (DEFAULT SPLIT-VIEW WITH LIVE BLOB PREVIEW) -->
+            <div id="editor-workspace" class="editor-workspace split-view" style="flex:1;min-height:0;position:relative;height:100%">
+              <textarea id="docs-editor-textarea" name="content" class="editor-textarea" maxlength="50000" placeholder="Write documentation here in Markdown or plain text..." style="flex:1;height:100%;min-height:0;resize:none;padding:18px 24px;font-family:var(--mono);font-size:13px;line-height:1.65;border:0;outline:none;background:var(--surface);color:var(--text);box-sizing:border-box">${e(content)}</textarea>
+
+              <!-- LIVE PREVIEW CONTAINER WITH DEDICATED BLOB URL BAR -->
+              <div id="docs-editor-preview" class="editor-preview" style="flex:1;height:100%;background:var(--bg);display:flex;flex-direction:column;min-height:0;box-sizing:border-box" aria-live="polite">
+                <!-- LIVE BLOB PREVIEW URL BAR -->
+                <div id="blob-preview-bar" class="blob-preview-bar">
+                  <div style="display:flex;align-items:center;gap:8px;min-width:0;flex:1">
+                    <span class="tag good" style="font-size:10px;font-weight:700;padding:2px 6px;display:inline-flex;align-items:center;gap:4px">
+                      ${icon('zap')} LIVE BLOB PREVIEW
+                    </span>
+                    <code id="blob-preview-url-text" title="Click to copy live blob URL">generating blob…</code>
+                  </div>
+                  <div style="display:flex;align-items:center;gap:6px">
+                    <button type="button" id="copy-blob-btn" class="button secondary small" style="padding:3px 8px;font-size:11px" title="Copy live blob preview URL">
+                      ${icon('copy')} <span>Copy Blob URL</span>
+                    </button>
+                    <a id="open-blob-link" href="#" target="_blank" class="button secondary small" style="padding:3px 8px;font-size:11px" title="Open blob preview in standalone tab">
+                      ${icon('external')} <span>Open Tab ↗</span>
+                    </a>
+                    <button type="button" id="toggle-iframe-view-btn" class="button secondary small" style="padding:3px 8px;font-size:11px" title="Toggle between inline DOM and sandboxed iframe view">
+                      ${icon('eye')} <span>Iframe View</span>
+                    </button>
+                    <button type="button" id="close-preview-btn" class="button secondary small iconb" style="padding:3px 6px" title="Close Preview">${icon('close')}</button>
+                  </div>
                 </div>
-                <div id="docs-preview-content"></div>
+
+                <!-- PREVIEW CONTENT AREA -->
+                <div id="docs-preview-content" class="docs-preview-body" style="flex:1;overflow-y:auto;padding:20px 24px"></div>
+                <iframe id="blob-preview-iframe" title="Standalone blob preview" sandbox="allow-scripts allow-same-origin" style="display:none;width:100%;height:100%;border:0;flex:1;background:var(--surface)"></iframe>
               </div>
             </div>
 
+            <!-- STATUS BAR -->
             <div class="editor-statusbar" style="padding:10px 18px;border-top:1px solid var(--line);background:var(--surface-hover);display:flex;align-items:center;justify-content:space-between;flex-shrink:0">
-              <span id="editor-counter">0 words · 0 / 20,000 characters</span>
+              <span id="editor-counter">0 words · 0 / 50,000 characters</span>
               <div style="display:flex;align-items:center;gap:12px">
                 <span class="tag good">${icon('security')} Superadmin Mode · Auto-Sync</span>
                 <button class="button small" type="submit">${icon('check')} <span>Publish documentation</span></button>
@@ -3808,19 +4104,84 @@ export function docsEditor(content, sess) {
   ${sess?.script_nonce ? `<script nonce="${sess.script_nonce}">
     (function() {
       var ta = document.getElementById('docs-editor-textarea');
+      var workspace = document.getElementById('editor-workspace');
       var preview = document.getElementById('docs-editor-preview');
       var previewContent = document.getElementById('docs-preview-content');
+      var previewIframe = document.getElementById('blob-preview-iframe');
       var counter = document.getElementById('editor-counter');
       var toggleBtn = document.getElementById('editor-toggle-preview');
       var closePreviewBtn = document.getElementById('close-preview-btn');
       var saveTopBtn = document.getElementById('studio-save-top-btn');
       var form = document.getElementById('docs-editor-form');
 
+      var blobUrlText = document.getElementById('blob-preview-url-text');
+      var copyBlobBtn = document.getElementById('copy-blob-btn');
+      var openBlobLink = document.getElementById('open-blob-link');
+      var toggleIframeBtn = document.getElementById('toggle-iframe-view-btn');
+      var currentBlobUrl = null;
+      var isIframeMode = false;
+
+      // View mode buttons
+      var modeEditBtn = document.getElementById('mode-edit-btn');
+      var modeSplitBtn = document.getElementById('mode-split-btn');
+      var modePreviewBtn = document.getElementById('mode-preview-btn');
+
+      // Search & Replace
+      var findBar = document.getElementById('editor-search-replace-bar');
+      var btnToggleFind = document.getElementById('btn-toggle-find');
+      var btnCloseFind = document.getElementById('btn-close-find');
+      var findInput = document.getElementById('find-input');
+      var replaceInput = document.getElementById('replace-input');
+      var btnFindNext = document.getElementById('btn-find-next');
+      var btnReplaceOne = document.getElementById('btn-replace-one');
+      var btnReplaceAll = document.getElementById('btn-replace-all');
+      var findCountPill = document.getElementById('find-count-pill');
+
+      // Cheatsheet
+      var cheatsheetBar = document.getElementById('editor-cheatsheet-bar');
+      var btnToggleCheatsheet = document.getElementById('btn-toggle-cheatsheet');
+      var btnCloseCheatsheet = document.getElementById('btn-close-cheatsheet');
+
+      // Utility copy buttons
+      var btnCopyMd = document.getElementById('btn-copy-markdown');
+      var btnCopyHtml = document.getElementById('btn-copy-html');
+
+      // Asset upload
+      var uploadAssetBtn = document.getElementById('btn-upload-image-asset');
+      var assetFileInput = document.getElementById('editor-image-file-input');
+
       if (!ta) return;
 
       if (saveTopBtn && form) {
         saveTopBtn.addEventListener('click', function() { form.submit(); });
       }
+
+      function setViewMode(mode) {
+        if (!workspace) return;
+        workspace.classList.remove('split-view', 'preview-mode', 'edit-mode');
+        if (modeEditBtn) modeEditBtn.classList.remove('active');
+        if (modeSplitBtn) modeSplitBtn.classList.remove('active');
+        if (modePreviewBtn) modePreviewBtn.classList.remove('active');
+
+        if (mode === 'edit') {
+          workspace.classList.add('edit-mode');
+          if (modeEditBtn) modeEditBtn.classList.add('active');
+          if (preview) preview.style.display = 'none';
+        } else if (mode === 'preview') {
+          workspace.classList.add('preview-mode');
+          if (modePreviewBtn) modePreviewBtn.classList.add('active');
+          if (preview) preview.style.display = 'flex';
+        } else {
+          workspace.classList.add('split-view');
+          if (modeSplitBtn) modeSplitBtn.classList.add('active');
+          if (preview) preview.style.display = 'flex';
+        }
+        update();
+      }
+
+      if (modeEditBtn) modeEditBtn.addEventListener('click', function() { setViewMode('edit'); });
+      if (modeSplitBtn) modeSplitBtn.addEventListener('click', function() { setViewMode('split'); });
+      if (modePreviewBtn) modePreviewBtn.addEventListener('click', function() { setViewMode('preview'); });
 
       function renderMarkdown(md) {
         if (!md) return '<p class="muted">No content to preview.</p>';
@@ -3830,28 +4191,58 @@ export function docsEditor(content, sess) {
         for (var i = 0; i < blocks.length; i++) {
           var b = blocks[i].trim();
           if (!b) continue;
-          if (b.startsWith('### ')) {
-            html += '<h3>' + inlineFmt(b.slice(4)) + '</h3>';
+          if (b.startsWith('#### ')) {
+            html += '<h4 style="margin:16px 0 8px;font-size:14px;color:var(--text);font-weight:700">' + inlineFmt(b.slice(5)) + '</h4>';
+          } else if (b.startsWith('### ')) {
+            html += '<h3 style="margin:18px 0 8px;font-size:16px;color:var(--text);font-weight:700">' + inlineFmt(b.slice(4)) + '</h3>';
           } else if (b.startsWith('## ')) {
-            html += '<h2>' + inlineFmt(b.slice(3)) + '</h2>';
+            html += '<h2 style="margin:22px 0 10px;font-size:18px;color:var(--text);border-bottom:1px solid var(--line);padding-bottom:6px;font-weight:700">' + inlineFmt(b.slice(3)) + '</h2>';
           } else if (b.startsWith('# ')) {
-            html += '<h1>' + inlineFmt(b.slice(2)) + '</h1>';
+            html += '<h1 style="margin:24px 0 12px;font-size:24px;color:var(--accent);font-weight:800;letter-spacing:-0.03em">' + inlineFmt(b.slice(2)) + '</h1>';
+          } else if (b.startsWith('&gt; [!NOTE]') || b.startsWith('&gt; [!TIP]') || b.startsWith('&gt; [!WARNING]') || b.startsWith('&gt; [!IMPORTANT]') || b.startsWith('&gt; [!CAUTION]')) {
+            var type = b.includes('[!TIP]') ? 'tip' : (b.includes('[!WARNING]') || b.includes('[!CAUTION]')) ? 'warning' : b.includes('[!IMPORTANT]') ? 'important' : 'note';
+            var lines = b.split('\\n').map(function(l) { return l.replace(/^&gt;\\s?(\\[!.*?\\])?/, '').trim(); }).filter(Boolean);
+            html += '<div class="docs-callout callout-' + type + '"><div class="callout-header"><strong>' + type.toUpperCase() + '</strong></div><div class="callout-body">' + inlineFmt(lines.join(' ')) + '</div></div>';
           } else if (b.startsWith('> ')) {
-            html += '<blockquote>' + inlineFmt(b.slice(2)) + '</blockquote>';
+            var q = b.split('\\n').map(function(l) { return l.replace(/^>\\s?/, ''); }).join('\\n');
+            html += '<blockquote style="border-left:3px solid var(--accent);padding-left:12px;margin:12px 0;color:var(--muted);font-style:italic">' + inlineFmt(q.replace(/\\n/g, '<br>')) + '</blockquote>';
           } else if (b.startsWith('\x60\x60\x60')) {
-            var lines = b.split('\\n');
-            var code = lines.slice(1, lines[lines.length - 1] === '\x60\x60\x60' ? -1 : undefined).join('\\n');
-            html += '<pre><code>' + code + '</code></pre>';
+            var cLines = b.split('\\n');
+            var lang = (cLines[0].replace(/^\x60\x60\x60/, '').trim()) || 'CODE';
+            var code = cLines.slice(1, cLines[cLines.length - 1].startsWith('\x60\x60\x60') ? -1 : undefined).join('\\n');
+            html += '<div class="docs-code-card"><div class="code-header"><span class="code-lang">' + lang.toUpperCase() + '</span><button type="button" class="btn-copy-code" data-code="' + encodeURIComponent(code) + '">Copy</button></div><pre><code>' + code + '</code></pre></div>';
+          } else if (b.includes('|') && b.split('\\n').length >= 2 && b.split('\\n')[1].includes('---')) {
+            var tLines = b.split('\\n').map(function(l) { return l.trim(); }).filter(Boolean);
+            var headers = tLines[0].split('|').map(function(c) { return c.trim(); }).filter(Boolean);
+            var rows = tLines.slice(2).map(function(l) { return l.split('|').map(function(c) { return c.trim(); }).filter(Boolean); });
+            var tHtml = '<div class="table-container"><table><thead><tr>';
+            headers.forEach(function(h) { tHtml += '<th>' + inlineFmt(h) + '</th>'; });
+            tHtml += '</tr></thead><tbody>';
+            rows.forEach(function(r) {
+              tHtml += '<tr>';
+              r.forEach(function(cell) { tHtml += '<td>' + inlineFmt(cell) + '</td>'; });
+              tHtml += '</tr>';
+            });
+            tHtml += '</tbody></table></div>';
+            html += tHtml;
           } else if (b.startsWith('- ') || b.startsWith('* ')) {
             var items = b.split('\\n').map(function(l) { return l.replace(/^[-*]\\s+/, ''); });
-            html += '<ul>' + items.map(function(item) { return '<li>' + inlineFmt(item) + '</li>'; }).join('') + '</ul>';
+            html += '<ul style="padding-left:20px;margin:8px 0">' + items.map(function(item) {
+              if (item.startsWith('[x] ') || item.startsWith('[X] ')) {
+                return '<li class="task-item checked"><input type="checkbox" checked disabled> ' + inlineFmt(item.slice(4)) + '</li>';
+              }
+              if (item.startsWith('[ ] ')) {
+                return '<li class="task-item"><input type="checkbox" disabled> ' + inlineFmt(item.slice(4)) + '</li>';
+              }
+              return '<li style="margin:4px 0">' + inlineFmt(item) + '</li>';
+            }).join('') + '</ul>';
           } else if (/^\\d+\\.\\s/.test(b)) {
             var numItems = b.split('\\n').map(function(l) { return l.replace(/^\\d+\\.\\s+/, ''); });
-            html += '<ol>' + numItems.map(function(item) { return '<li>' + inlineFmt(item) + '</li>'; }).join('') + '</ol>';
+            html += '<ol style="padding-left:20px;margin:8px 0">' + numItems.map(function(item) { return '<li style="margin:4px 0">' + inlineFmt(item) + '</li>'; }).join('') + '</ol>';
           } else if (b === '---' || b === '***') {
             html += '<hr style="border:0;border-top:1px solid var(--line);margin:16px 0;">';
           } else {
-            html += '<p>' + inlineFmt(b.replace(/\\n/g, '<br>')) + '</p>';
+            html += '<p style="margin:8px 0;line-height:1.65">' + inlineFmt(b.replace(/\\n/g, '<br>')) + '</p>';
           }
         }
         return html;
@@ -3859,11 +4250,34 @@ export function docsEditor(content, sess) {
 
       function inlineFmt(str) {
         return str
-          .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-          .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+          .replace(/!\\[([^\\]]*)\\]\\(([^)]+)\\)/g, '<img src="$2" alt="$1" class="docs-inline-img">')
+          .replace(/\\[([^\\]]+)\\]\\(([^)]+)\\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">$1</a>')
+          .replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>')
+          .replace(/\\*([^*]+)\\*/g, '<em>$1</em>')
           .replace(/~~([^~]+)~~/g, '<del>$1</del>')
-          .replace(/\x60([^\x60]+)\x60/g, '<code>$1</code>')
-          .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">$1</a>');
+          .replace(/&lt;u&gt;(.*?)&lt;\\/u&gt;/g, '<u>$1</u>')
+          .replace(/\x60([^\x60]+)\x60/g, '<code style="background:var(--surface-hover);padding:2px 6px;border-radius:4px;border:1px solid var(--line);font-family:var(--mono);font-size:12px">$1</code>');
+      }
+
+      function updateBlobPreview(rendered) {
+        if (typeof Blob === 'undefined' || typeof URL === 'undefined' || !URL.createObjectURL) return;
+        var fullHtml = '<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>neoMail Live Docs Preview</title><style>body{font-family:system-ui,-apple-system,sans-serif;background:#0c100e;color:#f0ede6;padding:24px 32px;line-height:1.65;max-width:880px;margin:0 auto}h1,h2,h3{color:#10b981}code,pre{font-family:monospace}pre{background:#151c19;padding:12px;border-radius:8px;border:1px solid #23302a;color:#34d399}blockquote{border-left:3px solid #10b981;padding-left:12px;margin:12px 0;color:#84968d}table{border-collapse:collapse;width:100%;margin:16px 0}th,td{border:1px solid #202c25;padding:8px 12px;text-align:left}th{background:#18221d}a{color:#10b981}</style></head><body>' + rendered + '</body></html>';
+        if (currentBlobUrl) {
+          try { URL.revokeObjectURL(currentBlobUrl); } catch(e) {}
+        }
+        var docBlob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
+        currentBlobUrl = URL.createObjectURL(docBlob);
+
+        if (blobUrlText) {
+          blobUrlText.textContent = currentBlobUrl;
+          blobUrlText.title = 'Click to copy: ' + currentBlobUrl;
+        }
+        if (openBlobLink) {
+          openBlobLink.href = currentBlobUrl;
+        }
+        if (previewIframe && isIframeMode) {
+          previewIframe.src = currentBlobUrl;
+        }
       }
 
       function update() {
@@ -3871,9 +4285,30 @@ export function docsEditor(content, sess) {
         var rendered = renderMarkdown(val);
         if (previewContent) previewContent.innerHTML = rendered;
         else if (preview) preview.innerHTML = rendered;
+
+        updateBlobPreview(rendered);
+
+        // Attach copy button handlers on code cards
+        if (previewContent) {
+          previewContent.querySelectorAll('.btn-copy-code').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+              var code = decodeURIComponent(btn.getAttribute('data-code') || '');
+              if (navigator && navigator.clipboard) {
+                navigator.clipboard.writeText(code).then(function() {
+                  btn.textContent = 'Copied!';
+                  setTimeout(function() { btn.textContent = 'Copy'; }, 1500);
+                });
+              }
+            });
+          });
+        }
+
         if (counter) {
-          var words = val.trim() ? val.trim().split(/\\s+/).length : 0;
-          counter.textContent = words.toLocaleString() + ' words · ' + val.length.toLocaleString() + ' / 20,000 characters';
+          var trimmed = val.trim();
+          var words = trimmed ? trimmed.split(/\\s+/).length : 0;
+          var lines = val ? val.split('\\n').length : 0;
+          var readTime = Math.ceil(words / 200) || 1;
+          counter.textContent = words.toLocaleString() + ' words · ' + lines.toLocaleString() + ' lines · ~' + readTime + ' min read · ' + val.length.toLocaleString() + ' / 50,000 chars';
         }
       }
 
@@ -3889,6 +4324,63 @@ export function docsEditor(content, sess) {
         update();
       }
 
+      // Wire Copy Blob Button
+      if (copyBlobBtn) {
+        copyBlobBtn.addEventListener('click', function() {
+          if (!currentBlobUrl) return;
+          if (navigator && navigator.clipboard) {
+            navigator.clipboard.writeText(currentBlobUrl).then(function() {
+              copyBlobBtn.innerHTML = '${icon('check')} <span>Copied!</span>';
+              setTimeout(function() {
+                copyBlobBtn.innerHTML = '${icon('copy')} <span>Copy Blob URL</span>';
+              }, 1800);
+            });
+          }
+        });
+      }
+      if (blobUrlText) {
+        blobUrlText.addEventListener('click', function() {
+          if (copyBlobBtn) copyBlobBtn.click();
+        });
+      }
+
+      // Toggle Iframe vs Inline DOM preview
+      if (toggleIframeBtn && previewIframe && previewContent) {
+        toggleIframeBtn.addEventListener('click', function() {
+          isIframeMode = !isIframeMode;
+          if (isIframeMode) {
+            previewContent.style.display = 'none';
+            previewIframe.style.display = 'block';
+            if (currentBlobUrl) previewIframe.src = currentBlobUrl;
+            toggleIframeBtn.innerHTML = '${icon('code')} <span>DOM View</span>';
+          } else {
+            previewIframe.style.display = 'none';
+            previewContent.style.display = 'block';
+            toggleIframeBtn.innerHTML = '${icon('eye')} <span>Iframe View</span>';
+          }
+        });
+      }
+
+      // Image Asset Upload with Local Blob URL
+      if (uploadAssetBtn && assetFileInput) {
+        uploadAssetBtn.addEventListener('click', function() {
+          assetFileInput.click();
+        });
+        assetFileInput.addEventListener('change', function() {
+          if (!assetFileInput.files || !assetFileInput.files[0]) return;
+          var file = assetFileInput.files[0];
+          if (typeof URL !== 'undefined' && URL.createObjectURL) {
+            var imgBlobUrl = URL.createObjectURL(file);
+            insert('![Image: ' + file.name + '](' + imgBlobUrl + ')\\n', '');
+            if (blobUrlText) {
+              blobUrlText.textContent = imgBlobUrl;
+              blobUrlText.title = 'Asset Blob URL: ' + imgBlobUrl;
+            }
+          }
+        });
+      }
+
+      // Toolbar Buttons Actions
       document.querySelectorAll('.rich-editor-toolbar button[data-action]').forEach(function(btn) {
         btn.addEventListener('click', function(e) {
           e.preventDefault();
@@ -3896,18 +4388,134 @@ export function docsEditor(content, sess) {
           if (action === 'h1') insert('# ', '\\n');
           else if (action === 'h2') insert('## ', '\\n');
           else if (action === 'h3') insert('### ', '\\n');
+          else if (action === 'h4') insert('#### ', '\\n');
           else if (action === 'bold') insert('**', '**');
           else if (action === 'italic') insert('*', '*');
           else if (action === 'strike') insert('~~', '~~');
+          else if (action === 'underline') insert('<u>', '</u>');
           else if (action === 'quote') insert('> ', '\\n');
+          else if (action === 'callout-note') insert('> [!NOTE]\\n> ', '\\n');
+          else if (action === 'callout-tip') insert('> [!TIP]\\n> ', '\\n');
+          else if (action === 'callout-warn') insert('> [!WARNING]\\n> ', '\\n');
           else if (action === 'code') insert('\x60', '\x60');
-          else if (action === 'codeblock') insert('\x60\x60\x60\\n', '\\n\x60\x60\x60');
+          else if (action === 'codeblock') insert('\x60\x60\x60javascript\\n// Code example\\n', '\\n\x60\x60\x60\\n');
           else if (action === 'bullet') insert('- ', '\\n');
+          else if (action === 'number') insert('1. ', '\\n');
+          else if (action === 'task') insert('- [ ] ', '\\n');
           else if (action === 'link') insert('[link title](', ')');
-          else if (action === 'table') insert('\\n| Header 1 | Header 2 |\\n| -------- | -------- |\\n| Cell 1   | Cell 2   |\\n', '');
+          else if (action === 'image') insert('![image alt](', ')');
+          else if (action === 'table') insert('\\n| Header 1 | Header 2 | Header 3 |\\n| -------- | -------- | -------- |\\n| Cell 1   | Cell 2   | Cell 3   |\\n', '');
           else if (action === 'hr') insert('\\n---\\n', '');
         });
       });
+
+      // Search & Replace Functionality
+      if (btnToggleFind && findBar) {
+        btnToggleFind.addEventListener('click', function() {
+          var isHidden = findBar.style.display === 'none';
+          findBar.style.display = isHidden ? 'flex' : 'none';
+          btnToggleFind.classList.toggle('active', isHidden);
+          if (isHidden && findInput) findInput.focus();
+        });
+      }
+      if (btnCloseFind && findBar) {
+        btnCloseFind.addEventListener('click', function() {
+          findBar.style.display = 'none';
+          if (btnToggleFind) btnToggleFind.classList.remove('active');
+        });
+      }
+
+      function updateFindCount() {
+        if (!findInput || !findCountPill) return;
+        var query = findInput.value;
+        if (!query) { findCountPill.textContent = '0 matches'; return; }
+        var matches = ta.value.split(query).length - 1;
+        findCountPill.textContent = matches + ' ' + (matches === 1 ? 'match' : 'matches');
+      }
+
+      if (findInput) {
+        findInput.addEventListener('input', updateFindCount);
+      }
+      if (btnFindNext && findInput) {
+        btnFindNext.addEventListener('click', function() {
+          var q = findInput.value;
+          if (!q) return;
+          var text = ta.value;
+          var curPos = ta.selectionEnd;
+          var idx = text.indexOf(q, curPos);
+          if (idx === -1) idx = text.indexOf(q, 0);
+          if (idx !== -1) {
+            ta.focus();
+            ta.setSelectionRange(idx, idx + q.length);
+          }
+        });
+      }
+      if (btnReplaceOne && findInput && replaceInput) {
+        btnReplaceOne.addEventListener('click', function() {
+          var q = findInput.value;
+          var rep = replaceInput.value;
+          if (!q) return;
+          var s = ta.selectionStart;
+          var e = ta.selectionEnd;
+          if (ta.value.substring(s, e) === q) {
+            ta.value = ta.value.substring(0, s) + rep + ta.value.substring(e);
+            ta.setSelectionRange(s + rep.length, s + rep.length);
+            update();
+            updateFindCount();
+          } else {
+            if (btnFindNext) btnFindNext.click();
+          }
+        });
+      }
+      if (btnReplaceAll && findInput && replaceInput) {
+        btnReplaceAll.addEventListener('click', function() {
+          var q = findInput.value;
+          var rep = replaceInput.value;
+          if (!q) return;
+          var count = ta.value.split(q).length - 1;
+          ta.value = ta.value.split(q).join(rep);
+          update();
+          updateFindCount();
+          alert('Replaced ' + count + ' occurrences.');
+        });
+      }
+
+      // Cheatsheet Toggle
+      if (btnToggleCheatsheet && cheatsheetBar) {
+        btnToggleCheatsheet.addEventListener('click', function() {
+          var isHidden = cheatsheetBar.style.display === 'none';
+          cheatsheetBar.style.display = isHidden ? 'block' : 'none';
+          btnToggleCheatsheet.classList.toggle('active', isHidden);
+        });
+      }
+      if (btnCloseCheatsheet && cheatsheetBar) {
+        btnCloseCheatsheet.addEventListener('click', function() {
+          cheatsheetBar.style.display = 'none';
+          if (btnToggleCheatsheet) btnToggleCheatsheet.classList.remove('active');
+        });
+      }
+
+      // Copy Markdown & HTML
+      if (btnCopyMd) {
+        btnCopyMd.addEventListener('click', function() {
+          if (navigator && navigator.clipboard) {
+            navigator.clipboard.writeText(ta.value).then(function() {
+              btnCopyMd.textContent = 'Copied!';
+              setTimeout(function() { btnCopyMd.innerHTML = '${icon('copy')} MD'; }, 1500);
+            });
+          }
+        });
+      }
+      if (btnCopyHtml && previewContent) {
+        btnCopyHtml.addEventListener('click', function() {
+          if (navigator && navigator.clipboard) {
+            navigator.clipboard.writeText(previewContent.innerHTML).then(function() {
+              btnCopyHtml.textContent = 'Copied!';
+              setTimeout(function() { btnCopyHtml.innerHTML = '${icon('code')} HTML'; }, 1500);
+            });
+          }
+        });
+      }
 
       // Navigation Items in Left Sidebar
       document.querySelectorAll('.studio-nav-item').forEach(function(item) {
@@ -3921,19 +4529,18 @@ export function docsEditor(content, sess) {
         });
       });
 
-      // Preview Drawer Toggle
+      // Preview Drawer Toggle (backward compatibility with test)
       if (toggleBtn && preview) {
         toggleBtn.addEventListener('click', function() {
           var isHidden = preview.style.display === 'none';
-          preview.style.display = isHidden ? 'block' : 'none';
+          preview.style.display = isHidden ? 'flex' : 'none';
           toggleBtn.classList.toggle('active', isHidden);
           update();
         });
       }
       if (closePreviewBtn && preview) {
         closePreviewBtn.addEventListener('click', function() {
-          preview.style.display = 'none';
-          if (toggleBtn) toggleBtn.classList.remove('active');
+          setViewMode('edit');
         });
       }
 
@@ -3971,7 +4578,6 @@ export function docsEditor(content, sess) {
           '</div>';
         }).join('');
 
-        // Attach insert handlers
         container.querySelectorAll('.btn-insert-proj').forEach(function(btn) {
           btn.addEventListener('click', function() {
             var pid = btn.getAttribute('data-id');
@@ -3988,7 +4594,6 @@ export function docsEditor(content, sess) {
           });
         });
 
-        // Attach delete handlers
         container.querySelectorAll('.btn-del-proj').forEach(function(btn) {
           btn.addEventListener('click', function() {
             var pid = btn.getAttribute('data-id');
@@ -4048,6 +4653,9 @@ export function docsEditor(content, sess) {
           e.preventDefault(); insert('*', '*');
         } else if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
           e.preventDefault(); insert('[', '](https://)');
+        } else if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+          e.preventDefault();
+          if (btnToggleFind) btnToggleFind.click();
         } else if (e.key === 'Tab') {
           e.preventDefault();
           var s = ta.selectionStart;
@@ -4062,44 +4670,601 @@ export function docsEditor(content, sess) {
   </script>` : ''}`;
 }
 
-export function docsViewer(content, sess) {
-  function renderMarkdown(md) {
-    if (!md) return '<p class="muted">No documentation published yet. Ask your superadmin to add docs.</p>';
-    var text = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    var blocks = text.split(/\\n\\n+/);
-    var html = '';
-    for (var i = 0; i < blocks.length; i++) {
-      var b = blocks[i].trim();
-      if (!b) continue;
-      if (b.startsWith('### ')) html += '<h3>' + inlineFmt(b.slice(4)) + '</h3>';
-      else if (b.startsWith('## ')) html += '<h2>' + inlineFmt(b.slice(3)) + '</h2>';
-      else if (b.startsWith('# ')) html += '<h1>' + inlineFmt(b.slice(2)) + '</h1>';
-      else if (b.startsWith('> ')) html += '<blockquote>' + inlineFmt(b.slice(2)) + '</blockquote>';
-      else if (b.startsWith('\x60\x60\x60')) {
-        var lines = b.split('\\n');
-        var code = lines.slice(1, lines[lines.length - 1] === '\x60\x60\x60' ? -1 : undefined).join('\\n');
-        html += '<pre><code>' + code + '</code></pre>';
-      } else if (b.startsWith('- ') || b.startsWith('* ')) {
-        var items = b.split('\\n').map(function(l) { return l.replace(/^[-*]\\s+/, ''); });
-        html += '<ul>' + items.map(function(item) { return '<li>' + inlineFmt(item) + '</li>'; }).join('') + '</ul>';
-      } else if (/^\\d+\\.\\s/.test(b)) {
-        var numItems = b.split('\\n').map(function(l) { return l.replace(/^\\d+\\.\\s+/, ''); });
-        html += '<ol>' + numItems.map(function(item) { return '<li>' + inlineFmt(item) + '</li>'; }).join('') + '</ol>';
-      } else {
-        html += '<p>' + inlineFmt(b.replace(/\\n/g, '<br>')) + '</p>';
-      }
-    }
-    return html;
-  }
-  function inlineFmt(str) {
-    return str
-      .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*([^*]+)\*/g, '<em>$1</em>')
-      .replace(/~~([^~]+)~~/g, '<del>$1</del>')
-      .replace(/\x60([^\x60]+)\x60/g, '<code>$1</code>')
-      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" style="color:var(--accent);text-decoration:underline">$1</a>');
-  }
+export function parseDocsMarkdown(md) {
+  if (!md || typeof md !== 'string') return { html: '<p class="muted">No documentation content available.</p>', toc: [] };
+  const text = md.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const blocks = text.split(/\n\n+/);
+  let html = '';
+  const toc = [];
 
+  for (let i = 0; i < blocks.length; i++) {
+    const b = blocks[i].trim();
+    if (!b) continue;
+
+    if (b.startsWith('#### ')) {
+      const hText = b.slice(5).trim();
+      const id = hText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `h4-${i}`;
+      toc.push({ level: 4, text: hText, id });
+      html += `<h4 id="${id}">${inlineDocFmt(hText)} <a class="anchor-link" href="#${id}">#</a></h4>`;
+    } else if (b.startsWith('### ')) {
+      const hText = b.slice(4).trim();
+      const id = hText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `h3-${i}`;
+      toc.push({ level: 3, text: hText, id });
+      html += `<h3 id="${id}">${inlineDocFmt(hText)} <a class="anchor-link" href="#${id}">#</a></h3>`;
+    } else if (b.startsWith('## ')) {
+      const hText = b.slice(3).trim();
+      const id = hText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `h2-${i}`;
+      toc.push({ level: 2, text: hText, id });
+      html += `<h2 id="${id}">${inlineDocFmt(hText)} <a class="anchor-link" href="#${id}">#</a></h2>`;
+    } else if (b.startsWith('# ')) {
+      const hText = b.slice(2).trim();
+      const id = hText.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || `h1-${i}`;
+      toc.push({ level: 1, text: hText, id });
+      html += `<h1 id="${id}">${inlineDocFmt(hText)} <a class="anchor-link" href="#${id}">#</a></h1>`;
+    } else if (b.startsWith('&gt; [!NOTE]') || b.startsWith('&gt; [!TIP]') || b.startsWith('&gt; [!IMPORTANT]') || b.startsWith('&gt; [!WARNING]') || b.startsWith('&gt; [!CAUTION]')) {
+      const isTip = b.includes('[!TIP]');
+      const isWarn = b.includes('[!WARNING]') || b.includes('[!CAUTION]');
+      const isImp = b.includes('[!IMPORTANT]');
+      const type = isTip ? 'tip' : isWarn ? 'warning' : isImp ? 'important' : 'note';
+      const label = type.toUpperCase();
+      const lines = b.split('\n').map(l => l.replace(/^&gt;\s?(\[!.*?\])?/, '').trim()).filter(Boolean);
+      html += `<div class="docs-callout callout-${type}"><div class="callout-header"><strong>${label}</strong></div><div class="callout-body">${inlineDocFmt(lines.join(' '))}</div></div>`;
+    } else if (b.startsWith('&gt; ')) {
+      const qLines = b.split('\n').map(l => l.replace(/^&gt;\s?/, '')).join('\n');
+      html += `<blockquote>${inlineDocFmt(qLines.replace(/\n/g, '<br>'))}</blockquote>`;
+    } else if (b.startsWith('\x60\x60\x60')) {
+      const lines = b.split('\n');
+      const lang = (lines[0].replace(/^\x60\x60\x60/, '').trim()) || 'CODE';
+      const code = lines.slice(1, lines[lines.length - 1].startsWith('\x60\x60\x60') ? -1 : undefined).join('\n');
+      html += `<div class="docs-code-card"><div class="code-header"><span class="code-lang">${lang.toUpperCase()}</span><button type="button" class="btn-copy-code" data-code="${encodeURIComponent(code)}">Copy</button></div><pre><code>${code}</code></pre></div>`;
+    } else if (b.includes('|') && b.split('\n').length >= 2 && b.split('\n')[1].includes('---')) {
+      const tableLines = b.split('\n').map(l => l.trim()).filter(Boolean);
+      const headers = tableLines[0].split('|').map(c => c.trim()).filter(Boolean);
+      const rows = tableLines.slice(2).map(l => l.split('|').map(c => c.trim()).filter(Boolean));
+      let tableHtml = '<div class="table-container"><table><thead><tr>';
+      headers.forEach(h => { tableHtml += `<th>${inlineDocFmt(h)}</th>`; });
+      tableHtml += '</tr></thead><tbody>';
+      rows.forEach(r => {
+        tableHtml += '<tr>';
+        r.forEach(cell => { tableHtml += `<td>${inlineDocFmt(cell)}</td>`; });
+        tableHtml += '</tr>';
+      });
+      tableHtml += '</tbody></table></div>';
+      html += tableHtml;
+    } else if (b.startsWith('- ') || b.startsWith('* ')) {
+      const items = b.split('\n').map(l => l.replace(/^[-*]\s+/, ''));
+      html += '<ul>' + items.map(item => {
+        if (item.startsWith('[x] ') || item.startsWith('[X] ')) {
+          return `<li class="task-item checked"><input type="checkbox" checked disabled> ${inlineDocFmt(item.slice(4))}</li>`;
+        }
+        if (item.startsWith('[ ] ')) {
+          return `<li class="task-item"><input type="checkbox" disabled> ${inlineDocFmt(item.slice(4))}</li>`;
+        }
+        return `<li>${inlineDocFmt(item)}</li>`;
+      }).join('') + '</ul>';
+    } else if (/^\d+\.\s/.test(b)) {
+      const numItems = b.split('\n').map(l => l.replace(/^\d+\.\s+/, ''));
+      html += '<ol>' + numItems.map(item => `<li>${inlineDocFmt(item)}</li>`).join('') + '</ol>';
+    } else if (b === '---' || b === '***') {
+      html += '<hr class="docs-divider">';
+    } else {
+      html += `<p>${inlineDocFmt(b.replace(/\n/g, '<br>'))}</p>`;
+    }
+  }
+  return { html, toc };
+}
+
+function inlineDocFmt(str) {
+  return str
+    .replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" class="docs-inline-img">')
+    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener" class="docs-link">$1</a>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/~~([^~]+)~~/g, '<del>$1</del>')
+    .replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>')
+    .replace(/\x60([^\x60]+)\x60/g, '<code class="inline-code">$1</code>');
+}
+
+export function publicDocs(content, isDark = false) {
+  const defaultContent = `# NeoMail Documentation\n\nWelcome to **neoMail** — hardened transactional email infrastructure designed for high deliverability, automated fallback routing, and zero-trust tenant isolation.\n\n> [!NOTE]\n> All tenant API keys and provider credentials are encrypted at rest with AES-256-GCM in Cloudflare D1.\n\n## Getting Started\n\nneoMail provides a unified REST API and native SMTP relay that routes outbound transactional emails across multiple tier-1 providers with automated failover:\n\n- **Primary Provider**: Resend / Brevo\n- **Fallback Chain**: Resend → Brevo → Mailgun → Mailtrap → MailerSend → Custom SMTP\n- **Zero Downtime**: Circuit breakers automatically isolate unhealthy providers\n\n## System Guide\n\nConnect your application backend using the official REST API or native SMTP credentials.\n\n\`\`\`javascript\n// Node.js Dispatch Example\nconst response = await fetch('https://mail.neopathshala.com/api/v1/send', {\n  method: 'POST',\n  headers: {\n    'Authorization': 'Bearer ' + process.env.NEOMAIL_API_KEY,\n    'Content-Type': 'application/json',\n    'Idempotency-Key': 'order:10294:invoice'\n  },\n  body: JSON.stringify({\n    from: 'support@mail.neopathshala.com',\n    to: 'customer@example.com',\n    subject: 'Your Invoice #10294 is Ready',\n    html: '<p>Thank you for your order! Your receipt is attached.</p>'\n  })\n});\n\`\`\`\n\n## Sending Domains & DNS\n\nBefore sending, configure these standard DNS verification records:\n\n| Record Type | Hostname | Value | Purpose |\n| ----------- | -------- | ----- | ------- |\n| TXT | \`_neomail-verification\` | \`[domain_token]\` | Domain Ownership & Anti-Scam Protection |\n| TXT | \`@\` | \`v=spf1 include:mail.neopathshala.com ~all\` | SPF Alignment |\n| CNAME | \`default._domainkey\` | \`dkim.mail.neopathshala.com\` | DKIM Signature |\n| TXT | \`_dmarc\` | \`v=DMARC1; p=reject; sp=reject;\` | DMARC Enforcement |\n\n> [!TIP]\n> neoMail continuously monitors your domain DNS. If verification fails or records are tampered with, sending is paused automatically to protect your reputation.\n\n## REST API Reference\n\n### POST \`/api/v1/send\`\n\nDispatches an email through the optimal healthy provider.\n\n#### Request Headers\n\n- \`Authorization: Bearer <API_KEY>\` *(Required)*\n- \`Content-Type: application/json\` *(Required)*\n- \`Idempotency-Key: <unique_string>\` *(Recommended)*\n\n#### Response Schema\n\n\`\`\`json\n{\n  \"status\": \"success\",\n  \"id\": \"msg_90f23d8c11e74a6b\",\n  \"provider\": \"resend\",\n  \"transmission_status\": \"Delivered\",\n  \"timestamp\": 1730462400\n}\n\`\`\`\n\n## Provider Quotas & Rate Limits\n\nPer-user quotas prevent sudden spikes from degrading sender score.\n\n- [x] **Resend**: Tier 1 primary delivery\n- [x] **Brevo**: Global & EU transactional mail\n- [x] **Mailgun**: High-volume failover burst capacity\n- [x] **Mailtrap**: Production failover and sandbox staging\n- [x] **MailerSend**: Template fallback\n- [x] **SMTP Relay**: Port 465 (TLS) & 587 (STARTTLS)\n\n## Zero-Trust Security\n\n- **Session Binding**: Cryptographic SHA-256 session tokens with Cloudflare Access identity binding.\n- **Encrypted Storage**: Provider credentials and tenant secrets are sealed with authenticated AES-256-GCM.\n- **Immutable Auditing**: Every administrative change and dispatch event is logged.`;
+
+  const md = content && content.trim() ? content : defaultContent;
+  const { html, toc } = parseDocsMarkdown(md);
+
+  const tocHtml = toc.map(item => `
+    <a href="#${item.id}" class="docs-nav-link level-${item.level}">
+      <span>${e(item.text)}</span>
+    </a>
+  `).join('');
+
+  return `<!doctype html>
+<html lang="en" ${isDark ? 'data-theme="dark" class="dark"' : ''}>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="NeoMail Documentation · Private transactional email infrastructure and API reference.">
+  <meta name="theme-color" content="#087d54">
+  <title>NeoMail Documentation · Private Transactional Email Infrastructure</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #fcfdfc;
+      --surface: #ffffff;
+      --surface-hover: #f4f6f4;
+      --text: #111816;
+      --text-secondary: #526059;
+      --muted: #6b7a72;
+      --line: #e2e8e4;
+      --accent: #087d54;
+      --accent-hover: #059669;
+      --tint: rgba(8, 125, 84, 0.08);
+      --font: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --mono: 'JetBrains Mono', ui-monospace, monospace;
+    }
+    html.dark, [data-theme="dark"] {
+      --bg: #0c100e;
+      --surface: #121815;
+      --surface-hover: #18221d;
+      --text: #f0ede6;
+      --text-secondary: #84968d;
+      --muted: #6e8077;
+      --line: #202c25;
+      --accent: #10b981;
+      --accent-hover: #059669;
+      --tint: rgba(16, 185, 129, 0.1);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+    /* Fixed Top Navbar */
+    .docs-navbar {
+      height: 60px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+    }
+    .docs-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      text-decoration: none;
+      color: var(--text);
+      font-weight: 800;
+      font-size: 18px;
+      letter-spacing: -0.02em;
+    }
+    .docs-brand .brandmark {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: var(--accent);
+      color: #fff;
+      display: grid;
+      place-items: center;
+    }
+    .docs-brand .brandmark svg { width: 18px; height: 18px; }
+    .docs-brand .badge {
+      font-size: 10px;
+      padding: 2px 6px;
+      background: var(--tint);
+      color: var(--accent);
+      border-radius: 4px;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+    }
+    .docs-search-bar {
+      position: relative;
+      display: flex;
+      align-items: center;
+      width: 100%;
+      max-width: 380px;
+      background: var(--surface-hover);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+    }
+    .docs-search-bar svg { width: 14px; height: 14px; color: var(--muted); margin-right: 8px; }
+    .docs-search-bar input {
+      width: 100%;
+      height: 36px;
+      border: 0;
+      background: transparent;
+      color: var(--text);
+      font-size: 13px;
+      outline: none;
+    }
+    .docs-search-bar kbd {
+      font-family: var(--mono);
+      font-size: 11px;
+      padding: 2px 6px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      color: var(--muted);
+    }
+    .docs-nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .docs-link-btn {
+      font-size: 13px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      transition: all 0.12s ease;
+    }
+    .docs-link-btn:hover { color: var(--accent); background: var(--surface-hover); }
+    .btn-theme-toggle {
+      width: 36px;
+      height: 36px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      display: grid;
+      place-items: center;
+      transition: all 0.12s ease;
+    }
+    .btn-theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+    .btn-theme-toggle svg { width: 16px; height: 16px; }
+
+    /* Docs Layout */
+    .docs-layout {
+      display: grid;
+      grid-template-columns: 260px minmax(0, 1fr) 240px;
+      flex: 1;
+      width: 100%;
+      max-width: 1440px;
+      margin: 0 auto;
+    }
+    @media (max-width: 1100px) {
+      .docs-layout { grid-template-columns: 240px minmax(0, 1fr); }
+      .docs-right-col { display: none !important; }
+    }
+    @media (max-width: 768px) {
+      .docs-layout { grid-template-columns: 1fr; }
+      .docs-left-col { display: none; }
+      .docs-left-col.open { display: block; position: fixed; inset: 60px 0 0 0; z-index: 40; background: var(--surface); }
+    }
+
+    /* Left Sidebar */
+    .docs-left-col {
+      border-right: 1px solid var(--line);
+      background: var(--surface);
+      height: calc(100vh - 60px);
+      position: sticky;
+      top: 60px;
+      overflow-y: auto;
+      padding: 20px 16px;
+    }
+    .docs-nav-group-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin: 16px 0 8px 8px;
+    }
+    .docs-nav-link {
+      display: flex;
+      align-items: center;
+      padding: 6px 12px;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 13px;
+      border-radius: 6px;
+      margin-bottom: 2px;
+      transition: all 0.12s ease;
+    }
+    .docs-nav-link.level-3 { padding-left: 24px; font-size: 12px; color: var(--muted); }
+    .docs-nav-link.level-4 { padding-left: 34px; font-size: 11px; color: var(--muted); }
+    .docs-nav-link:hover { color: var(--accent); background: var(--surface-hover); }
+    .docs-nav-link.active { color: var(--accent); background: var(--tint); font-weight: 600; }
+
+    /* Center Content */
+    .docs-main-col {
+      padding: 40px 48px;
+      min-width: 0;
+      max-width: 900px;
+      margin: 0 auto;
+      width: 100%;
+    }
+    .docs-breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 24px;
+    }
+    .docs-breadcrumb a { color: var(--muted); text-decoration: none; }
+    .docs-breadcrumb a:hover { color: var(--accent); }
+
+    /* Typography inside Docs */
+    .docs-content h1 {
+      font-size: 32px;
+      font-weight: 800;
+      color: var(--accent);
+      letter-spacing: -0.03em;
+      margin-bottom: 16px;
+      line-height: 1.25;
+    }
+    .docs-content h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.02em;
+      margin: 36px 0 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+    .docs-content h3 {
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 24px 0 10px;
+    }
+    .docs-content h4 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text);
+      margin: 18px 0 8px;
+    }
+    .docs-content p {
+      font-size: 14px;
+      color: var(--text);
+      line-height: 1.7;
+      margin: 12px 0;
+    }
+    .docs-content ul, .docs-content ol {
+      padding-left: 24px;
+      margin: 14px 0;
+      font-size: 14px;
+    }
+    .docs-content li { margin: 6px 0; }
+    .docs-content blockquote {
+      border-left: 4px solid var(--accent);
+      padding: 10px 18px;
+      margin: 18px 0;
+      background: var(--surface);
+      color: var(--text-secondary);
+      border-radius: 0 8px 8px 0;
+      font-style: italic;
+    }
+
+    /* Right Sidebar */
+    .docs-right-col {
+      border-left: 1px solid var(--line);
+      background: var(--surface);
+      height: calc(100vh - 60px);
+      position: sticky;
+      top: 60px;
+      overflow-y: auto;
+      padding: 24px 18px;
+      font-size: 12px;
+    }
+    .right-toc-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+    .right-toc-link {
+      display: block;
+      color: var(--text-secondary);
+      text-decoration: none;
+      padding: 4px 0;
+      margin-bottom: 2px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      transition: color 0.12s ease;
+    }
+    .right-toc-link:hover { color: var(--accent); }
+
+    /* Footer */
+    .docs-footer {
+      border-top: 1px solid var(--line);
+      background: var(--surface);
+      padding: 24px;
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- NAVBAR -->
+  <header class="docs-navbar">
+    <div style="display:flex;align-items:center;gap:16px">
+      <a class="docs-brand" href="/">
+        <span class="brandmark">${icon('mail')}</span>
+        <span>neoMail <span class="badge">Docs</span></span>
+      </a>
+      <span class="tag good" style="font-size:11px;padding:3px 8px;display:inline-flex;align-items:center;gap:5px">
+        ${icon('zap')} Operational
+      </span>
+    </div>
+
+    <div class="docs-search-bar">
+      ${icon('search')}
+      <input type="search" id="docs-search-input" placeholder="Search documentation (Press '/' to focus)..." aria-label="Search docs">
+      <kbd>/</kbd>
+    </div>
+
+    <div class="docs-nav-actions">
+      <a href="#rest-api-reference" class="docs-link-btn">API Reference</a>
+      <a href="/admin" class="docs-link-btn" style="color:var(--accent);font-weight:700">Console ↗</a>
+      <button type="button" id="docs-theme-toggle" class="btn-theme-toggle" title="Toggle theme">
+        ${isDark ? icon('sun') : icon('moon')}
+      </button>
+    </div>
+  </header>
+
+  <!-- LAYOUT -->
+  <div class="docs-layout">
+    <!-- LEFT SIDEBAR -->
+    <aside class="docs-left-col" id="docs-left-col">
+      <div class="docs-nav-group-title">Documentation</div>
+      <div id="docs-nav-links-container">
+        ${tocHtml}
+      </div>
+
+      <div class="docs-nav-group-title" style="margin-top:24px">Quick References</div>
+      <a href="#quickstart-setup" class="docs-nav-link">SDK & Quickstart</a>
+      <a href="#sending-domains-dns" class="docs-nav-link">DNS Verification</a>
+      <a href="#rest-api-reference" class="docs-nav-link">REST API Reference</a>
+      <a href="#zero-trust-security" class="docs-nav-link">Zero-Trust Isolation</a>
+      <a href="/admin/docs" class="docs-nav-link" style="color:var(--accent);font-weight:600;margin-top:12px">
+        ${icon('code')} Studio Editor ↗
+      </a>
+    </aside>
+
+    <!-- CENTER CONTENT -->
+    <main class="docs-main-col">
+      <div class="docs-breadcrumb">
+        <a href="/">Home</a> / <a href="/docs">Docs</a> / <span>NeoMail Documentation</span>
+      </div>
+
+      <article class="docs-content" id="docs-content-area">
+        ${html}
+      </article>
+
+      <div style="margin-top:48px;padding-top:20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+        <span style="font-size:12px;color:var(--muted)">Need help or have security inquiries? Contact your workspace administrator.</span>
+        <a href="/admin" style="font-size:12px;color:var(--accent);font-weight:600;text-decoration:none">Open neoMail Workspace →</a>
+      </div>
+    </main>
+
+    <!-- RIGHT SIDEBAR: ON THIS PAGE -->
+    <aside class="docs-right-col">
+      <div class="right-toc-title">On this page</div>
+      <nav id="right-toc-container">
+        ${toc.map(item => `<a href="#${item.id}" class="right-toc-link level-${item.level}">${e(item.text)}</a>`).join('')}
+      </nav>
+
+      <div class="right-toc-title" style="margin-top:24px">Developer Tools</div>
+      <button type="button" id="btn-copy-doc-link" class="button secondary small" style="width:100%;justify-content:center;margin-bottom:6px">
+        ${icon('link')} Copy Page Link
+      </button>
+      <a href="/api/v1/send" target="_blank" class="button secondary small" style="width:100%;justify-content:center;text-decoration:none;display:inline-flex;align-items:center;gap:6px">
+        ${icon('external')} API Endpoint
+      </a>
+    </aside>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="docs-footer">
+    <p>neoMail · Hardened Transactional Email Infrastructure · All Systems Operational</p>
+  </footer>
+
+  <script>
+    (function() {
+      // Dark Mode Toggle
+      var themeBtn = document.getElementById('docs-theme-toggle');
+      if (themeBtn) {
+        themeBtn.addEventListener('click', function() {
+          var isDark = document.documentElement.classList.contains('dark');
+          var newTheme = isDark ? 'light' : 'dark';
+          if (newTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+            document.documentElement.setAttribute('data-theme', 'dark');
+            themeBtn.innerHTML = '${icon('sun')}';
+          } else {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.setAttribute('data-theme', 'light');
+            themeBtn.innerHTML = '${icon('moon')}';
+          }
+          try {
+            localStorage.setItem('neomail_theme', newTheme);
+            document.cookie = 'neomail_theme=' + newTheme + '; path=/; max-age=31536000; SameSite=Lax';
+          } catch(e) {}
+        });
+      }
+
+      // Quick Search Filter
+      var searchInput = document.getElementById('docs-search-input');
+      var contentArea = document.getElementById('docs-content-area');
+      if (searchInput && contentArea) {
+        searchInput.addEventListener('input', function() {
+          var q = searchInput.value.toLowerCase().trim();
+          var headings = contentArea.querySelectorAll('h1, h2, h3, h4, p, li');
+          if (!q) {
+            headings.forEach(function(el) { el.style.opacity = '1'; });
+            return;
+          }
+          headings.forEach(function(el) {
+            var match = el.textContent.toLowerCase().includes(q);
+            el.style.opacity = match ? '1' : '0.25';
+          });
+        });
+
+        // Key shortcut '/'
+        document.addEventListener('keydown', function(e) {
+          if (e.key === '/' && document.activeElement !== searchInput) {
+            e.preventDefault();
+            searchInput.focus();
+          }
+        });
+      }
+
+      // Code Copy Buttons
+      document.querySelectorAll('.btn-copy-code').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          var code = decodeURIComponent(btn.getAttribute('data-code') || '');
+          if (navigator && navigator.clipboard) {
+            navigator.clipboard.writeText(code).then(function() {
+              btn.textContent = 'Copied!';
+              setTimeout(function() { btn.textContent = 'Copy'; }, 1600);
+            });
+          }
+        });
+      });
+
+      // Copy Page Link
+      var copyLinkBtn = document.getElementById('btn-copy-doc-link');
+      if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', function() {
+          if (navigator && navigator.clipboard) {
+            navigator.clipboard.writeText(window.location.href).then(function() {
+              copyLinkBtn.textContent = '✓ Copied Link!';
+              setTimeout(function() { copyLinkBtn.innerHTML = '${icon('link')} Copy Page Link'; }, 1600);
+            });
+          }
+        });
+      }
+    })();
+  </script>
+</body>
+</html>`;
+}
+
+export function docsViewer(content, sess) {
+  const { html } = parseDocsMarkdown(content);
   return `<section class="panel">
     <div class="panelhead">
       <div>
@@ -4110,7 +5275,7 @@ export function docsViewer(content, sess) {
     </div>
     <div class="panelbody">
       <div class="docs-view-body">
-        ${renderMarkdown(content)}
+        ${html}
       </div>
     </div>
   </section>`;
@@ -4668,6 +5833,11 @@ function profileSettings(sess) {
               </div>
               <span class="profile-photo-hint">JPG, PNG, or WebP · Up to 3 MB</span>
               <span id="profile-upload-status" class="footnote" role="status" aria-live="polite"></span>
+              <div id="profile-blob-url-row" style="display:none;align-items:center;gap:8px;margin-top:6px;background:var(--surface);padding:4px 10px;border-radius:6px;border:1px solid var(--line);font-size:11px;font-family:var(--mono)">
+                <span class="tag good" style="font-size:9px;padding:1px 5px">BLOB PREVIEW</span>
+                <code id="profile-blob-url-text" style="color:var(--accent);max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></code>
+                <button type="button" id="btn-copy-profile-blob" class="button secondary small" style="padding:1px 6px;font-size:10px">Copy</button>
+              </div>
             </div>
           </div>
           <input type="file" id="profile-avatar-input" name="avatar" accept="image/png,image/jpeg,image/webp" style="display:none">

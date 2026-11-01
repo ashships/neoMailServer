@@ -22,6 +22,27 @@ export const PROFILE_SCRIPT = String.raw`
     if (topAvatar) {
       topAvatar.innerHTML = '<img src="' + src + '" alt="Profile preview" style="width:100%;height:100%;object-fit:cover;display:block;">';
     }
+    if (src && typeof src === 'string' && src.startsWith('blob:')) {
+      const blobRow = document.getElementById('profile-blob-url-row');
+      const blobText = document.getElementById('profile-blob-url-text');
+      const copyBtn = document.getElementById('btn-copy-profile-blob');
+      if (blobRow && blobText) {
+        if (blobRow.style) blobRow.style.display = 'inline-flex';
+        blobText.textContent = src;
+        blobText.title = src;
+        if (copyBtn && typeof copyBtn.addEventListener === 'function' && !copyBtn.dataset?.bound) {
+          if (copyBtn.dataset) copyBtn.dataset.bound = '1';
+          copyBtn.addEventListener('click', () => {
+            if (navigator && navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(src).then(() => {
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+              });
+            }
+          });
+        }
+      }
+    }
   }
 
   function triggerPicker() {
