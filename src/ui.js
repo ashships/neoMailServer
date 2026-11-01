@@ -756,6 +756,21 @@ nav {
   border-top: 1px solid var(--line);
 }
 
+.sidefoot-credit {
+  display: block;
+  font-size: 11px;
+  color: var(--muted);
+  font-weight: 500;
+  margin-top: 10px;
+  line-height: 1.4;
+  letter-spacing: 0.1px;
+}
+
+.sidefoot-credit strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
 .sidefoot small {
   display: block;
   color: var(--muted);
@@ -3363,14 +3378,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
         <nav>${navFor(sess?.role).map(([id, label]) => `<a class="navlink ${id === view ? 'active' : ''}" ${id === view ? 'aria-current="page"' : ''} href="${base}/${id}">${icon(id)}<span>${label}</span></a>`).join('')}</nav>
         <div class="sidefoot">
           <a class="navlink side-docs-link" href="/docs" target="_blank">${icon('docs')}<span>Documentation ↗</span></a>
-          <div class="sys-health-pill">
-            <span class="live-pulse"></span>
-            <span>System active</span>
-          </div>
-          <form method="post" action="/admin/logout">
-            ${hidden(sess.csrf_token)}
-            <button class="textbutton">Sign out</button>
-          </form>
+          <div class="sidefoot-credit">Developed by <strong>SoftLaya Tech</strong></div>
         </div>
       </aside>
       <div class="workspace">
@@ -3459,11 +3467,9 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
             </div>
           </div>
           <div class="footer-right">
+            <span>Developed by <strong>SoftLaya Tech</strong></span>
+            <span>·</span>
             <span>Zero-Trust AES-256</span>
-            <span>·</span>
-            <span>Failover Routing</span>
-            <span>·</span>
-            <span>Auto-DNS Verified</span>
           </div>
         </footer>
       </div>
@@ -5179,7 +5185,7 @@ export function publicDocs(content, isDark = false) {
 
   <!-- FOOTER -->
   <footer class="docs-footer">
-    <p>neoMail · Hardened Transactional Email Infrastructure · All Systems Operational</p>
+    <p>neoMail · Hardened Transactional Email Infrastructure · Developed by SoftLaya Tech</p>
   </footer>
 
   <script>
