@@ -351,16 +351,20 @@ body {
   letter-spacing: -0.011em;
 }
 
-::selection {
-  background: var(--tint-strong);
-  color: var(--accent);
-}
-
+::selection,
 :root[data-theme="dark"] ::selection,
 :root.dark ::selection,
 :root:has(#theme-toggle:checked) ::selection {
-  background: rgba(52, 211, 153, 0.28);
-  color: #f0ede6;
+  background: var(--accent);
+  color: #000000 !important;
+}
+
+::-moz-selection,
+:root[data-theme="dark"] ::-moz-selection,
+:root.dark ::-moz-selection,
+:root:has(#theme-toggle:checked) ::-moz-selection {
+  background: var(--accent);
+  color: #000000 !important;
 }
 
 a { color: inherit; text-decoration: none; }
