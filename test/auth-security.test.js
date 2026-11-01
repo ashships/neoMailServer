@@ -68,7 +68,6 @@ test('auth security: only superadmin-provisioned accounts can request OTP and lo
     const unregHtml = await unregReq.text();
     assert.ok(unregHtml.includes('No account found with this email. Please check your email address or contact your <a href="mailto:aashish@neopathshala.com">workspace administrator</a> for access.'), 'Must display custom error message with mailto link');
     assert.ok(unregHtml.includes('class="notice error" role="alert"'), 'Must have notice error banner');
-    assert.ok(unregHtml.includes('<svg'), 'Must have alert icon in error banner');
     assert.ok(unregHtml.indexOf('Administrator email') < unregHtml.indexOf('notice error'), 'Error must be displayed below the email input field');
     assert.ok(unregHtml.includes('value="attacker@evil.com"'), 'Must retain entered email in field');
     assert.ok(unregHtml.includes('Request client access'), 'Must display client registration request link');

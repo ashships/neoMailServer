@@ -169,9 +169,11 @@ function lucideSvgUri(iconName, stroke = '#64748b', strokeWidth = 2) {
 
 const chevronDownUri = lucideSvgUri('chevron', '#64748b', 2);
 const checkUri = lucideSvgUri('check', '#087d54', 2.5);
-const faviconSvg = `<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='#087d54'/><path d='M7 10h18a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V12a2 2 0 0 1 2-2z' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><path d='m5 11 11 8 11-8' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/><circle cx='23' cy='9' r='3.5' fill='#34d399'/></svg>`;
+const faviconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 290" width="32" height="32" fill="none"><defs><linearGradient id="nm-top-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="35%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-left-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="50%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nm-bot-right-grad" x1="0%" y1="40%" x2="100%" y2="70%"><stop offset="0%" stop-color="#033b28"/><stop offset="18%" stop-color="#055f42"/><stop offset="65%" stop-color="#087d54"/><stop offset="100%" stop-color="#0ea868"/></linearGradient><clipPath id="nm-envelope-clip"><rect x="0" y="0" width="450" height="290" rx="45" ry="45"/></clipPath></defs><g clip-path="url(#nm-envelope-clip)"><rect x="0" y="0" width="450" height="290" fill="#ffffff"/><path d="M 45 0 L 405 0 C 429.9 0 448.9 19 449.2 35 C 375 65 295 115 225 145 C 157 116 82 61 12 36 C 18 20 29 9 45 0 Z" fill="url(#nm-top-grad)"/><path d="M 0 45 C 0 20.1 20.1 0 45 0 C 29 9 18 20 12 36 C 82 96 162 156 228 209 C 200 205 180 201 165 199 C 125 214 85 264 45 290 C 20.1 290 0 270 0 245 Z" fill="url(#nm-bot-left-grad)"/><path d="M 228 209 C 298 178 378 88 450 62 L 450 245 C 450 270 429.9 290 405 290 L 300 290 C 255 274 210 209 165 199 C 180 201 200 205 228 209 Z" fill="url(#nm-bot-right-grad)"/><path d="M 12 36 C 82 61 157 116 225 145 C 295 115 375 65 449.2 35 C 449.8 40 450 45 450 48 L 450 62 C 378 88 298 178 228 209 C 162 156 82 96 12 36 Z" fill="#ffffff"/></g><circle cx="410" cy="40" r="28" fill="#34d399"/><rect width="0" height="0" fill="#087d54"/></svg>`;
 export { faviconSvg };
 export const faviconUri = `data:image/svg+xml,${encodeURIComponent(faviconSvg)}`;
+
+export const neomailLogoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 290" width="32" height="21" fill="none" aria-hidden="true" style="display:block"><defs><linearGradient id="nml-top-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="35%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nml-bot-left-grad" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0eb958"/><stop offset="50%" stop-color="#087d54"/><stop offset="100%" stop-color="#055239"/></linearGradient><linearGradient id="nml-bot-right-grad" x1="0%" y1="40%" x2="100%" y2="70%"><stop offset="0%" stop-color="#033b28"/><stop offset="18%" stop-color="#055f42"/><stop offset="65%" stop-color="#087d54"/><stop offset="100%" stop-color="#0ea868"/></linearGradient><clipPath id="nml-envelope-clip"><rect x="0" y="0" width="450" height="290" rx="45" ry="45"/></clipPath></defs><g clip-path="url(#nml-envelope-clip)"><rect x="0" y="0" width="450" height="290" fill="#ffffff"/><path d="M 45 0 L 405 0 C 429.9 0 448.9 19 449.2 35 C 375 65 295 115 225 145 C 157 116 82 61 12 36 C 18 20 29 9 45 0 Z" fill="url(#nml-top-grad)"/><path d="M 0 45 C 0 20.1 20.1 0 45 0 C 29 9 18 20 12 36 C 82 96 162 156 228 209 C 200 205 180 201 165 199 C 125 214 85 264 45 290 C 20.1 290 0 270 0 245 Z" fill="url(#nml-bot-left-grad)"/><path d="M 228 209 C 298 178 378 88 450 62 L 450 245 C 450 270 429.9 290 405 290 L 300 290 C 255 274 210 209 165 199 C 180 201 200 205 228 209 Z" fill="url(#nml-bot-right-grad)"/><path d="M 12 36 C 82 61 157 116 225 145 C 295 115 375 65 449.2 35 C 449.8 40 450 45 450 48 L 450 62 C 378 88 298 178 228 209 C 162 156 82 96 12 36 Z" fill="#ffffff"/></g></svg>`;
 
 const css = `
 @font-face {
@@ -7280,20 +7282,21 @@ export function healthPage(isDark = false) {
       color: var(--text);
     }
     .btn-console {
-      font-size: 12px;
+      font-size: 12.5px;
       font-weight: 600;
-      padding: 6px 14px;
-      border-radius: 8px;
-      background: var(--emerald-dark);
+      padding: 6.5px 15px;
+      border-radius: 9px;
+      background: #10b981;
       color: #fff;
       display: inline-flex;
       align-items: center;
       gap: 6px;
       box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-      transition: all 0.15s ease;
+      transition: background-color 0.15s ease, transform 0.1s ease;
+      cursor: pointer;
     }
     .btn-console:hover {
-      background: var(--emerald);
+      background: #059669; /* little dark green on hover */
       color: #fff;
     }
     .hero-banner {
@@ -7314,19 +7317,20 @@ export function healthPage(isDark = false) {
       align-items: center;
       gap: 14px;
     }
-    .hero-icon-pulse {
-      position: relative;
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
-      background: rgba(16, 185, 129, 0.2);
+    .hero-icon-badge {
+      width: 44px;
+      height: 44px;
+      border-radius: 13px;
+      background: #12281f;
+      border: 1px solid rgba(16, 185, 129, 0.35);
       color: var(--emerald);
       display: flex;
       align-items: center;
       justify-content: center;
       flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.3);
     }
-    .hero-icon-pulse svg { width: 18px; height: 18px; }
+    .hero-icon-badge svg { width: 22px; height: 22px; }
     .hero-title {
       font-size: 20px;
       font-weight: 800;
@@ -7562,9 +7566,10 @@ export function healthPage(isDark = false) {
 
     <div class="hero-banner">
       <div class="hero-left">
-        <div class="hero-icon-pulse">
-          <svg fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
-            <path d="M5 13l4 4L19 7"/>
+        <div class="hero-icon-badge">
+          <svg fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            <path d="M9 12l2 2 4-4"/>
           </svg>
         </div>
         <div>
