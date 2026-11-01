@@ -47,7 +47,7 @@ test('neoMail enhancements: clean slugs, dark mode hover, SPA encrypted cache, D
     assert.equal(res.status, 200, `/admin/${slug} must return 200 OK`);
     const html = await res.text();
     assert.ok(html.includes('id="app-main"'), 'Must have partial workspace main element');
-    assert.ok(html.includes('neo<span>Mail</span>'), 'Must display neoMail platform brand');
+    assert.ok(html.includes('neo<span>Mailer</span>'), 'Must display neoMailer platform brand');
     assert.ok(html.includes('href="/admin/overview"'), 'Navigation links must use clean slugs');
     assert.ok(html.includes('href="/admin/domains"'), 'Navigation links must use clean slugs');
     assert.ok(html.includes('id="spa-progress"'), 'Must include SPA progress bar element');

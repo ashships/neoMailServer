@@ -46,6 +46,7 @@ import {
   Image,
   Upload,
   Quote,
+  AlertCircle,
 } from 'lucide';
 
 const icons = {
@@ -92,6 +93,7 @@ const icons = {
   Image,
   Upload,
   Quote,
+  AlertCircle,
 };
 
 const iconMap = {
@@ -138,6 +140,8 @@ const iconMap = {
   image: 'Image',
   upload: 'Upload',
   quote: 'Quote',
+  alert: 'AlertCircle',
+  alertCircle: 'AlertCircle',
 };
 
 function initial(name) {
@@ -215,6 +219,19 @@ const css = `
   --info: #0284c7;
   --info-bg: #f0f9ff;
   --info-line: #bae6fd;
+  --illus-chair: #1e3a32;
+  --illus-chair-shadow: #142822;
+  --illus-chair-highlight: #2a5247;
+  --illus-mascot: #8ba59e;
+  --illus-mascot-dark: #6e8a83;
+  --illus-glasses: #142822;
+  --illus-plant-dark: #064e3b;
+  --illus-plant-light: #10b981;
+  --illus-pot: #e5e7eb;
+  --illus-wood: #b45309;
+  --illus-table: #d97706;
+  --illus-blob: rgba(8, 125, 84, 0.09);
+  --illus-clock-rim: #374151;
   --shadow-xs: none;
   --shadow-sm: none;
   --shadow-md: none;
@@ -230,7 +247,7 @@ const css = `
   font-size: 14px;
 }
 
-/* NeoMail Dark Mode */
+/* neoMailer Dark Mode */
 :root[data-theme="dark"],
 :root.dark,
 :root:has(#theme-toggle:checked) {
@@ -261,6 +278,19 @@ const css = `
   --info: #38bdf8;
   --info-bg: rgba(56, 189, 248, 0.15);
   --info-line: rgba(56, 189, 248, 0.3);
+  --illus-chair: #162f28;
+  --illus-chair-shadow: #0d1e19;
+  --illus-chair-highlight: #23483e;
+  --illus-mascot: #7c9891;
+  --illus-mascot-dark: #5e7972;
+  --illus-glasses: #0a1612;
+  --illus-plant-dark: #065f46;
+  --illus-plant-light: #34d399;
+  --illus-pot: #374151;
+  --illus-wood: #92400e;
+  --illus-table: #b45309;
+  --illus-blob: rgba(16, 185, 129, 0.09);
+  --illus-clock-rim: #9ca3af;
   --shadow-xs: none;
   --shadow-sm: none;
   --shadow-md: none;
@@ -296,6 +326,19 @@ const css = `
     --info: #38bdf8;
     --info-bg: rgba(56, 189, 248, 0.15);
     --info-line: rgba(56, 189, 248, 0.3);
+    --illus-chair: #162f28;
+    --illus-chair-shadow: #0d1e19;
+    --illus-chair-highlight: #23483e;
+    --illus-mascot: #7c9891;
+    --illus-mascot-dark: #5e7972;
+    --illus-glasses: #0a1612;
+    --illus-plant-dark: #065f46;
+    --illus-plant-light: #34d399;
+    --illus-pot: #374151;
+    --illus-wood: #92400e;
+    --illus-table: #b45309;
+    --illus-blob: rgba(16, 185, 129, 0.09);
+    --illus-clock-rim: #9ca3af;
     --shadow-xs: none;
     --shadow-sm: none;
     --shadow-md: none;
@@ -1551,6 +1594,9 @@ textarea {
 }
 
 .notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
   background: var(--tint);
   border: 1px solid var(--tint-strong);
   color: var(--tint-text);
@@ -1559,6 +1605,13 @@ textarea {
   margin-bottom: 20px;
   font-size: 12px;
   line-height: 1.5;
+}
+
+.notice svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 .notice.warn {
@@ -1805,6 +1858,20 @@ iframe {
   margin-top: 24px;
 }
 
+.logininner .notice {
+  margin-top: 8px;
+  margin-bottom: 16px;
+}
+
+input[aria-invalid="true"] {
+  border-color: var(--danger);
+}
+
+input[aria-invalid="true"]:focus {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px var(--danger-line);
+}
+
 .logininner .button {
   width: 100%;
   padding: 10px;
@@ -1835,6 +1902,90 @@ iframe {
   font-size: 11px;
   color: var(--muted);
   margin-top: 20px;
+}
+
+.notice a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  font-weight: 600;
+}
+
+.notice a:hover {
+  opacity: 0.8;
+}
+
+.textbutton-link {
+  background: none;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: inherit;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+}
+
+.textbutton-link:hover {
+  color: var(--accent-hover);
+}
+
+dialog.login-modal {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  padding: 0;
+  background: var(--surface);
+  color: var(--text);
+  max-width: 440px;
+  width: 90vw;
+  box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+  margin: auto;
+}
+
+dialog.login-modal::backdrop {
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
+}
+
+.modal-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-hover);
+}
+
+.modal-close-btn {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  transition: color 0.12s ease;
+}
+
+.modal-close-btn:hover {
+  color: var(--text);
+}
+
+.modal-body {
+  padding: 18px;
+}
+
+.modal-body textarea {
+  resize: vertical;
+  min-height: 60px;
 }
 
 .checkrow {
@@ -2602,14 +2753,36 @@ input[type=checkbox] {
   margin-bottom: 20px;
 }
 
+.docs-studio-header-bar {
+  height: 50px !important;
+  min-height: 50px !important;
+  max-height: 50px !important;
+  box-sizing: border-box !important;
+  border-bottom: 1px solid var(--line) !important;
+  display: flex !important;
+  align-items: center !important;
+  background: var(--surface) !important;
+  margin: 0 !important;
+}
+
 .rich-editor-toolbar {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 12px;
+  padding: 0 12px;
   background: var(--surface-hover);
   border-bottom: 1px solid var(--line);
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none;
+  height: 50px;
+  min-height: 50px;
+  max-height: 50px;
+  box-sizing: border-box;
+}
+
+.rich-editor-toolbar::-webkit-scrollbar {
+  display: none;
 }
 
 .editor-btn-group {
@@ -2931,6 +3104,111 @@ input[type=checkbox] {
   color: var(--accent);
 }
 
+/* Highlights, Badges, Accordions, Diagrams, Math */
+mark.docs-highlight {
+  background: #fef08a;
+  color: #854d0e;
+  padding: 1px 4px;
+  border-radius: 3px;
+  font-weight: 500;
+}
+:root[data-theme="dark"] mark.docs-highlight,
+:root.dark mark.docs-highlight {
+  background: rgba(234, 179, 8, 0.25);
+  color: #fef08a;
+}
+
+kbd.docs-kbd {
+  display: inline-block;
+  padding: 2px 5px;
+  font-family: var(--mono);
+  font-size: 11px;
+  line-height: 1;
+  color: var(--text);
+  background: var(--surface-hover);
+  border: 1px solid var(--line);
+  border-bottom: 2px solid var(--line);
+  border-radius: 4px;
+  box-shadow: none !important;
+}
+
+details.docs-accordion {
+  margin: 12px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  overflow: hidden;
+}
+details.docs-accordion summary {
+  padding: 10px 14px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+  cursor: pointer;
+  background: var(--surface-hover);
+  user-select: none;
+  list-style-position: inside;
+}
+details.docs-accordion .accordion-content {
+  padding: 12px 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+}
+
+.docs-math-block {
+  margin: 14px 0;
+  padding: 12px 18px;
+  background: var(--surface-hover);
+  border: 1px dashed var(--line);
+  border-radius: 8px;
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--accent);
+}
+
+.docs-diagram-card {
+  margin: 16px 0;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--surface);
+  overflow: hidden;
+}
+.diagram-header {
+  padding: 6px 12px;
+  background: var(--surface-hover);
+  border-bottom: 1px solid var(--line);
+  font-size: 11px;
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.diagram-body {
+  padding: 14px 16px;
+  font-family: var(--mono);
+  font-size: 12px;
+  background: #0f1412;
+  color: #34d399;
+  overflow-x: auto;
+}
+.diagram-body pre {
+  margin: 0;
+  background: transparent;
+  border: 0;
+  padding: 0;
+  font-family: var(--mono);
+}
+
+.docs-divider {
+  border: 0;
+  border-top: 1px solid var(--line);
+  margin: 20px 0;
+}
+
 /* Application Status Footer */
 .app-footer {
   height: 38px;
@@ -3038,6 +3316,20 @@ main.docs-main-studio {
   background: var(--surface) !important;
   overflow: hidden !important;
   box-shadow: none !important;
+}
+
+.docs-studio-panel.is-fullscreen {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  max-width: 100vw !important;
+  max-height: 100vh !important;
+  z-index: 999999 !important;
+  border-radius: 0 !important;
+  border: 0 !important;
+  margin: 0 !important;
 }
 
 .docs-studio-body {
@@ -3320,10 +3612,156 @@ main.docs-main-studio {
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
 }
+
+/* neoMailer Error Pages */
+.error-page-wrapper {
+  position: fixed;
+  inset: 0;
+  overflow-y: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 24px;
+  background: var(--bg);
+  z-index: 999;
+}
+.error-page-card {
+  width: 100%;
+  max-width: 1040px;
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  align-items: center;
+  gap: 48px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 56px 48px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.03);
+  position: relative;
+  overflow: hidden;
+  margin: auto;
+}
+@media (max-width: 860px) {
+  .error-page-card {
+    grid-template-columns: 1fr;
+    padding: 36px 20px;
+    gap: 32px;
+    text-align: center;
+  }
+}
+.error-page-content {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  z-index: 2;
+}
+.error-page-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+@media (max-width: 860px) {
+  .error-page-brand {
+    justify-content: center;
+  }
+}
+.error-page-title {
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.8px;
+  color: var(--brand-dark);
+  line-height: 1.15;
+  margin: 0;
+}
+[data-theme="dark"] .error-page-title {
+  color: var(--text);
+}
+.error-page-desc {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  max-width: 440px;
+  margin: 0;
+}
+@media (max-width: 860px) {
+  .error-page-desc {
+    margin: 0 auto;
+  }
+}
+.error-page-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  margin-top: 4px;
+}
+@media (max-width: 860px) {
+  .error-page-time {
+    justify-content: center;
+  }
+}
+.error-page-time-counter {
+  font-family: var(--mono);
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--tint);
+  border: 1px solid var(--tint-strong);
+  padding: 3px 10px;
+  border-radius: var(--radius-sm);
+  letter-spacing: 0.3px;
+}
+.error-page-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+@media (max-width: 860px) {
+  .error-page-actions {
+    justify-content: center;
+  }
+}
+.error-page-art {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+.error-page-svg {
+  width: 100%;
+  max-width: 460px;
+  height: auto;
+  overflow: visible;
+}
+@keyframes neomailClockSweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.error-clock-sweep {
+  transform-origin: 400px 75px;
+  animation: neomailClockSweep 60s linear infinite;
+}
+@keyframes neomailSteamFloat {
+  0% { opacity: 0; transform: translateY(0) scaleX(0.8); }
+  50% { opacity: 0.7; transform: translateY(-8px) scaleX(1.1); }
+  100% { opacity: 0; transform: translateY(-16px) scaleX(1.3); }
+}
+.error-steam-1 {
+  animation: neomailSteamFloat 2.8s ease-out infinite;
+}
+.error-steam-2 {
+  animation: neomailSteamFloat 2.8s ease-out infinite 1.4s;
+}
 `;
 
 function document(title, content, nonce = '', isDark = false) {
-  return `<!doctype html><html lang="en" ${isDark ? 'data-theme="dark" class="dark"' : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#063b2c"><link rel="icon" type="image/svg+xml" href="${faviconUri}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="preload" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwgknk-6nFg.woff2" as="font" type="font/woff2" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"><title>${e(title)} · neoMail</title><style>${css}</style>${nonce ? `<script nonce="${nonce}">try{var cf=localStorage.getItem('neomail_font_css');if(cf){var s=document.createElement('style');s.id='neomail-fonts-cached';s.textContent=cf;document.head.appendChild(s);}var t=localStorage.getItem('neomail_theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark');}}catch(e){}</script>` : ''}</head><body>${content}</body></html>`;
+  return `<!doctype html><html lang="en" ${isDark ? 'data-theme="dark" class="dark"' : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#063b2c"><link rel="icon" type="image/svg+xml" href="${faviconUri}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="preload" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwgknk-6nFg.woff2" as="font" type="font/woff2" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"><title>${e(title)} · neoMailer</title><style>${css}</style>${nonce ? `<script nonce="${nonce}">try{var cf=localStorage.getItem('neomail_font_css');if(cf){var s=document.createElement('style');s.id='neomail-fonts-cached';s.textContent=cf;document.head.appendChild(s);}var t=localStorage.getItem('neomail_theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark');}}catch(e){}</script>` : ''}</head><body>${content}</body></html>`;
 }
 
 const navAll = [
@@ -3368,7 +3806,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
           <a class="brand" href="${base}">
             <span class="brandmark">${icon('mail')}</span>
             <div class="brand-text">
-              <span class="brand-title">neo<span>Mail</span></span><!-- Neo<span>Mail</span> -->
+              <span class="brand-title">neo<span>Mailer</span></span><span style="display:none">neo<span>Mailer</span></span>
               <span class="brand-sub">Mail Infrastructure</span>
             </div>
           </a>
@@ -3479,7 +3917,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
 }
 
 export function login(error = '', isDark = false) {
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mail</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMail</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMail</h1><!-- Welcome to NeoMail --><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><label class="field">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token"></label><button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p></div></div></div>`, '', isDark);
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Local development sign-in. Production uses email OTP or passkey through Cloudflare Access.</p><form method="post" action="/login"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator token<input type="password" name="admin_token" required minlength="43" maxlength="128" autocomplete="current-password" placeholder="Enter your secure access token" ${error ? 'aria-invalid="true"' : ''}></label>${error ? `<div class="notice error" role="alert">${icon('alert')}<span>${e(error)}</span></div>` : ''}<button class="button">Sign in to workspace ${icon('arrow')}</button></form><p class="footnote">Production sign-in also requires Cloudflare Access. Ask your workspace owner if you need access.</p></div></div></div>`, '', isDark);
 }
 
 function empty(message = 'Your mail activity will appear here', help = 'Configure a provider and sender identity, then send your first test email.') {
@@ -3600,7 +4038,7 @@ function providerLimitsPanel(sess, limits = {}, usage = {}) {
       <div class="panelhead">
         <div>
           <h2>Provider Sending Limits (Your Workspace)</h2>
-          <p>Configurable per-provider dispatch limits. When usage reaches the limit, neoMail fails over to the next provider.</p>
+          <p>Configurable per-provider dispatch limits. When usage reaches the limit, neoMailer fails over to the next provider.</p>
         </div>
       </div>
       <div class="panelbody">
@@ -3764,7 +4202,7 @@ export function identities(rows, sess, domains = []) {
 }
 
 export function compose(rows, sess) {
-  return `<div class="grid2"><section class="panel"><div class="panelhead"><div><h2>Send a test email</h2><p>This sends a real message through your configured providers.</p></div></div><div class="panelbody"><form method="post" action="/admin/send-test">${hidden(sess.csrf_token)}<input type="hidden" name="idempotency_key" value="${crypto.randomUUID()}"><label class="field">Delivery mode<select name="delivery_mode" class="custom-select"><option value="normal">Configured providers</option>${sess.role === 'superadmin' ? '<option value="mailgun-sandbox">Mailgun sandbox only</option>' : ''}</select><small>Sandbox uses postmaster@your-sandbox domain and only sends through Mailgun. The sender selection below is ignored in sandbox mode. Authorize the recipient in Mailgun first.</small></label><label class="field">Sender<select name="from" required class="custom-select">${rows.filter(r => r.is_active).map(r => `<option value="${e(r.email_address)}" ${r.is_default ? 'selected' : ''}>${e(r.display_name)} · ${e(r.email_address)}</option>`).join('')}</select></label><label class="field">Recipient<input type="email" name="to" maxlength="254" required autocomplete="off" spellcheck="false" placeholder="you@example.com"></label><label class="field">Subject<input name="subject" maxlength="255" required value="Your NeoMail connection is ready"></label><label class="field">Plain text message<textarea name="text" maxlength="50000" required>Hello! This is a test message from your NeoMail workspace.</textarea></label><button class="button">Send test email ${icon('arrow')}</button></form></div></section><section class="panel"><div class="panelbody"><h2>Before you send</h2><ul class="list"><li>Verify the sender domain with your delivery provider.</li><li>Configure a provider credential in Settings.</li><li>Use an inbox you control for your first test.</li><li>Inspect the result in Mail activity. “Sent” means accepted by the provider.</li><li>If the result is uncertain, reconcile with the provider before sending again.</li></ul></div></section></div>`;
+  return `<div class="grid2"><section class="panel"><div class="panelhead"><div><h2>Send a test email</h2><p>This sends a real message through your configured providers.</p></div></div><div class="panelbody"><form method="post" action="/admin/send-test">${hidden(sess.csrf_token)}<input type="hidden" name="idempotency_key" value="${crypto.randomUUID()}"><label class="field">Delivery mode<select name="delivery_mode" class="custom-select"><option value="normal">Configured providers</option>${sess.role === 'superadmin' ? '<option value="mailgun-sandbox">Mailgun sandbox only</option>' : ''}</select><small>Sandbox uses postmaster@your-sandbox domain and only sends through Mailgun. The sender selection below is ignored in sandbox mode. Authorize the recipient in Mailgun first.</small></label><label class="field">Sender<select name="from" required class="custom-select">${rows.filter(r => r.is_active).map(r => `<option value="${e(r.email_address)}" ${r.is_default ? 'selected' : ''}>${e(r.display_name)} · ${e(r.email_address)}</option>`).join('')}</select></label><label class="field">Recipient<input type="email" name="to" maxlength="254" required autocomplete="off" spellcheck="false" placeholder="you@example.com"></label><label class="field">Subject<input name="subject" maxlength="255" required value="Your neoMailer connection is ready"></label><label class="field">Plain text message<textarea name="text" maxlength="50000" required>Hello! This is a test message from your neoMailer workspace.</textarea></label><button class="button">Send test email ${icon('arrow')}</button></form></div></section><section class="panel"><div class="panelbody"><h2>Before you send</h2><ul class="list"><li>Verify the sender domain with your delivery provider.</li><li>Configure a provider credential in Settings.</li><li>Use an inbox you control for your first test.</li><li>Inspect the result in Mail activity. “Sent” means accepted by the provider.</li><li>If the result is uncertain, reconcile with the provider before sending again.</li></ul></div></section></div>`;
 }
 
 export function security(rows, env) {
@@ -3850,8 +4288,8 @@ export function inspector(mail) {
 }
 
 export function setup(origin, cfg) {
-  const snippet = `// Server-side only. Never expose the API token in browser code.\nconst response = await fetch('${origin}/api/v1/send', {\n  method: 'POST',\n  headers: {\n    'Authorization': 'Bearer ' + process.env.NEOMAIL_API_KEY,\n    'Content-Type': 'application/json',\n    'Idempotency-Key': 'welcome:' + user.id + ':v1'\n  },\n  body: JSON.stringify({\n    from: '${cfg.DEFAULT_SENDER}',\n    to: user.email,\n    subject: 'Welcome to your account',\n    text: 'Your account is ready.'\n  })\n});\nconst result = await response.json();\nif (!response.ok) throw new Error('Mail request failed');`;
-  return `<div class="grid2"><section class="panel"><div class="panelhead"><h2>Connect your platform</h2></div><div class="panelbody"><ol class="list">${[['Deploy the Worker', 'Create D1, apply the schema and migration, configure secrets, and bind your chosen custom domain.'], ['Protect the console', 'Create a Cloudflare Access application for /admin and /admin/* with an explicit administrator allowlist and MFA. Configure team domain and audience in the Worker.'], ['Verify your sending domain', 'Copy provider-generated DNS records exactly. Enable one provider first, then verify fallback providers.'], ['Configure the workspace', 'Add a sender identity matching your verified domain, then save provider credentials and your separate API token in Settings.'], ['Connect your backend', 'Store NEOMAIL_URL and NEOMAIL_API_KEY in your application server environment. Send from authenticated backend flows only.'], ['Test and operate', 'Test acceptance, delivery webhooks, duplicate requests, invalid credentials, backups, and retention before launch.']].map(([title, desc], i) => `<li class="step"><span class="stepnum">${i + 1}</span><div><h3>${e(title)}</h3><p>${e(desc)}</p></div></li>`).join('')}</ol></div></section><section class="panel"><div class="panelhead"><h2>Backend request example</h2></div><div class="panelbody"><pre>${e(snippet)}</pre><div class="notice warn">Confirmed sender: your-sender@your-verified-domain.com. Verify this sending domain with each active provider before deployment.</div><p class="sub">Full deployment, security, API, recovery, and DNS instructions are included in the project’s docs directory.</p></div></section></div>`;
+  const snippet = `// Server-side only. Never expose the API token in browser code.\nconst response = await fetch('${origin}/api/v1/send', {\n  method: 'POST',\n  headers: {\n    'Authorization': 'Bearer ' + process.env.NEOMAILER_API_KEY,\n    'Content-Type': 'application/json',\n    'Idempotency-Key': 'welcome:' + user.id + ':v1'\n  },\n  body: JSON.stringify({\n    from: '${cfg.DEFAULT_SENDER}',\n    to: user.email,\n    subject: 'Welcome to your account',\n    text: 'Your account is ready.'\n  })\n});\nconst result = await response.json();\nif (!response.ok) throw new Error('Mail request failed');`;
+  return `<div class="grid2"><section class="panel"><div class="panelhead"><h2>Connect your platform</h2></div><div class="panelbody"><ol class="list">${[['Deploy the Worker', 'Create D1, apply the schema and migration, configure secrets, and bind your chosen custom domain.'], ['Protect the console', 'Create a Cloudflare Access application for /admin and /admin/* with an explicit administrator allowlist and MFA. Configure team domain and audience in the Worker.'], ['Verify your sending domain', 'Copy provider-generated DNS records exactly. Enable one provider first, then verify fallback providers.'], ['Configure the workspace', 'Add a sender identity matching your verified domain, then save provider credentials and your separate API token in Settings.'], ['Connect your backend', 'Store NEOMAILER_URL and NEOMAILER_API_KEY in your application server environment. Send from authenticated backend flows only.'], ['Test and operate', 'Test acceptance, delivery webhooks, duplicate requests, invalid credentials, backups, and retention before launch.']].map(([title, desc], i) => `<li class="step"><span class="stepnum">${i + 1}</span><div><h3>${e(title)}</h3><p>${e(desc)}</p></div></li>`).join('')}</ol></div></section><section class="panel"><div class="panelhead"><h2>Backend request example</h2></div><div class="panelbody"><pre>${e(snippet)}</pre><div class="notice warn">Confirmed sender: your-sender@your-verified-domain.com. Verify this sending domain with each active provider before deployment.</div><p class="sub">Full deployment, security, API, recovery, and DNS instructions are included in the project’s docs directory.</p></div></section></div>`;
 }
 
 export function docsEditor(content, sess) {
@@ -3873,18 +4311,18 @@ export function docsEditor(content, sess) {
     <div class="docs-studio-body">
       <!-- LEFT SIDEBAR: Documentation Navigation Links -->
       <aside class="docs-studio-sidebar-left" style="border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--surface);overflow-y:auto">
-        <div style="padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+        <div class="docs-studio-header-bar" style="padding:0 14px;justify-content:space-between">
           <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted)">Docs Structure</span>
           <span class="tag" style="font-size:10px;padding:2px 6px">10 topics</span>
         </div>
         <div class="docs-nav-links" style="padding:8px;display:flex;flex-direction:column;gap:3px">
-          <button type="button" class="studio-nav-item active" data-title="Getting Started" data-snippet="## Getting Started\n\nWelcome to neoMail. Private transactional email infrastructure.">
+          <button type="button" class="studio-nav-item active" data-title="Getting Started" data-snippet="## Getting Started\n\nWelcome to neoMailer. Private transactional email infrastructure.">
             ${icon('zap')} <span>Getting Started</span>
           </button>
           <button type="button" class="studio-nav-item" data-title="Quickstart & Setup" data-snippet="## Quickstart & Setup\n\nConnect your application backend using the official SDK or REST API.">
             ${icon('play')} <span>Quickstart & Setup</span>
           </button>
-          <button type="button" class="studio-nav-item" data-title="Sending Domains & DNS" data-snippet="## Sending Domains & DNS Verification\n\nAdd TXT verification record:\n- Name: \`_neomail-verification.yourdomain.com\`\n- Value: \`your_verification_token\`">
+          <button type="button" class="studio-nav-item" data-title="Sending Domains & DNS" data-snippet="## Sending Domains & DNS Verification\n\nAdd TXT verification record:\n- Name: \`_neomailer-verification.yourdomain.com\`\n- Value: \`your_verification_token\`">
             ${icon('globe')} <span>Domains & DNS</span>
           </button>
           <button type="button" class="studio-nav-item" data-title="Delivery Providers" data-snippet="## Intelligent Fallback Routing\n\nOutbound emails are dispatched sequentially across enrolled providers (Resend → Brevo → Mailgun → Mailtrap → MailerSend → SMTP).">
@@ -3922,22 +4360,33 @@ export function docsEditor(content, sess) {
           ${hidden(sess.csrf_token)}
           <div class="rich-editor-container" style="display:flex;flex-direction:column;flex:1;min-height:0;margin:0;border:0;border-radius:0">
             <!-- EXTENDED TOOLBAR WITH MODERN FEATURES -->
-            <div class="rich-editor-toolbar" role="toolbar" aria-label="Editor toolbar">
-              <!-- Headings -->
-              <div class="editor-btn-group" title="Headings">
+            <div class="rich-editor-toolbar docs-studio-header-bar" role="toolbar" aria-label="Editor toolbar">
+              <!-- History -->
+              <div class="editor-btn-group" title="History">
+                <button type="button" class="editor-btn" data-action="undo" title="Undo (Ctrl+Z)">↶</button>
+                <button type="button" class="editor-btn" data-action="redo" title="Redo (Ctrl+Y)">↷</button>
+              </div>
+
+              <!-- Headings & Paragraph -->
+              <div class="editor-btn-group" title="Headings & Typography">
                 <button type="button" class="editor-btn" data-action="h1" title="Heading 1 (#)">H1</button>
                 <button type="button" class="editor-btn" data-action="h2" title="Heading 2 (##)">H2</button>
                 <button type="button" class="editor-btn" data-action="h3" title="Heading 3 (###)">H3</button>
                 <button type="button" class="editor-btn" data-action="h4" title="Heading 4 (####)">H4</button>
+                <button type="button" class="editor-btn" data-action="p" title="Paragraph / Normal Text">P</button>
               </div>
 
               <!-- Inline Styles -->
               <div class="editor-btn-group" title="Text Styles">
                 <button type="button" class="editor-btn" data-action="bold" title="Bold (Ctrl+B)">${icon('bold')}</button>
                 <button type="button" class="editor-btn" data-action="italic" title="Italic (Ctrl+I)">${icon('italic')}</button>
+                <button type="button" class="editor-btn" data-action="underline" title="Underline (Ctrl+U)"><u>U</u></button>
                 <button type="button" class="editor-btn" data-action="strike" title="Strikethrough (~~)">~S~</button>
-                <button type="button" class="editor-btn" data-action="underline" title="Underline (&lt;u&gt;)"><u>U</u></button>
+                <button type="button" class="editor-btn" data-action="highlight" title="Highlight (==text==)"><mark style="background:#fef08a;padding:0 2px;border-radius:2px;color:#854d0e">hl</mark></button>
+                <button type="button" class="editor-btn" data-action="sub" title="Subscript (X₂)">X₂</button>
+                <button type="button" class="editor-btn" data-action="sup" title="Superscript (X²)">X²</button>
                 <button type="button" class="editor-btn" data-action="code" title="Inline code (\`)">${icon('code')}</button>
+                <button type="button" class="editor-btn" data-action="kbd" title="Keyboard shortcut badge (&lt;kbd&gt;)">kbd</button>
               </div>
 
               <!-- Callouts / Admonitions -->
@@ -3945,33 +4394,47 @@ export function docsEditor(content, sess) {
                 <button type="button" class="editor-btn" data-action="callout-note" title="Note Callout (&gt; [!NOTE])">[!NOTE]</button>
                 <button type="button" class="editor-btn" data-action="callout-tip" title="Tip Callout (&gt; [!TIP])">[!TIP]</button>
                 <button type="button" class="editor-btn" data-action="callout-warn" title="Warning Callout (&gt; [!WARNING])">[!WARN]</button>
+                <button type="button" class="editor-btn" data-action="callout-caution" title="Caution / Danger Callout (&gt; [!CAUTION])">[!DANGER]</button>
                 <button type="button" class="editor-btn" data-action="quote" title="Blockquote (&gt;)">${icon('quote')}</button>
               </div>
 
-              <!-- Lists & Codeblocks -->
-              <div class="editor-btn-group" title="Lists & Code">
+              <!-- Lists & Indent -->
+              <div class="editor-btn-group" title="Lists & Indent">
                 <button type="button" class="editor-btn" data-action="bullet" title="Bullet list (-)">${icon('list')}</button>
                 <button type="button" class="editor-btn" data-action="number" title="Numbered list (1.)">1.</button>
                 <button type="button" class="editor-btn" data-action="task" title="Task checklist (- [ ])">[✓]</button>
-                <button type="button" class="editor-btn" data-action="codeblock" title="Code block (\`\`\`)">&lt;/&gt;</button>
+                <button type="button" class="editor-btn" data-action="indent" title="Indent list (Tab)">⇥</button>
+                <button type="button" class="editor-btn" data-action="outdent" title="Outdent list (Shift+Tab)">⇤</button>
               </div>
 
-              <!-- Links, Media, Tables & Dividers -->
+              <!-- Media, Blocks, Tables & Dividers -->
               <div class="editor-btn-group" title="Media & Layout">
                 <button type="button" class="editor-btn" data-action="link" title="Insert link (Ctrl+K)">${icon('link')}</button>
                 <button type="button" class="editor-btn" data-action="image" title="Insert markdown image">${icon('image')}</button>
                 <button type="button" class="editor-btn" id="btn-upload-image-asset" title="Upload local image & show Blob preview URL">${icon('upload')} Asset</button>
-                <button type="button" class="editor-btn" data-action="table" title="Insert table template">Table</button>
+                <button type="button" class="editor-btn" data-action="table" title="Insert table template">⊞ Table</button>
+                <button type="button" class="editor-btn" data-action="codeblock" title="Code block (\`\`\`)">&lt;/&gt;</button>
+                <button type="button" class="editor-btn" data-action="mermaid" title="Mermaid Architecture Diagram">☊ Diagram</button>
+                <button type="button" class="editor-btn" data-action="details" title="Collapsible Spoiler Section (&lt;details&gt;)">▼ Spoiler</button>
+                <button type="button" class="editor-btn" data-action="math" title="Math Formula ($$)">∑ Math</button>
                 <button type="button" class="editor-btn" data-action="hr" title="Divider (---)">—</button>
               </div>
 
-              <!-- Utilities: Find/Replace, Copy, Help -->
+              <!-- Utilities: Find/Replace, Format, Export, Import, Help -->
               <div class="editor-btn-group" title="Editor Tools">
                 <button type="button" class="editor-btn" id="btn-toggle-find" title="Find & Replace (Ctrl+F)">${icon('search')}</button>
+                <button type="button" class="editor-btn" data-action="clear-fmt" title="Clear Formatting from selection">Tx</button>
+                <button type="button" class="editor-btn" data-action="case-cycle" title="Toggle Case (Upper/Lower/Title)">aA</button>
+                <button type="button" class="editor-btn" id="btn-export-md" title="Download Markdown file (.md)">⬇ .md</button>
+                <button type="button" class="editor-btn" id="btn-import-md" title="Import local .md file">⬆ Open</button>
                 <button type="button" class="editor-btn" id="btn-copy-markdown" title="Copy Raw Markdown">${icon('copy')} MD</button>
                 <button type="button" class="editor-btn" id="btn-copy-html" title="Copy Rendered HTML">${icon('code')} HTML</button>
+                <button type="button" class="editor-btn" id="btn-toggle-fullscreen" title="Toggle Zen Fullscreen Mode">⛶</button>
                 <button type="button" class="editor-btn" id="btn-toggle-cheatsheet" title="Markdown Quick Reference">?</button>
               </div>
+
+              <!-- Hidden input for file import -->
+              <input type="file" id="import-md-file-input" accept=".md,.markdown,.txt" style="display:none">
 
               <!-- View Modes: Edit / Split View / Preview -->
               <div class="editor-btn-group" style="margin-left:auto" title="View Mode">
@@ -4066,10 +4529,10 @@ export function docsEditor(content, sess) {
 
       <!-- RIGHT SIDEBAR: neoCodebase Connected Projects Panel -->
       <aside class="docs-studio-sidebar-right" style="border-left:1px solid var(--line);display:flex;flex-direction:column;min-height:0;background:var(--surface);overflow-y:auto">
-        <div style="padding:12px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between">
+        <div class="docs-studio-header-bar" style="padding:0 14px;justify-content:space-between">
           <div>
-            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);display:block">Projects & Data</span>
-            <span style="font-size:10px;color:var(--muted)">neoCodebase Workspace</span>
+            <span style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;color:var(--muted);display:block;line-height:1.2">Projects & Data</span>
+            <span style="font-size:10px;color:var(--muted);line-height:1.2">neoCodebase Workspace</span>
           </div>
           <button type="button" id="btn-toggle-add-proj" class="button secondary small" style="padding:3px 8px;font-size:11px" title="Add project to studio">+ Add</button>
         </div>
@@ -4156,6 +4619,13 @@ export function docsEditor(content, sess) {
       var uploadAssetBtn = document.getElementById('btn-upload-image-asset');
       var assetFileInput = document.getElementById('editor-image-file-input');
 
+      // Markdown file export & import & fullscreen
+      var btnExportMd = document.getElementById('btn-export-md');
+      var btnImportMd = document.getElementById('btn-import-md');
+      var importFileInput = document.getElementById('import-md-file-input');
+      var btnFullscreen = document.getElementById('btn-toggle-fullscreen');
+      var studioPanel = document.querySelector('.docs-studio-panel');
+
       if (!ta) return;
 
       if (saveTopBtn && form) {
@@ -4212,6 +4682,10 @@ export function docsEditor(content, sess) {
           } else if (b.startsWith('> ')) {
             var q = b.split('\\n').map(function(l) { return l.replace(/^>\\s?/, ''); }).join('\\n');
             html += '<blockquote style="border-left:3px solid var(--accent);padding-left:12px;margin:12px 0;color:var(--muted);font-style:italic">' + inlineFmt(q.replace(/\\n/g, '<br>')) + '</blockquote>';
+          } else if (b.startsWith('\x60\x60\x60mermaid')) {
+            var mLines = b.split('\\n');
+            var mCode = mLines.slice(1, mLines[mLines.length - 1].startsWith('\x60\x60\x60') ? -1 : undefined).join('\\n');
+            html += '<div class="docs-diagram-card"><div class="diagram-header"><span>☊ MERMAID DIAGRAM</span></div><div class="diagram-body"><pre class="mermaid">' + mCode + '</pre></div></div>';
           } else if (b.startsWith('\x60\x60\x60')) {
             var cLines = b.split('\\n');
             var lang = (cLines[0].replace(/^\x60\x60\x60/, '').trim()) || 'CODE';
@@ -4245,6 +4719,18 @@ export function docsEditor(content, sess) {
           } else if (/^\\d+\\.\\s/.test(b)) {
             var numItems = b.split('\\n').map(function(l) { return l.replace(/^\\d+\\.\\s+/, ''); });
             html += '<ol style="padding-left:20px;margin:8px 0">' + numItems.map(function(item) { return '<li style="margin:4px 0">' + inlineFmt(item) + '</li>'; }).join('') + '</ol>';
+          } else if (b.startsWith('$$') && b.endsWith('$$')) {
+            var formula = b.slice(2, -2).trim();
+            html += '<div class="docs-math-block"><code>$$ ' + formula + ' $$</code></div>';
+          } else if (b.includes('&lt;details&gt;') || b.includes('<details>')) {
+            var sumMatch = b.match(/&lt;summary&gt;(.*?)&lt;\/summary&gt;/) || b.match(/<summary>(.*?)<\/summary>/);
+            var sumText = sumMatch ? sumMatch[1] : 'Click to expand';
+            var bodyText = b
+              .replace(/&lt;details&gt;|<details>/gi, '')
+              .replace(/&lt;\/details&gt;|<\/details>/gi, '')
+              .replace(/&lt;summary&gt;.*?&lt;\/summary&gt;|<summary>.*?<\/summary>/gi, '')
+              .trim();
+            html += '<details class="docs-accordion" open><summary>' + inlineFmt(sumText) + '</summary><div class="accordion-content">' + inlineFmt(bodyText.replace(/\\n/g, '<br>')) + '</div></details>';
           } else if (b === '---' || b === '***') {
             html += '<hr style="border:0;border-top:1px solid var(--line);margin:16px 0;">';
           } else {
@@ -4261,7 +4747,12 @@ export function docsEditor(content, sess) {
           .replace(/\\*\\*([^*]+)\\*\\*/g, '<strong>$1</strong>')
           .replace(/\\*([^*]+)\\*/g, '<em>$1</em>')
           .replace(/~~([^~]+)~~/g, '<del>$1</del>')
-          .replace(/&lt;u&gt;(.*?)&lt;\\/u&gt;/g, '<u>$1</u>')
+          .replace(/==([^=]+)==/g, '<mark class="docs-highlight">$1</mark>')
+          .replace(/&lt;mark&gt;(.*?)&lt;\\/mark&gt;/gi, '<mark class="docs-highlight">$1</mark>')
+          .replace(/&lt;u&gt;(.*?)&lt;\\/u&gt;/gi, '<u>$1</u>')
+          .replace(/&lt;kbd&gt;(.*?)&lt;\\/kbd&gt;/gi, '<kbd class="docs-kbd">$1</kbd>')
+          .replace(/&lt;sub&gt;(.*?)&lt;\\/sub&gt;/gi, '<sub>$1</sub>')
+          .replace(/&lt;sup&gt;(.*?)&lt;\\/sup&gt;/gi, '<sup>$1</sup>')
           .replace(/\x60([^\x60]+)\x60/g, '<code style="background:var(--surface-hover);padding:2px 6px;border-radius:4px;border:1px solid var(--line);font-family:var(--mono);font-size:12px">$1</code>');
       }
 
@@ -4391,27 +4882,113 @@ export function docsEditor(content, sess) {
         btn.addEventListener('click', function(e) {
           e.preventDefault();
           var action = btn.getAttribute('data-action');
-          if (action === 'h1') insert('# ', '\\n');
+          if (action === 'undo') {
+            try { document.execCommand('undo'); } catch(err){}
+            update();
+          } else if (action === 'redo') {
+            try { document.execCommand('redo'); } catch(err){}
+            update();
+          } else if (action === 'h1') insert('# ', '\\n');
           else if (action === 'h2') insert('## ', '\\n');
           else if (action === 'h3') insert('### ', '\\n');
           else if (action === 'h4') insert('#### ', '\\n');
-          else if (action === 'bold') insert('**', '**');
+          else if (action === 'p') {
+            var s = ta.selectionStart;
+            var e = ta.selectionEnd;
+            var text = ta.value;
+            var startLine = text.lastIndexOf('\\n', s - 1) + 1;
+            var endLine = text.indexOf('\\n', e);
+            if (endLine === -1) endLine = text.length;
+            var block = text.substring(startLine, endLine);
+            var clean = block.replace(/^(#{1,6}\\s+|[-*]\\s+|\\d+\\.\\s+|&gt;\\s*|>\\s*)/gm, '');
+            ta.value = text.substring(0, startLine) + clean + text.substring(endLine);
+            ta.setSelectionRange(startLine, startLine + clean.length);
+            update();
+          } else if (action === 'bold') insert('**', '**');
           else if (action === 'italic') insert('*', '*');
           else if (action === 'strike') insert('~~', '~~');
           else if (action === 'underline') insert('<u>', '</u>');
+          else if (action === 'highlight') insert('==', '==');
+          else if (action === 'sub') insert('<sub>', '</sub>');
+          else if (action === 'sup') insert('<sup>', '</sup>');
+          else if (action === 'code') insert('\x60', '\x60');
+          else if (action === 'kbd') insert('<kbd>', '</kbd>');
           else if (action === 'quote') insert('> ', '\\n');
           else if (action === 'callout-note') insert('> [!NOTE]\\n> ', '\\n');
           else if (action === 'callout-tip') insert('> [!TIP]\\n> ', '\\n');
           else if (action === 'callout-warn') insert('> [!WARNING]\\n> ', '\\n');
-          else if (action === 'code') insert('\x60', '\x60');
-          else if (action === 'codeblock') insert('\x60\x60\x60javascript\\n// Code example\\n', '\\n\x60\x60\x60\\n');
+          else if (action === 'callout-caution') insert('> [!CAUTION]\\n> ', '\\n');
           else if (action === 'bullet') insert('- ', '\\n');
           else if (action === 'number') insert('1. ', '\\n');
           else if (action === 'task') insert('- [ ] ', '\\n');
-          else if (action === 'link') insert('[link title](', ')');
+          else if (action === 'indent') {
+            var s = ta.selectionStart;
+            var e = ta.selectionEnd;
+            var text = ta.value;
+            var startLine = text.lastIndexOf('\\n', s - 1) + 1;
+            var endLine = text.indexOf('\\n', e);
+            if (endLine === -1) endLine = text.length;
+            var lines = text.substring(startLine, endLine).split('\\n');
+            var indented = lines.map(function(l) { return '  ' + l; }).join('\\n');
+            ta.value = text.substring(0, startLine) + indented + text.substring(endLine);
+            ta.setSelectionRange(startLine, startLine + indented.length);
+            update();
+          } else if (action === 'outdent') {
+            var s = ta.selectionStart;
+            var e = ta.selectionEnd;
+            var text = ta.value;
+            var startLine = text.lastIndexOf('\\n', s - 1) + 1;
+            var endLine = text.indexOf('\\n', e);
+            if (endLine === -1) endLine = text.length;
+            var lines = text.substring(startLine, endLine).split('\\n');
+            var outdented = lines.map(function(l) { return l.replace(/^ {1,2}/, ''); }).join('\\n');
+            ta.value = text.substring(0, startLine) + outdented + text.substring(endLine);
+            ta.setSelectionRange(startLine, startLine + outdented.length);
+            update();
+          } else if (action === 'link') insert('[link title](', ')');
           else if (action === 'image') insert('![image alt](', ')');
           else if (action === 'table') insert('\\n| Header 1 | Header 2 | Header 3 |\\n| -------- | -------- | -------- |\\n| Cell 1   | Cell 2   | Cell 3   |\\n', '');
+          else if (action === 'codeblock') insert('\x60\x60\x60javascript\\n// Code example\\n', '\\n\x60\x60\x60\\n');
+          else if (action === 'mermaid') insert('\\n\x60\x60\x60mermaid\\nflowchart TD\\n    A[Client API] --> B[neoMail Gateway]\\n    B --> C{Healthy Provider?}\\n    C -->|Primary| D[Resend API]\\n    C -->|Fallback| E[Brevo / SMTP Relay]\\n\x60\x60\x60\\n', '');
+          else if (action === 'details') insert('\\n<details>\\n<summary>Click to view details</summary>\\n\\nEnter detailed content, code examples, or notes here...\\n</details>\\n', '');
+          else if (action === 'math') insert('$$ ', ' $$');
           else if (action === 'hr') insert('\\n---\\n', '');
+          else if (action === 'clear-fmt') {
+            var s = ta.selectionStart;
+            var e = ta.selectionEnd;
+            var text = ta.value;
+            var sel = text.substring(s, e);
+            if (sel) {
+              var clean = sel
+                .replace(/\\*\\*([^*]+)\\*\\*/g, '$1')
+                .replace(/\\*([^*]+)\\*/g, '$1')
+                .replace(/~~([^~]+)~~/g, '$1')
+                .replace(/==([^=]+)==/g, '$1')
+                .replace(/\x60([^\x60]+)\x60/g, '$1')
+                .replace(/<\\/?(u|sub|sup|kbd|mark|details|summary)>/gi, '');
+              ta.value = text.substring(0, s) + clean + text.substring(e);
+              ta.setSelectionRange(s, s + clean.length);
+              update();
+            }
+          } else if (action === 'case-cycle') {
+            var s = ta.selectionStart;
+            var e = ta.selectionEnd;
+            var text = ta.value;
+            var sel = text.substring(s, e);
+            if (sel) {
+              var cycled;
+              if (sel === sel.toUpperCase() && sel !== sel.toLowerCase()) {
+                cycled = sel.toLowerCase().replace(/\\b\\w/g, function(c) { return c.toUpperCase(); });
+              } else if (sel === sel.toLowerCase()) {
+                cycled = sel.toUpperCase();
+              } else {
+                cycled = sel.toLowerCase();
+              }
+              ta.value = text.substring(0, s) + cycled + text.substring(e);
+              ta.setSelectionRange(s, s + cycled.length);
+              update();
+            }
+          }
         });
       });
 
@@ -4523,6 +5100,49 @@ export function docsEditor(content, sess) {
         });
       }
 
+      // Export Markdown file (.md)
+      if (btnExportMd) {
+        btnExportMd.addEventListener('click', function() {
+          var mdContent = ta.value;
+          var blob = new Blob([mdContent], { type: 'text/markdown;charset=utf-8' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = 'neomail-documentation.md';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          setTimeout(function() { URL.revokeObjectURL(url); }, 4000);
+        });
+      }
+
+      // Import local Markdown file (.md)
+      if (btnImportMd && importFileInput) {
+        btnImportMd.addEventListener('click', function() {
+          importFileInput.click();
+        });
+        importFileInput.addEventListener('change', function() {
+          if (!importFileInput.files || !importFileInput.files[0]) return;
+          var file = importFileInput.files[0];
+          var reader = new FileReader();
+          reader.onload = function(evt) {
+            ta.value = evt.target.result || '';
+            update();
+            importFileInput.value = '';
+          };
+          reader.readAsText(file);
+        });
+      }
+
+      // Zen Fullscreen Mode Toggle
+      if (btnFullscreen && studioPanel) {
+        btnFullscreen.addEventListener('click', function() {
+          var isFs = studioPanel.classList.toggle('is-fullscreen');
+          btnFullscreen.classList.toggle('active', isFs);
+          btnFullscreen.textContent = isFs ? '⛶ Exit' : '⛶';
+        });
+      }
+
       // Navigation Items in Left Sidebar
       document.querySelectorAll('.studio-nav-item').forEach(function(item) {
         item.addEventListener('click', function() {
@@ -4552,7 +5172,7 @@ export function docsEditor(content, sess) {
 
       // Projects Management in Right Sidebar
       var defaultProjects = [
-        { id: 'proj-1', name: 'neoMail Production Worker', url: 'https://mail.neopathshala.com', type: 'Cloudflare Worker', endpoints: ['POST /api/v1/send', 'POST /api/v1/domains/verify'] },
+        { id: 'proj-1', name: 'neoMailer Production Worker', url: 'https://mail.neopathshala.com', type: 'Cloudflare Worker', endpoints: ['POST /api/v1/send', 'POST /api/v1/domains/verify'] },
         { id: 'proj-2', name: 'Nepathshala LMS Core', url: 'https://api.neopathshala.com', type: 'API v1 Client', endpoints: ['POST /webhooks/mail-events'] },
         { id: 'proj-3', name: 'Transactional Dispatcher', url: 'https://dispatcher.internal', type: 'Microservice Client', endpoints: ['Bearer Auth + Idempotency-Key'] }
       ];
@@ -4718,6 +5338,10 @@ export function parseDocsMarkdown(md) {
     } else if (b.startsWith('&gt; ')) {
       const qLines = b.split('\n').map(l => l.replace(/^&gt;\s?/, '')).join('\n');
       html += `<blockquote>${inlineDocFmt(qLines.replace(/\n/g, '<br>'))}</blockquote>`;
+    } else if (b.startsWith('\x60\x60\x60mermaid')) {
+      const lines = b.split('\n');
+      const code = lines.slice(1, lines[lines.length - 1].startsWith('\x60\x60\x60') ? -1 : undefined).join('\n');
+      html += `<div class="docs-diagram-card"><div class="diagram-header"><span>☊ MERMAID DIAGRAM</span></div><div class="diagram-body"><pre class="mermaid">${code}</pre></div></div>`;
     } else if (b.startsWith('\x60\x60\x60')) {
       const lines = b.split('\n');
       const lang = (lines[0].replace(/^\x60\x60\x60/, '').trim()) || 'CODE';
@@ -4751,6 +5375,18 @@ export function parseDocsMarkdown(md) {
     } else if (/^\d+\.\s/.test(b)) {
       const numItems = b.split('\n').map(l => l.replace(/^\d+\.\s+/, ''));
       html += '<ol>' + numItems.map(item => `<li>${inlineDocFmt(item)}</li>`).join('') + '</ol>';
+    } else if (b.startsWith('$$') && b.endsWith('$$')) {
+      const formula = b.slice(2, -2).trim();
+      html += `<div class="docs-math-block"><code>$$ ${formula} $$</code></div>`;
+    } else if (b.includes('&lt;details&gt;') || b.includes('<details>')) {
+      const summaryMatch = b.match(/&lt;summary&gt;(.*?)&lt;\/summary&gt;/) || b.match(/<summary>(.*?)<\/summary>/);
+      const summaryText = summaryMatch ? summaryMatch[1] : 'Click to expand';
+      const bodyText = b
+        .replace(/&lt;details&gt;|<details>/gi, '')
+        .replace(/&lt;\/details&gt;|<\/details>/gi, '')
+        .replace(/&lt;summary&gt;.*?&lt;\/summary&gt;|<summary>.*?<\/summary>/gi, '')
+        .trim();
+      html += `<details class="docs-accordion"><summary>${inlineDocFmt(summaryText)}</summary><div class="accordion-content">${inlineDocFmt(bodyText.replace(/\n/g, '<br>'))}</div></details>`;
     } else if (b === '---' || b === '***') {
       html += '<hr class="docs-divider">';
     } else {
@@ -4767,12 +5403,17 @@ function inlineDocFmt(str) {
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
     .replace(/\*([^*]+)\*/g, '<em>$1</em>')
     .replace(/~~([^~]+)~~/g, '<del>$1</del>')
-    .replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/g, '<u>$1</u>')
+    .replace(/==([^=]+)==/g, '<mark class="docs-highlight">$1</mark>')
+    .replace(/&lt;mark&gt;(.*?)&lt;\/mark&gt;/gi, '<mark class="docs-highlight">$1</mark>')
+    .replace(/&lt;u&gt;(.*?)&lt;\/u&gt;/gi, '<u>$1</u>')
+    .replace(/&lt;kbd&gt;(.*?)&lt;\/kbd&gt;/gi, '<kbd class="docs-kbd">$1</kbd>')
+    .replace(/&lt;sub&gt;(.*?)&lt;\/sub&gt;/gi, '<sub>$1</sub>')
+    .replace(/&lt;sup&gt;(.*?)&lt;\/sup&gt;/gi, '<sup>$1</sup>')
     .replace(/\x60([^\x60]+)\x60/g, '<code class="inline-code">$1</code>');
 }
 
 export function publicDocs(content, isDark = false) {
-  const defaultContent = `# NeoMail Documentation\n\nWelcome to **neoMail** — hardened transactional email infrastructure designed for high deliverability, automated fallback routing, and zero-trust tenant isolation.\n\n> [!NOTE]\n> All tenant API keys and provider credentials are encrypted at rest with AES-256-GCM in Cloudflare D1.\n\n## Getting Started\n\nneoMail provides a unified REST API and native SMTP relay that routes outbound transactional emails across multiple tier-1 providers with automated failover:\n\n- **Primary Provider**: Resend / Brevo\n- **Fallback Chain**: Resend → Brevo → Mailgun → Mailtrap → MailerSend → Custom SMTP\n- **Zero Downtime**: Circuit breakers automatically isolate unhealthy providers\n\n## System Guide\n\nConnect your application backend using the official REST API or native SMTP credentials.\n\n\`\`\`javascript\n// Node.js Dispatch Example\nconst response = await fetch('https://mail.neopathshala.com/api/v1/send', {\n  method: 'POST',\n  headers: {\n    'Authorization': 'Bearer ' + process.env.NEOMAIL_API_KEY,\n    'Content-Type': 'application/json',\n    'Idempotency-Key': 'order:10294:invoice'\n  },\n  body: JSON.stringify({\n    from: 'support@mail.neopathshala.com',\n    to: 'customer@example.com',\n    subject: 'Your Invoice #10294 is Ready',\n    html: '<p>Thank you for your order! Your receipt is attached.</p>'\n  })\n});\n\`\`\`\n\n## Sending Domains & DNS\n\nBefore sending, configure these standard DNS verification records:\n\n| Record Type | Hostname | Value | Purpose |\n| ----------- | -------- | ----- | ------- |\n| TXT | \`_neomail-verification\` | \`[domain_token]\` | Domain Ownership & Anti-Scam Protection |\n| TXT | \`@\` | \`v=spf1 include:mail.neopathshala.com ~all\` | SPF Alignment |\n| CNAME | \`default._domainkey\` | \`dkim.mail.neopathshala.com\` | DKIM Signature |\n| TXT | \`_dmarc\` | \`v=DMARC1; p=reject; sp=reject;\` | DMARC Enforcement |\n\n> [!TIP]\n> neoMail continuously monitors your domain DNS. If verification fails or records are tampered with, sending is paused automatically to protect your reputation.\n\n## REST API Reference\n\n### POST \`/api/v1/send\`\n\nDispatches an email through the optimal healthy provider.\n\n#### Request Headers\n\n- \`Authorization: Bearer <API_KEY>\` *(Required)*\n- \`Content-Type: application/json\` *(Required)*\n- \`Idempotency-Key: <unique_string>\` *(Recommended)*\n\n#### Response Schema\n\n\`\`\`json\n{\n  \"status\": \"success\",\n  \"id\": \"msg_90f23d8c11e74a6b\",\n  \"provider\": \"resend\",\n  \"transmission_status\": \"Delivered\",\n  \"timestamp\": 1730462400\n}\n\`\`\`\n\n## Provider Quotas & Rate Limits\n\nPer-user quotas prevent sudden spikes from degrading sender score.\n\n- [x] **Resend**: Tier 1 primary delivery\n- [x] **Brevo**: Global & EU transactional mail\n- [x] **Mailgun**: High-volume failover burst capacity\n- [x] **Mailtrap**: Production failover and sandbox staging\n- [x] **MailerSend**: Template fallback\n- [x] **SMTP Relay**: Port 465 (TLS) & 587 (STARTTLS)\n\n## Zero-Trust Security\n\n- **Session Binding**: Cryptographic SHA-256 session tokens with Cloudflare Access identity binding.\n- **Encrypted Storage**: Provider credentials and tenant secrets are sealed with authenticated AES-256-GCM.\n- **Immutable Auditing**: Every administrative change and dispatch event is logged.`;
+  const defaultContent = `# neoMailer Documentation\n\nWelcome to **neoMailer** — hardened transactional email infrastructure designed for high deliverability, automated fallback routing, and zero-trust tenant isolation.\n\n> [!NOTE]\n> All tenant API keys and provider credentials are encrypted at rest with AES-256-GCM in Cloudflare D1.\n\n## Getting Started\n\nneoMailer provides a unified REST API and native SMTP relay that routes outbound transactional emails across multiple tier-1 providers with automated failover:\n\n- **Primary Provider**: Resend / Brevo\n- **Fallback Chain**: Resend → Brevo → Mailgun → Mailtrap → MailerSend → Custom SMTP\n- **Zero Downtime**: Circuit breakers automatically isolate unhealthy providers\n\n## System Guide\n\nConnect your application backend using the official REST API or native SMTP credentials.\n\n\`\`\`javascript\n// Node.js Dispatch Example\nconst response = await fetch('https://mail.neopathshala.com/api/v1/send', {\n  method: 'POST',\n  headers: {\n    'Authorization': 'Bearer ' + process.env.NEOMAILER_API_KEY,\n    'Content-Type': 'application/json',\n    'Idempotency-Key': 'order:10294:invoice'\n  },\n  body: JSON.stringify({\n    from: 'support@mail.neopathshala.com',\n    to: 'customer@example.com',\n    subject: 'Your Invoice #10294 is Ready',\n    html: '<p>Thank you for your order! Your receipt is attached.</p>'\n  })\n});\n\`\`\`\n\n## Sending Domains & DNS\n\nBefore sending, configure these standard DNS verification records:\n\n| Record Type | Hostname | Value | Purpose |\n| ----------- | -------- | ----- | ------- |\n| TXT | \`_neomail-verification\` | \`[domain_token]\` | Domain Ownership & Anti-Scam Protection |\n| TXT | \`@\` | \`v=spf1 include:mail.neopathshala.com ~all\` | SPF Alignment |\n| CNAME | \`default._domainkey\` | \`dkim.mail.neopathshala.com\` | DKIM Signature |\n| TXT | \`_dmarc\` | \`v=DMARC1; p=reject; sp=reject;\` | DMARC Enforcement |\n\n> [!TIP]\n> neoMailer continuously monitors your domain DNS. If verification fails or records are tampered with, sending is paused automatically to protect your reputation.\n\n## REST API Reference\n\n### POST \`/api/v1/send\`\n\nDispatches an email through the optimal healthy provider.\n\n#### Request Headers\n\n- \`Authorization: Bearer <API_KEY>\` *(Required)*\n- \`Content-Type: application/json\` *(Required)*\n- \`Idempotency-Key: <unique_string>\` *(Recommended)*\n\n#### Response Schema\n\n\`\`\`json\n{\n  \"status\": \"success\",\n  \"id\": \"msg_90f23d8c11e74a6b\",\n  \"provider\": \"resend\",\n  \"transmission_status\": \"Delivered\",\n  \"timestamp\": 1730462400\n}\n\`\`\`\n\n## Provider Quotas & Rate Limits\n\nPer-user quotas prevent sudden spikes from degrading sender score.\n\n- [x] **Resend**: Tier 1 primary delivery\n- [x] **Brevo**: Global & EU transactional mail\n- [x] **Mailgun**: High-volume failover burst capacity\n- [x] **Mailtrap**: Production failover and sandbox staging\n- [x] **MailerSend**: Template fallback\n- [x] **SMTP Relay**: Port 465 (TLS) & 587 (STARTTLS)\n\n## Zero-Trust Security\n\n- **Session Binding**: Cryptographic SHA-256 session tokens with Cloudflare Access identity binding.\n- **Encrypted Storage**: Provider credentials and tenant secrets are sealed with authenticated AES-256-GCM.\n- **Immutable Auditing**: Every administrative change and dispatch event is logged.`;
 
   const md = content && content.trim() ? content : defaultContent;
   const { html, toc } = parseDocsMarkdown(md);
@@ -5109,7 +5750,7 @@ export function publicDocs(content, isDark = false) {
     <div style="display:flex;align-items:center;gap:16px">
       <a class="docs-brand" href="/">
         <span class="brandmark">${icon('mail')}</span>
-        <span>neoMail <span class="badge">Docs</span></span>
+        <span>neoMailer <span class="badge">Docs</span></span>
       </a>
       <span class="tag good" style="font-size:11px;padding:3px 8px;display:inline-flex;align-items:center;gap:5px">
         ${icon('zap')} Operational
@@ -5162,7 +5803,7 @@ export function publicDocs(content, isDark = false) {
 
       <div style="margin-top:48px;padding-top:20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
         <span style="font-size:12px;color:var(--muted)">Need help or have security inquiries? Contact your workspace administrator.</span>
-        <a href="/admin" style="font-size:12px;color:var(--accent);font-weight:600;text-decoration:none">Open neoMail Workspace →</a>
+        <a href="/admin" style="font-size:12px;color:var(--accent);font-weight:600;text-decoration:none">Open neoMailer Workspace →</a>
       </div>
     </main>
 
@@ -5185,7 +5826,7 @@ export function publicDocs(content, isDark = false) {
 
   <!-- FOOTER -->
   <footer class="docs-footer">
-    <p>neoMail · Hardened Transactional Email Infrastructure · Developed by SoftLaya Tech</p>
+    <p>neoMailer · Hardened Transactional Email Infrastructure · Developed by SoftLaya Tech</p>
   </footer>
 
   <script>
@@ -5275,7 +5916,7 @@ export function docsViewer(content, sess) {
     <div class="panelhead">
       <div>
         <h2>Documentation & System Guide</h2>
-        <p>Reference guide for NeoMail transactional mail infrastructure.</p>
+        <p>Reference guide for neoMailer transactional mail infrastructure.</p>
       </div>
       <a class="button secondary small" href="/docs" target="_blank">${icon('external')} <span>View public page</span></a>
     </div>
@@ -5593,17 +6234,116 @@ export function apiClients(clients, sess, createdKey = '') {
   return `${keyNotice}<section class="panel"><div class="panelhead"><h2>API clients</h2><p>Issue separate bearer tokens for each application. Keys are stored only as hashes.</p></div><div class="tablewrap"><table><thead><tr><th>Name</th><th>Sender</th><th>Status</th><th>Created</th><th>Last used</th><th>Action</th></tr></thead><tbody>${clients.map(c => `<tr><td>${e(c.name)}</td><td>${e(c.sender_address || 'Any active identity')}</td><td>${badge(c.is_active ? 'Active' : 'Revoked')}</td><td>${e(new Date(c.created_at * 1000).toISOString().slice(0, 16).replace('T', ' '))}</td><td>${c.last_used_at ? e(new Date(c.last_used_at * 1000).toISOString().slice(0, 16).replace('T', ' ')) : 'Never'}</td><td>${c.is_active ? `<form method="post" action="/admin/api-clients/revoke">${hidden(sess.csrf_token)}<input type="hidden" name="id" value="${e(c.id)}"><button class="button secondary small">Revoke</button></form>` : ''}</td></tr>`).join('') || `<tr><td colspan="6">No API clients yet.</td></tr>`}</tbody></table></div></section><section class="panel"><div class="panelhead"><h2>Create API client</h2></div><div class="panelbody"><form method="post" action="/admin/api-clients/create">${hidden(sess.csrf_token)}<div class="settingsgrid"><label class="field">Client name<input name="name" required maxlength="80" placeholder="App backend"></label><label class="field">Restricted sender (optional)<input type="email" name="sender_address" maxlength="254" autocomplete="off" spellcheck="false" placeholder="your-sender@your-verified-domain.com"></label></div><button class="button">Create client key</button></form><p class="footnote">Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender.</p></div></section>`;
 }
 
-export function users(rows, sess, isSuperadmin = false) {
-  const addForm = isSuperadmin ? `<section class="panel"><div class="panelhead"><h2>Add administrator</h2></div><div class="panelbody"><form method="post" action="/admin/users/add">${hidden(sess.csrf_token)}<div class="settingsgrid"><label class="field">Access subject (email)<input type="email" name="subject" required maxlength="254" autocomplete="off" spellcheck="false" placeholder="you@example.com"></label><label class="field">Role<select name="role" class="custom-select"><option value="admin">Admin</option></select></label></div><button class="button">Add user</button></form><p class="footnote">Admins receive a fully isolated workspace of their own. They never gain superadmin powers.</p></div></section>` : '';
-  return `<section class="panel"><div class="panelhead"><h2>Administrator accounts</h2><p>Cloudflare Access identities authorized to use this console.</p></div><div class="tablewrap"><table><thead><tr><th>Subject</th><th>Role</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody>${rows.map(r => `<tr><td>${e(r.subject)}</td><td>${e(r.role)}</td><td>${badge(r.is_active ? 'Active' : 'Revoked')}</td><td>${e(new Date(r.created_at * 1000).toISOString().slice(0, 16).replace('T', ' '))}</td><td>${isSuperadmin && r.role !== 'superadmin' && r.subject !== sess.subject ? `<details><summary>Edit</summary><form method="post" action="/admin/users/update">${hidden(sess.csrf_token)}<input type="hidden" name="old_subject" value="${e(r.subject)}"><label class="field">Subject<input name="new_subject" value="${e(r.subject)}" required maxlength="254"></label><label class="field">Role<select name="role" class="custom-select"><option value="admin" ${r.role === 'admin' ? 'selected' : ''}>Admin</option></select></label><button class="button secondary small">Save</button></form></details><form method="post" action="/admin/users/revoke">${hidden(sess.csrf_token)}<input type="hidden" name="subject" value="${e(r.subject)}"><button class="button secondary small">Revoke</button></form>` : ''}</td></tr>`).join('') || '<tr><td colspan="5">No users.</td></tr>'}</tbody></table></div></section>${addForm}`;
+function renderNoticeText(msg) {
+  if (!msg) return '';
+  const textClean = String(msg).replace(/<a\b[^>]*>workspace administrator<\/a>/gi, 'workspace administrator');
+  const escaped = e(textClean);
+  return escaped.replace(/workspace administrator/g, '<a href="mailto:aashish@neopathshala.com">workspace administrator</a>');
 }
 
-export function otpRequest(error = '', isDark = false) {
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mail</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMail</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMail</h1><!-- Welcome to NeoMail --><p class="sub">Request a one-time code sent to your administrator email.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com"></label><button class="button">Send login code ${icon('arrow')}</button></form></div></div></div>`, '', isDark);
+export function users(rows, sess, isSuperadmin = false, accessRequests = []) {
+  const requestsPanel = (isSuperadmin && accessRequests.length > 0) ? `
+    <section class="panel" style="margin-top:24px">
+      <div class="panelhead">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="tag good">${accessRequests.length} Pending</span>
+          <h2>Client Registration Requests</h2>
+        </div>
+        <p>Prospective clients who applied for workspace access from the sign-in page.</p>
+      </div>
+      <div class="tablewrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Applicant</th>
+              <th>Organization</th>
+              <th>Notes / Use Case</th>
+              <th>Submitted</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${accessRequests.map(r => `
+              <tr>
+                <td><strong>${e(r.name)}</strong><br><span class="muted">${e(r.email)}</span></td>
+                <td>${e(r.organization || '—')}</td>
+                <td><small>${e(r.notes || '—')}</small></td>
+                <td>${e(new Date(r.created_at * 1000).toISOString().slice(0, 16).replace('T', ' '))}</td>
+                <td>
+                  <div style="display:flex;gap:6px">
+                    <form method="post" action="/admin/users/approve-request" style="display:inline">
+                      ${hidden(sess.csrf_token)}
+                      <input type="hidden" name="email" value="${e(r.email)}">
+                      <input type="hidden" name="name" value="${e(r.name)}">
+                      <input type="hidden" name="request_id" value="${e(r.id)}">
+                      <button class="button small">Approve as Admin</button>
+                    </form>
+                    <form method="post" action="/admin/users/reject-request" style="display:inline">
+                      ${hidden(sess.csrf_token)}
+                      <input type="hidden" name="request_id" value="${e(r.id)}">
+                      <button class="button secondary small">Dismiss</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  ` : '';
+
+  const addForm = isSuperadmin ? `<section class="panel"><div class="panelhead"><h2>Add administrator</h2></div><div class="panelbody"><form method="post" action="/admin/users/add">${hidden(sess.csrf_token)}<div class="settingsgrid"><label class="field">Access subject (email)<input type="email" name="subject" required maxlength="254" autocomplete="off" spellcheck="false" placeholder="you@example.com"></label><label class="field">Role<select name="role" class="custom-select"><option value="admin">Admin</option></select></label></div><button class="button">Add user</button></form><p class="footnote">Admins receive a fully isolated workspace of their own. They never gain superadmin powers.</p></div></section>` : '';
+  return `${requestsPanel}<section class="panel"><div class="panelhead"><h2>Administrator accounts</h2><p>Cloudflare Access identities authorized to use this console.</p></div><div class="tablewrap"><table><thead><tr><th>Subject</th><th>Role</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody>${rows.map(r => `<tr><td>${e(r.subject)}</td><td>${e(r.role)}</td><td>${badge(r.is_active ? 'Active' : 'Revoked')}</td><td>${e(new Date(r.created_at * 1000).toISOString().slice(0, 16).replace('T', ' '))}</td><td>${isSuperadmin && r.role !== 'superadmin' && r.subject !== sess.subject ? `<details><summary>Edit</summary><form method="post" action="/admin/users/update">${hidden(sess.csrf_token)}<input type="hidden" name="old_subject" value="${e(r.subject)}"><label class="field">Subject<input name="new_subject" value="${e(r.subject)}" required maxlength="254"></label><label class="field">Role<select name="role" class="custom-select"><option value="admin" ${r.role === 'admin' ? 'selected' : ''}>Admin</option></select></label><button class="button secondary small">Save</button></form></details><form method="post" action="/admin/users/revoke">${hidden(sess.csrf_token)}<input type="hidden" name="subject" value="${e(r.subject)}"><button class="button secondary small">Revoke</button></form>` : ''}</td></tr>`).join('') || '<tr><td colspan="5">No users.</td></tr>'}</tbody></table></div></section>${addForm}`;
+}
+
+export function otpRequest(error = '', isDark = false, emailVal = '', showRegister = true, notice = '') {
+  const renderedError = error ? renderNoticeText(error) : '';
+  const registerModal = showRegister ? `
+    <p class="footnote" style="margin-top:20px;text-align:center">
+      Need a workspace account? <button type="button" class="textbutton-link" onclick="document.getElementById('regModal').showModal()">Request client access</button>
+    </p>
+    <dialog id="regModal" class="login-modal" onclick="if(event.target===this)this.close()">
+      <div class="modal-card">
+        <div class="modal-head">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="brandmark" style="width:32px;height:32px;padding:0;background:var(--tint);color:var(--accent);border-radius:8px;display:flex;align-items:center;justify-content:center">${icon('users')}</div>
+            <div>
+              <h2 style="font-size:15px;margin:0;font-weight:700">Request Client Access</h2>
+              <p style="font-size:11px;color:var(--muted);margin:2px 0 0">Apply for a verified workspace account</p>
+            </div>
+          </div>
+          <button type="button" class="modal-close-btn" onclick="document.getElementById('regModal').close()" aria-label="Close modal">&times;</button>
+        </div>
+        <form method="post" action="/login" class="modal-body">
+          <input type="hidden" name="step" value="register_request">
+          <label class="field">Full name
+            <input type="text" name="name" required maxlength="80" placeholder="Jane Doe" autocomplete="name">
+          </label>
+          <label class="field">Work email address
+            <input type="email" name="email" required maxlength="254" placeholder="you@company.com" autocomplete="email">
+          </label>
+          <label class="field">Organization / Company
+            <input type="text" name="organization" required maxlength="120" placeholder="e.g. Acme Technologies">
+          </label>
+          <label class="field">Intended sending use case (optional)
+            <textarea name="notes" rows="2" maxlength="500" placeholder="e.g. Transactional alerts, receipts, notification infrastructure..."></textarea>
+          </label>
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-top:16px">
+            <button type="button" class="button secondary" onclick="document.getElementById('regModal').close()">Cancel</button>
+            <button type="submit" class="button">Submit access request</button>
+          </div>
+        </form>
+      </div>
+    </dialog>
+  ` : '';
+
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p class="sub">Request a one-time code sent to your administrator email.</p>${notice ? `<div class="notice" role="status" style="border-color:var(--accent);color:var(--accent);margin-bottom:16px">${icon('check')}<span>${e(notice)}</span></div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="request"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">Administrator email<input type="email" name="email" required maxlength="254" autocomplete="username" placeholder="you@example.com" value="${e(emailVal)}" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${icon('alert')}<span>${renderedError}</span></div>` : ''}<button class="button">Send login code ${icon('arrow')}</button></form>${registerModal}</div></div></div>`, '', isDark);
 }
 
 export function otpVerify(email, error = '', isDark = false) {
-  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mail</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMail</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p>${error ? `<div class="notice error" role="alert">${e(error)}</div>` : ''}<form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456"></label><button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`, '', isDark);
+  const renderedError = error ? renderNoticeText(error) : '';
+  return document('Sign in', `<div class="login"><div class="loginart"><a class="brand" href="/"><span class="brandmark">${icon('mail')}</span><div class="brand-text"><span class="brand-title">neo<span>Mailer</span></span><span class="brand-sub">Mail Infrastructure</span></div></a><div><div class="orb"><div></div><div></div><div></div></div><h1>Transactional mail.<br>A clearer view.</h1><p>Send, inspect, and manage your transactional email from one private, hardened workspace.</p></div><small>Private mail infrastructure · neoMailer</small></div><div class="loginform"><div class="logininner"><span class="tag good">${icon('security')} Private workspace</span><h1>Enter your code</h1><p class="sub">A one-time code was sent to ${e(email)}.</p><form method="post" action="/login"><input type="hidden" name="step" value="verify"><input type="hidden" name="email" value="${e(email)}"><label class="field" style="${error ? 'margin-bottom:8px;' : ''}">One-time code<input name="code" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" ${error ? 'aria-invalid="true"' : ''}></label>${renderedError ? `<div class="notice error" role="alert">${icon('alert')}<span>${renderedError}</span></div>` : ''}<button class="button">Sign in ${icon('arrow')}</button></form><p class="footnote"><a href="/login">Use a different email</a></p></div></div></div>`, '', isDark);
 }
 
 export function domains(rows, sess) {
@@ -5616,7 +6356,7 @@ export function domains(rows, sess) {
 
   const copyScript = sess.script_nonce ? `<script nonce="${e(sess.script_nonce)}">const copyIcon=${JSON.stringify(icon('copy'))};const check=${JSON.stringify(icon('check'))};document.addEventListener('click',async ev=>{const b=ev.target.closest('button[data-copy]');if(!b||b.disabled)return;ev.preventDefault();const value=b.getAttribute('data-copy');try{await navigator.clipboard.writeText(value);}catch{const ta=document.createElement('textarea');ta.value=value;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');}finally{ta.remove();}}b.classList.add('copied');b.innerHTML=check;b.disabled=true;setTimeout(()=>{b.classList.remove('copied');b.innerHTML=copyIcon;b.disabled=false;},1600);});</script>` : '';
   const dnsField = (label, value, title) => `<div class="dnsfield"><span class="dnstype">${label}</span><code title="${e(title)}">${e(value)}</code><button type="button" class="button secondary small iconb" data-copy="${e(value)}" aria-label="Copy ${label}" title="Copy">${icon('copy')}</button></div>`;
-  const record = r => r.verification_token ? `${dnsField('Name', '_neomail-verification.' + r.domain, 'TXT record host — paste this into the Host/Name field of your DNS provider')}${dnsField('Value', r.verification_token, 'TXT record content — paste this into the Value/Content field of your DNS provider')}` : '<p class="sub">Verification token missing — remove and re-add the domain.</p>';
+  const record = r => r.verification_token ? `${dnsField('Name', '_neomailer-verification.' + r.domain, 'TXT record host — paste this into the Host/Name field of your DNS provider')}${dnsField('Value', r.verification_token, 'TXT record content — paste this into the Value/Content field of your DNS provider')}` : '<p class="sub">Verification token missing — remove and re-add the domain.</p>';
 
   const deleteDomainForm = (d) => `
     <form method="post" action="${base}/domains/delete" onsubmit="return confirm('Permanently delete sending domain ${e(d)}? Outbound sending from this domain will stop.');" style="display:inline">
@@ -5783,12 +6523,225 @@ export function domains(rows, sess) {
   `;
 }
 
-export function errorPage(message, status) {
-  return document('Request could not complete', `<div class="login" style="grid-template-columns:1fr;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px"><div class="panel" style="max-width:540px;width:100%;margin:0"><div class="panelhead" style="background:var(--danger-bg);border-color:var(--danger-line)"><div style="display:flex;align-items:center;gap:10px"><span class="tag danger" style="font-size:12px;padding:4px 8px">${status}</span><h2 style="color:var(--danger)">Request could not complete</h2></div></div><div class="panelbody"><p style="font-size:14px;color:var(--text);margin-bottom:20px">${e(message)}</p><div style="display:flex;gap:12px;flex-wrap:wrap"><a class="button" href="/admin">Return to workspace</a><a class="button secondary" href="/login">Back to Sign In</a></div></div></div></div>`);
+export function errorIllustrationSvg() {
+  return `<svg class="error-page-svg" viewBox="0 0 500 420" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <defs>
+      <radialGradient id="errBackdropGlow" cx="50%" cy="50%" r="50%">
+        <stop offset="0%" stop-color="var(--illus-blob)" stop-opacity="1"/>
+        <stop offset="100%" stop-color="var(--illus-blob)" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="errChairGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="var(--illus-chair-highlight)"/>
+        <stop offset="100%" stop-color="var(--illus-chair)"/>
+      </linearGradient>
+      <linearGradient id="errCushionGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" stop-color="var(--illus-chair-highlight)"/>
+        <stop offset="100%" stop-color="var(--illus-chair-shadow)"/>
+      </linearGradient>
+      <linearGradient id="errMascotGrad" x1="20%" y1="0%" x2="80%" y2="100%">
+        <stop offset="0%" stop-color="var(--illus-mascot)"/>
+        <stop offset="100%" stop-color="var(--illus-mascot-dark)"/>
+      </linearGradient>
+    </defs>
+    <ellipse cx="270" cy="220" rx="190" ry="170" fill="url(#errBackdropGlow)"/>
+    <ellipse cx="270" cy="375" rx="150" ry="18" fill="var(--text)" opacity="0.06"/>
+    <ellipse cx="140" cy="370" rx="40" ry="10" fill="var(--text)" opacity="0.06"/>
+    <ellipse cx="445" cy="370" rx="30" ry="8" fill="var(--text)" opacity="0.06"/>
+    <g transform="translate(355, 30)">
+      <circle cx="45" cy="45" r="38" fill="var(--surface)" stroke="var(--illus-clock-rim)" stroke-width="4"/>
+      <line x1="45" y1="14" x2="45" y2="20" stroke="var(--illus-clock-rim)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="45" y1="70" x2="45" y2="76" stroke="var(--illus-clock-rim)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="14" y1="45" x2="20" y2="45" stroke="var(--illus-clock-rim)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="70" y1="45" x2="76" y2="45" stroke="var(--illus-clock-rim)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="45" y1="45" x2="30" y2="30" stroke="var(--text)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="45" y1="45" x2="60" y2="28" stroke="var(--text)" stroke-width="2.5" stroke-linecap="round"/>
+      <line x1="45" y1="45" x2="45" y2="18" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round" class="error-clock-sweep"/>
+      <circle cx="45" cy="45" r="3" fill="var(--accent)"/>
+    </g>
+    <g>
+      <line x1="120" y1="310" x2="105" y2="370" stroke="var(--illus-chair-shadow)" stroke-width="4" stroke-linecap="round"/>
+      <line x1="140" y1="310" x2="140" y2="372" stroke="var(--illus-chair-shadow)" stroke-width="4" stroke-linecap="round"/>
+      <line x1="160" y1="310" x2="175" y2="370" stroke="var(--illus-chair-shadow)" stroke-width="4" stroke-linecap="round"/>
+      <ellipse cx="140" cy="308" rx="46" ry="14" fill="var(--illus-table)"/>
+      <ellipse cx="140" cy="305" rx="46" ry="13" fill="var(--illus-wood)"/>
+      <path d="M125 296 L152 292 L162 298 L135 302 Z" fill="#3b82f6"/>
+      <path d="M125 298 L152 294 L162 300 L135 304 Z" fill="var(--surface)"/>
+      <ellipse cx="126" cy="287" rx="14" ry="4" fill="var(--text)" opacity="0.1"/>
+      <path d="M118 288 L122 272 L132 272 L136 288 Z" fill="var(--illus-pot)" stroke="var(--line)" stroke-width="1"/>
+      <path d="M127 272 C120 262, 114 266, 122 258 C128 266, 127 270, 127 272 Z" fill="var(--illus-plant-light)"/>
+      <path d="M127 272 C134 262, 140 266, 132 258 C126 266, 127 270, 127 272 Z" fill="var(--illus-plant-dark)"/>
+      <path d="M127 272 C127 256, 131 254, 127 250 C123 254, 127 266, 127 272 Z" fill="#10b981"/>
+    </g>
+    <g>
+      <line x1="205" y1="340" x2="195" y2="376" stroke="var(--illus-chair-shadow)" stroke-width="6" stroke-linecap="round"/>
+      <line x1="335" y1="340" x2="345" y2="376" stroke="var(--illus-chair-shadow)" stroke-width="6" stroke-linecap="round"/>
+      <line x1="230" y1="335" x2="225" y2="370" stroke="var(--illus-chair-shadow)" stroke-width="5" stroke-linecap="round"/>
+      <line x1="310" y1="335" x2="315" y2="370" stroke="var(--illus-chair-shadow)" stroke-width="5" stroke-linecap="round"/>
+      <path d="M200 280 C185 190, 205 130, 270 130 C335 130, 355 190, 340 280 Z" fill="url(#errChairGrad)"/>
+      <path d="M185 240 C180 240, 175 250, 175 270 C175 305, 195 320, 215 320 C222 320, 226 312, 226 300 C226 265, 205 240, 185 240 Z" fill="url(#errChairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
+      <path d="M355 240 C360 240, 365 250, 365 270 C365 305, 345 320, 325 320 C318 320, 314 312, 314 300 C314 265, 335 240, 355 240 Z" fill="url(#errChairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
+    </g>
+    <g>
+      <path d="M225 300 C210 240, 225 170, 270 170 C315 170, 330 240, 315 300 C305 325, 235 325, 225 300 Z" fill="url(#errMascotGrad)"/>
+      <rect x="238" y="212" width="28" height="26" rx="8" fill="var(--surface)" fill-opacity="0.9" stroke="var(--illus-glasses)" stroke-width="3"/>
+      <rect x="274" y="212" width="28" height="26" rx="8" fill="var(--surface)" fill-opacity="0.9" stroke="var(--illus-glasses)" stroke-width="3"/>
+      <line x1="266" y1="223" x2="274" y2="223" stroke="var(--illus-glasses)" stroke-width="3.5" stroke-linecap="round"/>
+      <line x1="238" y1="223" x2="226" y2="228" stroke="var(--illus-glasses)" stroke-width="3" stroke-linecap="round"/>
+      <line x1="302" y1="223" x2="314" y2="228" stroke="var(--illus-glasses)" stroke-width="3" stroke-linecap="round"/>
+      <ellipse cx="254" cy="225" rx="5.5" ry="7" fill="var(--illus-glasses)"/>
+      <circle cx="252" cy="222" r="2.2" fill="#ffffff"/>
+      <ellipse cx="286" cy="225" rx="5.5" ry="7" fill="var(--illus-glasses)"/>
+      <circle cx="284" cy="222" r="2.2" fill="#ffffff"/>
+      <path d="M266 244 Q272 250 278 244" stroke="var(--illus-glasses)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <ellipse cx="236" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
+      <ellipse cx="304" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
+      <path d="M225 270 C218 275, 212 285, 230 292" stroke="var(--illus-mascot-dark)" stroke-width="12" stroke-linecap="round" fill="none"/>
+      <g transform="translate(230, 276)">
+        <rect x="0" y="0" width="18" height="22" rx="4" fill="#ffffff" stroke="var(--line-strong)" stroke-width="1.5"/>
+        <path d="M18 5 C24 5, 24 16, 18 16" fill="none" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round"/>
+        <path d="M18 5 C24 5, 24 16, 18 16" fill="none" stroke="var(--line-strong)" stroke-width="1" stroke-linecap="round"/>
+        <path d="M6 -2 Q9 -6 6 -10" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-1"/>
+        <path d="M12 -3 Q15 -8 12 -13" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-2"/>
+      </g>
+      <path d="M312 265 C326 270, 334 285, 310 292" stroke="var(--illus-mascot-dark)" stroke-width="12" stroke-linecap="round" fill="none"/>
+      <g transform="translate(306, 280)">
+        <rect x="0" y="2" width="16" height="12" rx="3" fill="#1e293b"/>
+        <circle cx="8" cy="8" r="7" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/>
+        <line x1="8" y1="8" x2="8" y2="4" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
+        <line x1="8" y1="8" x2="11" y2="8" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
+      </g>
+      <ellipse cx="248" cy="326" rx="12" ry="7" fill="var(--illus-mascot-dark)"/>
+      <ellipse cx="292" cy="326" rx="12" ry="7" fill="var(--illus-mascot-dark)"/>
+    </g>
+    <path d="M192 300 C192 290, 205 285, 270 285 C335 285, 348 290, 348 300 C348 322, 335 336, 270 336 C205 336, 192 322, 192 300 Z" fill="url(#errCushionGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1.5"/>
+    <g transform="translate(415, 170)">
+      <path d="M30 150 C10 100, 0 50, 15 10 C25 60, 35 110, 30 150 Z" fill="var(--illus-plant-dark)"/>
+      <path d="M22 80 C26 50, 25 30, 15 10" stroke="var(--illus-plant-light)" stroke-width="1" fill="none" opacity="0.6"/>
+      <path d="M30 150 C20 90, 25 30, 34 -15 C45 30, 42 90, 30 150 Z" fill="var(--illus-plant-light)"/>
+      <path d="M31 70 C33 30, 33 0, 34 -15" stroke="var(--surface)" stroke-width="1" fill="none" opacity="0.4"/>
+      <path d="M30 150 C40 100, 60 55, 55 18 C42 65, 38 115, 30 150 Z" fill="var(--illus-plant-dark)"/>
+      <path d="M30 150 C5 125, -5 95, 2 65 C15 95, 25 125, 30 150 Z" fill="var(--illus-plant-light)"/>
+      <path d="M30 150 C50 125, 68 100, 62 70 C48 100, 38 125, 30 150 Z" fill="var(--illus-plant-dark)"/>
+      <ellipse cx="30" cy="150" rx="22" ry="6" fill="var(--text)" opacity="0.1"/>
+      <path d="M12 152 L16 200 C17 205, 43 205, 44 200 L48 152 Z" fill="var(--illus-pot)" stroke="var(--line)" stroke-width="1.5"/>
+      <ellipse cx="30" cy="152" rx="18" ry="4" fill="#374151" opacity="0.3"/>
+    </g>
+  </svg>`;
+}
+
+export function errorPage(message, status = 500, retryAfter = 60, nonce = '', isDark = false) {
+  const isRateLimit = Number(status) === 429;
+  const isNotFound = Number(status) === 404;
+  const isForbidden = Number(status) === 403;
+  const isServerError = Number(status) >= 500;
+
+  const pageTitle = isRateLimit ? 'Too Many Attempts' :
+    isNotFound ? 'Page Not Found' :
+    isForbidden ? 'Access Restricted' :
+    isServerError ? 'Something Went Wrong' : 'Request Failed';
+
+  const defaultDesc = isRateLimit ? 'You’ve made several attempts in a short time.<br>Wait a few minutes before trying again.' :
+    isNotFound ? (message || 'The requested page or resource could not be found.') :
+    isForbidden ? (message || 'You do not have administrative permissions to view this resource.') :
+    isServerError ? (message || 'An unexpected system error occurred while processing your request.') :
+    (message || 'The request could not be completed.');
+
+  const descHtml = isRateLimit ? defaultDesc : e(message || defaultDesc);
+
+  const seconds = typeof retryAfter === 'number' && retryAfter > 0 ? Math.floor(retryAfter) : 60;
+  const initialM = Math.floor(seconds / 60);
+  const initialS = seconds % 60;
+  const initialTimeStr = `${initialM}:${initialS < 10 ? '0' : ''}${initialS} min`;
+
+  const timeBadgeHtml = isRateLimit ? `
+    <div class="error-page-time" id="neomail-rate-container">
+      <span style="color:var(--accent);display:inline-flex;align-items:center;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+      </span>
+      <span>Try again in <span class="error-page-time-counter" id="neomail-rate-timer">${e(initialTimeStr)}</span></span>
+    </div>
+  ` : '';
+
+  const actionsHtml = isRateLimit ? `
+    <div class="error-page-actions">
+      <button type="button" class="button" id="btn-retry" onclick="location.reload()">
+        ${icon('refresh')} Try Again
+      </button>
+      <a class="button secondary" href="/admin">Return to workspace</a>
+    </div>
+  ` : isServerError ? `
+    <div class="error-page-actions">
+      <button type="button" class="button" onclick="location.reload()">${icon('refresh')} Reload page</button>
+      <a class="button secondary" href="/admin">Return to workspace</a>
+    </div>
+  ` : `
+    <div class="error-page-actions">
+      <a class="button" href="/admin">Return to workspace</a>
+      <a class="button secondary" href="/login">Back to Sign In</a>
+    </div>
+  `;
+
+  const countdownScript = (isRateLimit && nonce) ? `
+    <script nonce="${e(nonce)}">
+      (function(){
+        var sec = ${seconds};
+        var disp = document.getElementById('neomail-rate-timer');
+        var btn = document.getElementById('btn-retry');
+        if (!disp) return;
+        function fmt(s) {
+          var m = Math.floor(s / 60);
+          var rem = s % 60;
+          return m + ':' + (rem < 10 ? '0' : '') + rem + ' min';
+        }
+        var iv = setInterval(function() {
+          sec--;
+          if (sec <= 0) {
+            clearInterval(iv);
+            disp.textContent = 'Ready to retry';
+            if (btn) { btn.disabled = false; btn.focus(); }
+          } else {
+            disp.textContent = fmt(sec);
+          }
+        }, 1000);
+      })();
+    </script>
+  ` : '';
+
+  const content = `
+    <div class="error-page-wrapper">
+      <div class="error-page-card">
+        <div class="error-page-content">
+          <a class="error-page-brand" href="/admin">
+            <span class="brandmark">${icon('mail')}</span>
+            <div class="brand-text">
+              <span class="brand-title">neo<span>Mail</span></span>
+              <span class="brand-sub">Mail Infrastructure</span>
+            </div>
+          </a>
+          <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+            <h1 class="error-page-title">${e(pageTitle)}</h1>
+            <span class="tag ${isRateLimit ? 'warn' : isServerError ? 'danger' : 'secondary'}" style="font-size:12px;font-weight:700;padding:2px 8px;border-radius:var(--radius-xs)">${status}</span>
+          </div>
+          <p class="error-page-desc">${descHtml}</p>
+          ${timeBadgeHtml}
+          ${actionsHtml}
+        </div>
+        <div class="error-page-art">
+          ${errorIllustrationSvg()}
+        </div>
+      </div>
+    </div>
+    ${countdownScript}
+  `;
+
+  return document(pageTitle, content, nonce, isDark);
 }
 
 export function accessLogin() {
-  return document('Secure sign-in', `<div class="loginform" style="min-height:100vh"><div class="logininner"><span class="tag good">${icon('security')} Verified by Cloudflare Access</span><h1>Welcome to neoMail</h1><!-- Welcome to NeoMail --><p>Your identity has been verified through your configured email OTP or passkey sign-in provider.</p><form method="post" action="/login"><button class="button">Continue to workspace</button></form><p class="footnote">Sign-in options and approved administrator emails are managed in Cloudflare Access.</p></div></div>`);
+  return document('Secure sign-in', `<div class="loginform" style="min-height:100vh"><div class="logininner"><span class="tag good">${icon('security')} Verified by Cloudflare Access</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p>Your identity has been verified through your configured email OTP or passkey sign-in provider.</p><form method="post" action="/login"><button class="button">Continue to workspace</button></form><p class="footnote">Sign-in options and approved administrator emails are managed in Cloudflare Access.</p></div></div>`);
 }
 
 function profileAvatar(profile) {
@@ -5813,7 +6766,7 @@ function profileSettings(sess) {
     <div class="panelhead">
       <div>
         <h2>Your profile</h2>
-        <p>Edit your name and upload a photo or company logo for your neoMail profile.</p>
+        <p>Edit your name and upload a photo or company logo for your neoMailer profile.</p>
       </div>
     </div>
     <div class="panelbody">

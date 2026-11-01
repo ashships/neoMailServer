@@ -72,10 +72,10 @@ test('OTP login: robust default sender fallback, multi-provider dispatch, and ze
 
     // Verify OTP email was dispatched via provider with safe fallback sender
     assert.equal(capturedDispatches.length, 1, 'OTP email must be dispatched');
-    assert.equal(capturedDispatches[0].body.from, '"neoMail" <no-reply@mail.neopathshala.com>');
+    assert.equal(capturedDispatches[0].body.from, '"neoMailer" <no-reply@mail.neopathshala.com>');
     assert.deepEqual(capturedDispatches[0].body.to, ['admin@neopathshala.com']);
-    assert.ok(capturedDispatches[0].body.subject.includes('NeoMail verification code'));
-    assert.ok(capturedDispatches[0].body.text.includes('Your NeoMail verification code is:'));
+    assert.ok(capturedDispatches[0].body.subject.includes('neoMailer verification code'));
+    assert.ok(capturedDispatches[0].body.text.includes('Your neoMailer verification code is:'));
 
     // Extract code by testing candidate codes 100000..999999 (or read from salt/hash)
     // To verify login, we can test that an invalid code fails with 403

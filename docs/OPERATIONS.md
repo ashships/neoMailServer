@@ -1,4 +1,4 @@
-# NeoMail deployment and neopathshala integration
+# neoMailer deployment and neopathshala integration
 
 > **Authentication update:** Production now uses Cloudflare Access with email OTP and a passkey-capable identity provider, without the shared admin token. Local HTTP retains its development token. See [current administrator sign-in instructions](ADMIN-SIGN-IN.md); these supersede older token/MFA/credential-reauthentication instructions below. Account configuration and live OTP/passkey verification remain pending.
 
@@ -147,18 +147,18 @@ Both Settings and Sender identities → Set default update the sender used by AP
 Configure in the **server environment only**:
 
 ```dotenv
-NEOMAIL_URL=https://your-worker-domain.com
-NEOMAIL_API_KEY=YOUR_SEPARATE_RANDOM_INTEGRATION_TOKEN
+NEOMAILER_URL=https://your-worker-domain.com
+NEOMAILER_API_KEY=YOUR_SEPARATE_RANDOM_INTEGRATION_TOKEN
 ```
 
-Do not use a public client environment prefix such as `NEXT_PUBLIC_`. Do not call NeoMail directly from browser code. Integrate inside authenticated registration, reset, billing, and notification handlers, ideally through a backend outbox tied to your own business database transaction.
+Do not use a public client environment prefix such as `NEXT_PUBLIC_`. Do not call neoMailer directly from browser code. Integrate inside authenticated registration, reset, billing, and notification handlers, ideally through a backend outbox tied to your own business database transaction.
 
 ```js
 export async function sendWelcome(user) {
-  const response = await fetch(`${process.env.NEOMAIL_URL}/api/v1/send`, {
+  const response = await fetch(`${process.env.NEOMAILER_URL}/api/v1/send`, {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${process.env.NEOMAIL_API_KEY}`,
+      Authorization: `Bearer ${process.env.NEOMAILER_API_KEY}`,
       'Content-Type': 'application/json',
       'Idempotency-Key': `welcome:${user.id}:v1`,
     },
@@ -175,14 +175,14 @@ export async function sendWelcome(user) {
     // Record for reconciliation; never blindly send again under a new key.
     return { pendingReview: true, mailId: result.id };
   }
-  if (!response.ok) throw new Error(`NeoMail error ${response.status}`);
+  if (!response.ok) throw new Error(`neoMailer error ${response.status}`);
   return result;
 }
 ```
 
 Use a stable operation-specific idempotency key. The same key must carry the same normalized message. Never generate a new key for a retry of the same business operation. If an upstream timeout interrupts your request, retry the identical payload with the same key and backoff; a 409 means in-progress or different content and must be inspected. Global fallback can take up to five provider timeouts, so use a backend job/outbox to keep registration page latency low. Do not wait for all providers inside a user-facing request if low latency matters.
 
-User-provided text embedded in HTML must be escaped by the caller. Authorization, recipient eligibility, OTP generation/expiry/attempt limits, password reset token hashing, and account enumeration prevention remain the responsibility of the neopathshala backend. NeoMail does not issue authentication tokens or decide whether a user may request a password reset.
+User-provided text embedded in HTML must be escaped by the caller. Authorization, recipient eligibility, OTP generation/expiry/attempt limits, password reset token hashing, and account enumeration prevention remain the responsibility of the neopathshala backend. neoMailer does not issue authentication tokens or decide whether a user may request a password reset.
 
 ### Request contract
 
@@ -281,7 +281,7 @@ Apply npm run db:migrate:remote before deploying to an existing production datab
 
 Sender identities → Edit name updates that identity's display name. Outbound sends use its saved name by default; explicit API from_name overrides it. Renaming the current default synchronizes DEFAULT_SENDER_NAME. Changing DEFAULT_SENDER_NAME in Settings also updates the default identity's name. Changing a name can change the normalized message used for idempotency matching, so do not rename identities during an in-flight retry/reconciliation operation.
 
-The uploaded profile image brands the NeoMail admin panel only. It is not sent as an email avatar, and it is not proof of sender authenticity. Recipient inbox logos require separate supported provider/domain configuration; do not assume a panel upload will appear in Gmail or Outlook. Domain authentication and reputation remain separate from visual branding.
+The uploaded profile image brands the neoMailer admin panel only. It is not sent as an email avatar, and it is not proof of sender authenticity. Recipient inbox logos require separate supported provider/domain configuration; do not assume a panel upload will appear in Gmail or Outlook. Domain authentication and reputation remain separate from visual branding.
 
 ## 14. WebP profile optimization (supersedes image-format limits in section 13)
 

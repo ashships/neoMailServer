@@ -48,11 +48,11 @@ test('superadmin provider order, adding, credentials, circuit breaker reset and 
     body: new URLSearchParams({ csrf: await getCsrf('tenant@example.com'), ...data })
   });
 
-  // 1. Initial view checks: Steady UI, NeoMail brand, dark mode toggle, favicon
+  // 1. Initial view checks: Steady UI, neoMailer brand, dark mode toggle, favicon
   const providersPage = await call('local-admin', '/admin?view=providers', { headers: { cookie: superCookie } });
   assert.equal(providersPage.status, 200);
   const providersHtml = await providersPage.text();
-  assert.ok(providersHtml.includes('Neo<span>Mail</span>'));
+  assert.ok(providersHtml.includes('neo<span>Mailer</span>'));
   assert.ok(providersHtml.includes('theme-toggle'));
   assert.ok(providersHtml.includes('image/svg+xml'));
   assert.ok(providersHtml.includes('compose-quickbtn'));

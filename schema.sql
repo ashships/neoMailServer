@@ -200,5 +200,18 @@ CREATE TABLE IF NOT EXISTS admin_alerts (
 );
 CREATE INDEX IF NOT EXISTS idx_admin_alerts_owner ON admin_alerts (owner_subject, is_read);
 
+-- 11. Client registration and account access requests submitted from sign-in page.
+CREATE TABLE IF NOT EXISTS access_requests (
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  email TEXT NOT NULL,
+  organization TEXT,
+  notes TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending', 'approved', 'rejected')),
+  created_at INTEGER NOT NULL,
+  ip_address TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_access_requests_created ON access_requests (created_at DESC);
+
 
 

@@ -139,7 +139,7 @@ async function handler(request, env) {
     const isDark = cookie(request, 'neomail_theme') === 'dark';
     return reply(ui.publicDocs(content, isDark), 200, { 'Content-Type': 'text/html; charset=utf-8' });
   }
-  if (path === '/health') { requireMethod(request, ['GET']); return reply({ status: 'ok', service: 'neomail' }); }
+  if (path === '/health') { requireMethod(request, ['GET']); return reply({ status: 'ok', service: 'neoMailer' }); }
   if (path === '/favicon.ico' || path === '/favicon.svg') {
     requireMethod(request, ['GET']);
     return new Response(ui.faviconSvg, {
@@ -288,7 +288,7 @@ async function handler(request, env) {
 
         if (!authorized) {
           await audit(env, request, 'AUTH_REJECTED_UNREGISTERED', { subject: emailAddr });
-          return reply(ui.otpRequest('Account not registered.', isDark), 403);
+          return reply(ui.otpRequest("We couldn't find an account associated with this email address. Please check your email address.", isDark, emailAddr), 403);
         }
 
         const existing = await env.DB.prepare('SELECT created_at FROM admin_otps WHERE subject=?').bind(emailAddr).first().catch(() => null);
@@ -322,7 +322,7 @@ async function handler(request, env) {
               SMTP_USER: env.OTP_SMTP_USER || env.OTP_SMTP_USERNAME || env.SMTP_USER || env.SMTP_USERNAME || cfg.SMTP_USER || cfg.SMTP_USERNAME,
               SMTP_PASS: env.OTP_SMTP_PASS || env.OTP_SMTP_PASSWORD || env.SMTP_PASS || env.SMTP_PASSWORD || cfg.SMTP_PASS || cfg.SMTP_PASSWORD,
               DEFAULT_SENDER: cfg.DEFAULT_SENDER,
-              DEFAULT_SENDER_NAME: 'neoMail',
+              DEFAULT_SENDER_NAME: 'neoMailer',
             };
             const defaultSender = email(cfg.DEFAULT_SENDER) || email(env.DEFAULT_SENDER) || 'no-reply@mail.neopathshala.com';
             const isGmail = (masterCfg.SMTP_HOST || '').toLowerCase().includes('gmail') || (masterCfg.SMTP_HOST || '').toLowerCase().includes('google');
@@ -330,11 +330,11 @@ async function handler(request, env) {
             const smtpSender = (isGmail && smtpUserEmail) ? smtpUserEmail : (defaultSender || smtpUserEmail || 'no-reply@mail.neopathshala.com');
             masterCfg.DEFAULT_SENDER = smtpSender;
 
-            const mailText = `Your NeoMail verification code is: ${code}\n\nIt expires in 5 minutes.\nIf you did not request this code, you can safely ignore this email.`;
+            const mailText = `Your neoMailer verification code is: ${code}\n\nIt expires in 5 minutes.\nIf you did not request this code, you can safely ignore this email.`;
             const mailHtml = `<div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;max-width:520px;margin:24px auto;padding:32px;background:#ffffff;border:1px solid #e2e8f0;border-radius:12px;color:#0f172a;">
-  <div style="font-size:20px;font-weight:700;color:#087d54;margin-bottom:16px;">NeoMail</div>
+  <div style="font-size:20px;font-weight:700;color:#087d54;margin-bottom:16px;">neoMailer</div>
   <h2 style="font-size:18px;font-weight:600;margin:0 0 12px 0;">Sign-in verification code</h2>
-  <p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 24px 0;">Enter the following 6-digit verification code to complete your login to the NeoMail administration panel. This code is valid for 5 minutes.</p>
+  <p style="font-size:14px;line-height:1.6;color:#475569;margin:0 0 24px 0;">Enter the following 6-digit verification code to complete your login to the neoMailer administration panel. This code is valid for 5 minutes.</p>
   <div style="background:#f8fafc;border:1px solid #cbd5e1;border-radius:8px;padding:20px;text-align:center;font-size:32px;font-weight:700;letter-spacing:6px;color:#0f172a;font-family:monospace;margin:0 0 24px 0;">${code}</div>
   <p style="font-size:12px;line-height:1.5;color:#94a3b8;margin:0;">If you did not request this login code, you can safely ignore this email. Do not share this code with anyone.</p>
 </div>`;
@@ -342,8 +342,8 @@ async function handler(request, env) {
             const mail = validateMail({
               to: emailAddr,
               from: smtpSender,
-              from_name: masterCfg.DEFAULT_SENDER_NAME || 'neoMail',
-              subject: 'NeoMail verification code',
+              from_name: masterCfg.DEFAULT_SENDER_NAME || 'neoMailer',
+              subject: 'neoMailer verification code',
               text: mailText,
               html: mailHtml,
             }, masterCfg);
@@ -423,7 +423,7 @@ async function handler(request, env) {
         const userAccount = await env.DB.prepare('SELECT role, is_active FROM admin_users WHERE subject=?').bind(emailAddr).first();
         if (!userAccount || userAccount.is_active !== 1) {
           await audit(env, request, 'AUTH_VERIFY_UNREGISTERED', { subject: emailAddr });
-          throw new HttpError(403, 'Account not registered.');
+          throw new HttpError(403, "We couldn't find an account associated with this email address. Please check your email address.");
         }
 
         const targetRole = userAccount.role;
@@ -1077,13 +1077,19 @@ export default {
         console.error(JSON.stringify({ event: 'REQUEST_FAILURE', reference, error: err?.message || String(err), stack: err?.stack }));
       }
       const message = status === 500 ? 'Request could not complete. Reference: ' + reference : err.message;
-      const extra = status===429 ? {'Retry-After':'60'} : {};
+      const retryAfter = err?.retryAfter || (status === 429 ? 60 : undefined);
+      const extra = status === 429 ? { 'Retry-After': String(retryAfter || 60) } : {};
       const pathname = new URL(request.url).pathname;
       const isUiPath = pathname.startsWith('/admin') || pathname.startsWith('/login') || pathname.startsWith('/dashboard');
       const acceptsHtml = (request.headers.get('accept') || '').includes('text/html');
-      return (isUiPath || acceptsHtml) && !pathname.startsWith('/api/') && !pathname.startsWith('/webhooks/')
-        ? reply(ui.errorPage(message, status), status, extra)
-        : reply({ error: message, reference }, status, extra);
+      if ((isUiPath || acceptsHtml) && !pathname.startsWith('/api/') && !pathname.startsWith('/webhooks/')) {
+        const script_nonce = crypto.randomUUID();
+        return reply(ui.errorPage(message, status, retryAfter, script_nonce), status, {
+          ...extra,
+          'Content-Security-Policy': headers['Content-Security-Policy'].replace("script-src 'none'", `script-src 'nonce-${script_nonce}'`),
+        });
+      }
+      return reply({ error: message, reference, ...(status === 429 && retryAfter ? { retry_after: retryAfter } : {}) }, status, extra);
     }
   },
   async email(message, env) {

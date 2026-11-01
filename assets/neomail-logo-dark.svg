@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 450 290" width="450" height="290" fill="none">
+  <defs>
+    <linearGradient id="dark-top-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="40%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#087d54" />
+    </linearGradient>
+
+    <linearGradient id="dark-bot-left-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" />
+      <stop offset="50%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#065f46" />
+    </linearGradient>
+
+    <linearGradient id="dark-bot-right-grad" x1="0%" y1="40%" x2="100%" y2="70%">
+      <stop offset="0%" stop-color="#044e33" />
+      <stop offset="20%" stop-color="#065f46" />
+      <stop offset="65%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#34d399" />
+    </linearGradient>
+  </defs>
+
+  <!-- Top Envelope Flap -->
+  <path d="M 45 0
+           L 405 0
+           C 429.9 0 450 20 450 44
+           L 450 35
+           C 375 65 295 115 225 145
+           C 157 116 82 61 12 36
+           C 18 20 29 9 45 0 Z"
+        fill="url(#dark-top-grad)" />
+
+  <!-- Bottom Left Pillar + Peak -->
+  <path d="M 0 45
+           C 0 20.1 20.1 0 45 0
+           C 29 9 18 20 12 36
+           C 82 96 162 156 228 209
+           C 200 205 180 201 165 199
+           C 125 214 85 264 45 289
+           C 20.1 289 0 268 0 244 Z"
+        fill="url(#dark-bot-left-grad)" />
+
+  <!-- Bottom Right Pillar -->
+  <path d="M 228 209
+           C 298 178 378 88 450 55
+           L 450 244
+           C 450 268 429.9 289 405 289
+           L 300 289
+           C 255 274 210 209 165 199
+           C 180 201 200 205 228 209 Z"
+        fill="url(#dark-bot-right-grad)" />
+
+  <!-- White Checkmark Ribbon -->
+  <path d="M 12 36
+           C 82 61 157 116 225 145
+           C 295 115 375 65 450 35
+           L 450 55
+           C 378 88 298 178 228 209
+           C 162 156 82 96 12 36 Z"
+        fill="#ffffff" />
+</svg>

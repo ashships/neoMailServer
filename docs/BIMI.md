@@ -1,8 +1,8 @@
 # Inbox logo setup for your-worker-domain.com
 
-Target sender: your-sender@your-verified-domain.com. This is a domain-level BIMI setup and can apply to other sender addresses on the same domain. The profile image in NeoMail is separate and private.
+Target sender: your-sender@your-verified-domain.com. This is a domain-level BIMI setup and can apply to other sender addresses on the same domain. The profile image in neoMailer is separate and private.
 
-## Prepared in NeoMail
+## Prepared in neoMailer
 
 Settings now has Inbox sender logo · BIMI instructions and two editable fields:
 - BIMI_LOGO_URL: the publicly accessible HTTPS SVG Tiny-PS logo URL.
@@ -16,7 +16,7 @@ Save both URLs in Workspace settings to generate the exact TXT value. The panel 
 2. Obtain a VMC or CMC from a certificate authority accepted by the target mailbox provider. Gmail requires a VMC or CMC. Issuance requires the CA's organization/domain/logo checks and may incur fees; no purchase or application was submitted.
 3. Host the approved SVG and issued certificate at public HTTPS URLs. Use static hosting or an appropriately configured public storage hostname. They must return actual files without sign-in, browser challenges or temporary download links. Do not use the private /admin/profile-image route. Existing Worker /admin routes must retain Access protection. No public asset hosting or deployment has been configured by this change.
 4. Verify real messages pass SPF/DKIM and DMARC alignment. Move to enforced DMARC only after inventorying legitimate senders. Gmail requires DMARC p=quarantine or p=reject with pct=100. Do not blindly replace existing DNS or enforce a policy that blocks valid business email. Provider reputation and policy affect logo display.
-5. Enter the final URLs in NeoMail Settings and save. In the Cloudflare DNS zone neopathshala.com add the following after validation:
+5. Enter the final URLs in neoMailer Settings and save. In the Cloudflare DNS zone neopathshala.com add the following after validation:
 
 Type: TXT
 Name: default._bimi.mail

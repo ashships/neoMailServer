@@ -1,9 +1,9 @@
-# NeoMail Server
+# neoMailer
 
 > **Authentication update:** Production now uses Cloudflare Access with email OTP and a passkey-capable identity provider, without the shared admin token. Local HTTP retains its development token. See [current administrator sign-in instructions](docs/ADMIN-SIGN-IN.md); these supersede older token/MFA/credential-reauthentication instructions below. Account configuration and live OTP/passkey verification remain pending.
 
 
-A private transactional email console for Cloudflare Workers and D1. Redesigned console: overview, mail activity, provider routing, sender identities, test dispatch, settings, security events, and integration guide.
+A private transactional email gateway and console for Cloudflare Workers and D1. Redesigned console: overview, mail activity, provider routing, sender identities, test dispatch, settings, security events, and integration guide.
 
 **Security is an ongoing process; this project does not guarantee immunity from compromise.** Deployment, provider DNS, Access policy, and account security must be configured and verified before production.
 

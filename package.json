@@ -1,7 +1,7 @@
 {
-  "name": "neomail-server",
+  "name": "neomailer",
   "version": "2.0.0",
-  "description": "Private transactional email console for Cloudflare Workers and D1",
+  "description": "Private transactional email console and gateway for Cloudflare Workers and D1",
   "main": "src/index.js",
   "type": "module",
   "scripts": {

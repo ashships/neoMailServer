@@ -1,6 +1,10 @@
 const enc = new TextEncoder();
 export class HttpError extends Error {
-  constructor(status, message) { super(message); this.status = status; }
+  constructor(status, message, retryAfter = undefined) {
+    super(message);
+    this.status = status;
+    if (retryAfter !== undefined) this.retryAfter = retryAfter;
+  }
 }
 export const headers = {
   'Content-Security-Policy': "default-src 'none'; connect-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com data:; img-src 'self' data: blob:; frame-src 'self' blob:; script-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
@@ -98,11 +102,16 @@ export async function json(request) {
 }
 export async function rate(env, key, max, windowSeconds) {
   if (env.LOCAL_DEV === 'true') return;
-  const bucket = Math.floor(Date.now() / 1000 / windowSeconds); const expires = (bucket + 1) * windowSeconds;
+  const nowSec = Math.floor(Date.now() / 1000);
+  const bucket = Math.floor(nowSec / windowSeconds);
+  const expires = (bucket + 1) * windowSeconds;
   const row = await env.DB.prepare(`INSERT INTO rate_limits (bucket_key, count, expires_at) VALUES (?, 1, ?)
     ON CONFLICT(bucket_key) DO UPDATE SET count = count + 1 WHERE count < ? RETURNING count`)
     .bind(`${await hash(key)}:${bucket}`, expires, max).first();
-  if (!row) throw new HttpError(429, 'Rate limit reached. Try again after the current window.');
+  if (!row) {
+    const retryAfter = Math.max(1, expires - nowSec);
+    throw new HttpError(429, 'Rate limit reached. Try again after the current window.', retryAfter);
+  }
 }
 export async function audit(env, request, event, details = {}) {
   await env.DB.prepare('INSERT INTO security_audit_logs (id,event_type,ip_address,user_agent,details,unix_timestamp) VALUES (?,?,?,?,?,unixepoch())')

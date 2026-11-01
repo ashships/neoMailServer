@@ -4,7 +4,7 @@
 
 ## Implemented application behavior
 
-Production uses Cloudflare Access as the authentication broker. Users select email OTP or a configured passkey-capable identity provider on the Access login page, then continue into NeoMail. The Worker validates the signed Access assertion and creates an opaque one-hour session bound to its subject and configured Access application. No shared administrator token is requested in production.
+Production uses Cloudflare Access as the authentication broker. Users select email OTP or a configured passkey-capable identity provider on the Access login page, then continue into neoMailer. The Worker validates the signed Access assertion and creates an opaque one-hour session bound to its subject and configured Access application. No shared administrator token is requested in production.
 
 Both methods are alternatives, not two factors required together. Email OTP remains the weaker fallback: mailbox compromise can grant access. Offering it means passkey phishing resistance does not protect every possible login. For administrators requiring stronger security, restrict their Access policy to the passkey-capable provider.
 
@@ -15,7 +15,7 @@ Production logout deletes the application session and redirects to /cdn-cgi/acce
 ## Cloudflare configuration required before either option is usable
 
 1. Confirm the actual mail console hostname and protect /admin and /admin/* using one self-hosted Access application. Keep API and webhook endpoints outside this admin policy.
-2. In Zero Trust → Integrations → Identity providers, add One-time PIN for email OTP. Cloudflare sends the codes; NeoMail does not deliver its own login mail.
+2. In Zero Trust → Integrations → Identity providers, add One-time PIN for email OTP. Cloudflare sends the codes; neoMailer does not deliver its own login mail.
 3. Add a passkey-capable identity provider such as your organization's OIDC/SAML provider. Enroll administrator passkeys and configure its authentication policy to require passkey/WebAuthn authentication for this application. Merely adding a provider or naming a button “Passkey” does not enforce passkeys.
 4. Enable both configured login methods for the Access application. Disable automatic redirection to a single provider if you want the chooser to remain visible.
 5. Explicitly allowlist administrator email addresses for both paths. Do not rely only on IdP groups for OTP users: group claims from a prior IdP login do not persist when the user switches to OTP. Do not use an everyone/bypass policy.
