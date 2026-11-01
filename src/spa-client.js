@@ -92,7 +92,7 @@ export const SPA_CLIENT_SCRIPT = String.raw`
   }
 
   function updateActiveNav(pathname) {
-    const norm = pathname.replace(/\/$/, '') || '/admin';
+    const norm = pathname.replace(/\/$/, '') || '/dashboard';
     const navLinks = document.querySelectorAll('.sidebar nav a.navlink');
     navLinks.forEach(link => {
       const href = link.getAttribute('href') || '';

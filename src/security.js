@@ -33,7 +33,7 @@ export async function equal(a, b) {
   return diff === 0;
 }
 // PBKDF2 is used for low-entropy secrets (one-time login codes). A fast SHA-256
-// digest of a six-digit code is trivially reversible from a D1 snapshot.
+// digest of a six-digit code is trivially reversible from a database snapshot.
 export async function pbkdf2(secret, salt, iterations = 100000) {
   const count = Math.min(100000, Math.max(1000, Number(iterations) || 100000));
   const material = await crypto.subtle.importKey('raw', enc.encode(String(secret)), 'PBKDF2', false, ['deriveBits']);

@@ -273,10 +273,18 @@ test('neoMail enhancements: clean slugs, dark mode hover, SPA encrypted cache, D
   assert.ok(!domainsHtml.includes('neoMail · Private transactional email infrastructure · UTC'), 'Footnote must be removed from domains page');
   assert.ok(!studioDocsHtml.includes('neoMail · Private transactional email infrastructure · UTC'), 'Footnote must be removed from docs page');
 
-  // 20. Verify Status Footer rendering system and API status
+  // 20. Verify Status Footer rendering system and API status, sidebar footer alignment and role-specific sidebar edit buttons
   assert.ok(domainsHtml.includes('app-footer'), 'Must render application footer');
   assert.ok(domainsHtml.includes('System: <strong>Operational</strong>'), 'Must render system status');
   assert.ok(domainsHtml.includes('API v1: <strong>Active · Healthy</strong>'), 'Must render API status');
+  assert.ok(domainsHtml.includes('class="sidefoot"'), 'Must render sidebar footer');
+  assert.ok(domainsHtml.includes('side-docs-edit-btn'), 'Superadmin sidebar includes Docs Studio shortcut');
+  assert.ok(domainsHtml.includes('sidefoot-credit-edit'), 'Superadmin sidebar includes credit edit shortcut');
+
+  const tenantDomainsRes = await call('tenant@neomail.internal', '/dashboard/domains', { headers: { cookie: tenantCookie } });
+  const tenantDomainsHtml = await tenantDomainsRes.text();
+  assert.ok(!tenantDomainsHtml.includes('side-docs-edit-btn'), 'Tenant admin sidebar must NOT render Docs Studio edit button');
+  assert.ok(!tenantDomainsHtml.includes('sidefoot-credit-edit'), 'Tenant admin sidebar must NOT render credit edit button');
 
   // 21. Verify profile settings: Camera & Image icons instead of Mail icon, and CSP img-src blob:
   const profSettingsRes = await call('super@neomail.internal', '/admin/settings', { headers: { cookie: superCookie } });

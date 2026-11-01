@@ -27,8 +27,10 @@ test('errorPage renders the modern mascot layout and dynamic countdown timer for
   assert.ok(html.includes('clockSecondHand'), 'Must include real-time clock second hand');
   assert.ok(html.includes('mascot-blinking-eyes'), 'Must include mascot blinking eyes');
   assert.ok(html.includes('plant-breeze'), 'Must include unified subtle plant breeze');
-  assert.ok(html.includes('x1="206"'), 'Must render chair legs styled like table legs');
+  assert.ok(html.includes('x1="217"'), 'Must render chair legs styled like table legs touching chair directly');
   assert.ok(html.includes('serverRack'), 'Must include server rack on the left side');
+  assert.ok(!html.includes('id="sideTable"'), 'Must remove side table');
+  assert.ok(html.includes('wallAlbumPhoto'), 'Must include framed wall album photo on the left wall');
   assert.ok(html.includes('server-led-1'), 'Must include server activity LEDs');
   assert.ok(html.includes('fill="#ffffff" fill-opacity="0.92"'), 'Must include light glasses lenses in dark mode');
   assert.ok(html.includes('nml-envelope-clip') || html.includes('nm-envelope-clip'), 'Must include neomail logo svg in brand');

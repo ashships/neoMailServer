@@ -1,4 +1,4 @@
-import { HttpError, reply, redirect, hash, hashOtp, equal, email, text, hostname, cookie, local, sameOrigin, form, json, readBody, rate, audit, access, session, csrf, sessionCookie, bytes64, headers } from './security.js';
+import { HttpError, reply, redirect, hash, hashOtp, equal, email, text, hostname, isPrivateHost, cookie, local, sameOrigin, form, json, readBody, rate, audit, access, session, csrf, sessionCookie, bytes64, headers } from './security.js';
 import { config, redactConfig, saveSettings, saveSecret, PROVIDERS, getAccountProviderKeys, saveAccountProviderKey, deleteAccountProviderKey, toggleAccountProviderKey, resolveAccountProviderSecrets } from './config.js';
 import { dispatch, validateMail, verifyWebhook, applyWebhook, sendSmtp, send, getProviderLimits, getProviderUsage } from './providers.js';
 import { safeFetch } from './security.js';
@@ -6,7 +6,7 @@ import * as ui from './ui.js';
 import { getProfile, saveProfile, profileForm, profileImage } from './profile.js';
 
 const now = () => Math.floor(Date.now() / 1000);
-const flash = message => redirect('/admin?notice=' + encodeURIComponent(message));
+const flash = (message, base = '/dashboard') => redirect(base + '?notice=' + encodeURIComponent(message));
 async function rows(env, sql, ...params) {
   try {
     return (await env.DB.prepare(sql).bind(...params).all()).results || [];
@@ -196,8 +196,7 @@ async function handler(request, env) {
   if (path === '/login') {
     const existingSubject = await access(request, env).catch(() => null);
     if (existingSubject) {
-      const existingRole = await adminRole(env, existingSubject);
-      return redirect(existingRole === 'superadmin' ? '/admin' : '/dashboard');
+      return redirect('/dashboard');
     }
     path = '/admin/login';
   }
@@ -252,6 +251,16 @@ async function handler(request, env) {
     const token = bearer.startsWith('Bearer ') ? bearer.slice(7) : '';
     const client = await apiClient(env, token);
     if (!client) throw new HttpError(401, 'Invalid API credential.');
+    const owner = client.owner_subject || 'local-admin';
+    const wlCheck = await env.DB.prepare(
+      'SELECT custom_api_hostname FROM managed_domains WHERE owner_subject=? AND enforce_custom_hostname=1 AND custom_api_hostname IS NOT NULL AND is_verified=1'
+    ).bind(owner).first();
+    if (wlCheck && wlCheck.custom_api_hostname) {
+      const reqHost = (request.headers.get('host') || '').toLowerCase().split(':')[0];
+      if (reqHost !== wlCheck.custom_api_hostname.toLowerCase()) {
+        throw new HttpError(403, 'This API client is restricted to dedicated white-label endpoint: https://' + wlCheck.custom_api_hostname + '/api/v1/send');
+      }
+    }
     const { values: cfg } = await config(env, request.method === 'POST');
     await rate(env, 'api:client:' + client.id, +cfg.API_RATE_LIMIT_PER_MINUTE, 60);
     const data = await json(request);
@@ -260,7 +269,7 @@ async function handler(request, env) {
       if (!data.from) data.from = client.sender_address;
     }
     const mail = validateMail(data, cfg);
-    const result = await dispatch(env, cfg, mail, request.headers.get('idempotency-key'), client.owner_subject || 'local-admin');
+    const result = await dispatch(env, cfg, mail, request.headers.get('idempotency-key'), owner);
     return reply(result, result.success ? 200 : result.uncertain ? 202 : 502);
   }
   if (path.startsWith('/webhooks/')) {
@@ -327,23 +336,43 @@ async function handler(request, env) {
   if (!subject && path !== '/admin/login' && path !== '/login') return redirect('/login');
   const role = subject ? await adminRole(env, subject) : null;
   const dashboardMode = path === '/dashboard' || path.startsWith('/dashboard/');
-  if (dashboardMode && role === 'superadmin') {
-    const sub = path.startsWith('/dashboard/') ? path.slice('/dashboard/'.length) : '';
-    return redirect(sub ? `/admin/${sub}${url.search || ''}` : `/admin${url.search || ''}`);
-  }
+  const normAction = path.startsWith('/dashboard/') ? '/admin/' + path.slice('/dashboard/'.length) : path;
   // Tenant workspaces may mutate their own resources via scoped action endpoints and inspect their
   // own messages; every other admin path (global settings, users, providers, docs, views) requires the superadmin role.
-  const tenantForm = (request.method === 'POST' && ['/admin/identities/create','/admin/identities/update','/admin/identities/request-otp','/dashboard/identities/request-otp','/admin/api-clients/create','/admin/api-clients/revoke','/admin/domains/create','/dashboard/domains/create','/admin/domains/verify','/dashboard/domains/verify','/admin/domains/delete','/dashboard/domains/delete','/admin/domains/auto-check','/dashboard/domains/auto-check','/admin/providers/limit','/dashboard/providers/limit','/admin/send-test','/admin/logout','/admin/sessions/revoke','/admin/profile','/dashboard/profile','/admin/account-keys/save','/admin/account-keys/delete','/admin/account-keys/toggle'].includes(path))
-    || (request.method === 'GET' && ['/admin/view-mail','/admin/email','/admin/preview','/admin/profile-image','/dashboard/profile-image'].includes(path));
-  if (!dashboardMode && path.startsWith('/admin') && role !== 'superadmin' && path !== '/admin/login' && !tenantForm) {
-    if (request.method === 'GET' && !url.searchParams.has('view')) {
-      const sub = path.slice('/admin/'.length).split('/')[0];
-      const VALID_SLUGS = ['overview','mail','providers','identities','clients','users','domains','docs','security','settings','setup','compose'];
-      if (VALID_SLUGS.includes(sub)) {
-        return redirect(`/dashboard/${sub}${url.search || ''}`);
-      }
+  const tenantForm = (request.method === 'POST' && [
+    '/admin/identities/create',
+    '/admin/identities/update',
+    '/admin/identities/request-otp',
+    '/admin/api-clients/create',
+    '/admin/api-clients/revoke',
+    '/admin/domains/create',
+    '/admin/domains/verify',
+    '/admin/domains/delete',
+    '/admin/domains/auto-check',
+    '/admin/providers/limit',
+    '/admin/send-test',
+    '/admin/logout',
+    '/admin/sessions/revoke',
+    '/admin/profile',
+    '/admin/account-keys/save',
+    '/admin/account-keys/delete',
+    '/admin/account-keys/toggle'
+  ].includes(normAction))
+    || (request.method === 'GET' && ['/admin/view-mail','/admin/email','/admin/preview','/admin/profile-image'].includes(normAction));
+  if (role !== 'superadmin' && path !== '/admin/login' && !tenantForm) {
+    if (request.method === 'POST') {
+      return redirect('/dashboard');
     }
-    return redirect('/dashboard' + (url.search || ''));
+    if (!dashboardMode && path.startsWith('/admin')) {
+      if (request.method === 'GET' && !url.searchParams.has('view')) {
+        const sub = path.slice('/admin/'.length).split('/')[0];
+        const VALID_SLUGS = ['overview','mail','providers','identities','clients','users','domains','docs','security','settings','setup','compose'];
+        if (VALID_SLUGS.includes(sub)) {
+          return redirect(`/dashboard/${sub}${url.search || ''}`);
+        }
+      }
+      return redirect('/dashboard' + (url.search || ''));
+    }
   }
   if (path === '/admin/login') {
     requireMethod(request, ['GET', 'POST']);
@@ -570,7 +599,7 @@ async function handler(request, env) {
           env.DB.prepare('INSERT INTO admin_sessions (token_hash,csrf_token,access_subject,credential_version,expires_at) VALUES (?,?,?,?,?)').bind(await hash(token), csrfToken, emailAddr, await hash(await adminVerifier(request, env)), now() + 3600),
         ]);
         await audit(env, request, 'AUTH_SUCCESS');
-        return redirect(targetRole === 'superadmin' ? '/admin' : '/dashboard', { 'Set-Cookie': sessionCookie(token) });
+        return redirect('/dashboard', { 'Set-Cookie': sessionCookie(token) });
       }
       throw new HttpError(422, 'Invalid login step.');
     }
@@ -592,7 +621,7 @@ async function handler(request, env) {
       env.DB.prepare('INSERT INTO admin_sessions (token_hash,csrf_token,access_subject,credential_version,expires_at) VALUES (?,?,?,?,?)').bind(await hash(token), csrfToken, sessionIdentity, await hash(await adminVerifier(request, env)), now() + 3600),
     ]);
     await audit(env, request, 'AUTH_SUCCESS');
-    return redirect(sessionRole === 'superadmin' ? '/admin' : '/dashboard', { 'Set-Cookie': sessionCookie(token) });
+    return redirect('/dashboard', { 'Set-Cookie': sessionCookie(token) });
   }
   const sess = await session(request, { ...env, ADMIN_TOKEN_HASH: await adminVerifier(request, env) }, subject);
   if (!sess) return redirect('/admin/login');
@@ -613,45 +642,46 @@ async function handler(request, env) {
   const { values: cfg } = await config(env, request.method === 'POST');
   sess.footerCredit = cfg.FOOTER_CREDIT;
   if (request.method === 'POST') {
-    const isProfilePost = path === '/admin/profile' || path === '/dashboard/profile';
+    const actionPath = path.startsWith('/dashboard/') ? '/admin/' + path.slice('/dashboard/'.length) : path;
+    const targetBase = path.startsWith('/admin') ? '/admin' : '/dashboard';
+    const isProfilePost = actionPath === '/admin/profile';
     const data = isProfilePost ? await profileForm(request) : await form(request); await csrf(request, data, sess);
     // Controls all console mutations, including test email dispatch.
     await rate(env, 'admin:' + subject, 30, 60);
     if (isProfilePost) {
       const result = await saveProfile(env, subject, data);
       await audit(env, request, 'PROFILE_UPDATED', result);
-      const redirectBase = role === 'superadmin' ? '/admin/settings' : '/dashboard/settings';
-      return redirect(redirectBase + '?notice=' + encodeURIComponent('Profile updated.') + '#profile');
+      return redirect(targetBase + '/settings?notice=' + encodeURIComponent('Profile updated.') + '#profile');
     }
-    if (path === '/admin/logout') {
+    if (actionPath === '/admin/logout') {
       await env.DB.prepare('DELETE FROM admin_sessions WHERE token_hash=?').bind(sess.token_hash).run();
       await audit(env, request, 'LOGOUT'); return redirect((local(request, env) || !accessConfigured(env)) ? '/login' : '/cdn-cgi/access/logout', { 'Set-Cookie': sessionCookie('', 0) });
     }
-    if (path === '/admin/sessions/revoke') {
+    if (actionPath === '/admin/sessions/revoke') {
       // Tenants may only revoke their own sessions; superadmins revoke the whole deployment.
       if (await isSuperadmin(env, subject)) await env.DB.prepare('DELETE FROM admin_sessions').run();
       else await env.DB.prepare('DELETE FROM admin_sessions WHERE access_subject=?').bind(subject).run();
       await audit(env, request, 'SESSIONS_REVOKED'); return redirect((local(request, env) || !accessConfigured(env)) ? '/login' : '/cdn-cgi/access/logout', { 'Set-Cookie': sessionCookie('', 0) });
     }
-    if (path === '/admin/settings') {
+    if (actionPath === '/admin/settings') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const sender = email(data.get('DEFAULT_SENDER'));
       if (!sender || !await activeIdentity(env, sender)) throw new HttpError(422, 'Default sender must match an active sender identity. Add the identity first.');
       await audit(env, request, 'SETTINGS_CHANGE_REQUESTED');
       const changed = await saveSettings(env, data);
       await audit(env, request, 'SETTINGS_UPDATED', { keys: changed });
-      return redirect('/admin?view=settings&notice=Settings+saved');
+      return redirect(targetBase + '?view=settings&notice=Settings+saved');
     }
-    if (path === '/admin/credentials') {
+    if (actionPath === '/admin/credentials') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       await rate(env, 'credential-reauth:' + subject, 5, 900);
       await reauthenticate(request, env, data);
       await audit(env, request, 'CREDENTIAL_CHANGE_REQUESTED', { name: data.get('name') });
       await saveSecret(env, data.get('name'), data.get('value'));
       await audit(env, request, 'CREDENTIAL_UPDATED', { name: data.get('name') });
-      return redirect('/admin?view=settings&notice=Credential+saved');
+      return redirect(targetBase + '?view=settings&notice=Credential+saved');
     }
-    if (path === '/admin/account-keys/save') {
+    if (actionPath === '/admin/account-keys/save') {
       const provider = data.get('provider');
       if (!PROVIDERS.includes(provider)) throw new HttpError(422, 'Invalid provider.');
       const apiKey = data.get('api_key');
@@ -671,32 +701,29 @@ async function handler(request, env) {
       await rate(env, 'account-keys:' + subject, 10, 60);
       await saveAccountProviderKey(env, subject, provider, apiKey, extraConfig);
       await audit(env, request, 'ACCOUNT_PROVIDER_KEY_SAVED', { provider, subject });
-      const targetBase = role === 'superadmin' ? '/admin' : '/dashboard';
       return redirect(targetBase + '?view=settings&notice=' + encodeURIComponent('Provider API key encrypted with AES-256-GCM and saved. Stored keys are strictly write-only and cannot be viewed.'));
     }
-    if (path === '/admin/account-keys/delete') {
+    if (actionPath === '/admin/account-keys/delete') {
       const provider = data.get('provider');
       await deleteAccountProviderKey(env, subject, provider);
       await audit(env, request, 'ACCOUNT_PROVIDER_KEY_DELETED', { provider, subject });
-      const targetBase = role === 'superadmin' ? '/admin' : '/dashboard';
       return redirect(targetBase + '?view=settings&notice=' + encodeURIComponent('Provider API key removed.'));
     }
-    if (path === '/admin/account-keys/toggle') {
+    if (actionPath === '/admin/account-keys/toggle') {
       const provider = data.get('provider');
       await toggleAccountProviderKey(env, subject, provider);
       await audit(env, request, 'ACCOUNT_PROVIDER_KEY_TOGGLED', { provider, subject });
-      const targetBase = role === 'superadmin' ? '/admin' : '/dashboard';
       return redirect(targetBase + '?view=settings&notice=' + encodeURIComponent('Provider status updated.'));
     }
-    if (path === '/admin/providers/toggle') {
+    if (actionPath === '/admin/providers/toggle') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const provider = data.get('provider'); if (!PROVIDERS.includes(provider)) throw new HttpError(422, 'Unknown provider.');
       await env.DB.prepare(`INSERT INTO provider_health (owner_subject,provider_name,is_active,consecutive_failures,updated_at)
         VALUES ('local-admin',?,0,0,unixepoch())
         ON CONFLICT(owner_subject,provider_name) DO UPDATE SET is_active=1-is_active,consecutive_failures=0,updated_at=unixepoch()`).bind(provider).run();
-      await audit(env, request, 'PROVIDER_TOGGLED', { provider }); return redirect('/admin?view=providers&notice=Provider+updated');
+      await audit(env, request, 'PROVIDER_TOGGLED', { provider }); return redirect(targetBase + '?view=providers&notice=Provider+updated');
     }
-    if (path === '/admin/providers/reorder') {
+    if (actionPath === '/admin/providers/reorder') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const provider = data.get('provider');
       const direction = data.get('direction');
@@ -715,9 +742,9 @@ async function handler(request, env) {
       const newOrderStr = currentOrder.join(',');
       await env.DB.prepare("INSERT INTO app_settings (name,value,is_secret,updated_at) VALUES ('FALLBACK_ORDER',?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,is_secret=0,updated_at=unixepoch()").bind(newOrderStr).run();
       await audit(env, request, 'PROVIDER_ORDER_UPDATED', { order: newOrderStr });
-      return redirect('/admin?view=providers&notice=' + encodeURIComponent('Provider priority order updated.'));
+      return redirect(targetBase + '?view=providers&notice=' + encodeURIComponent('Provider priority order updated.'));
     }
-    if (path === '/admin/providers/add') {
+    if (actionPath === '/admin/providers/add') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const provider = data.get('provider');
       if (!PROVIDERS.includes(provider)) throw new HttpError(422, 'Invalid provider.');
@@ -727,9 +754,9 @@ async function handler(request, env) {
       const newOrderStr = currentOrder.join(',');
       await env.DB.prepare("INSERT INTO app_settings (name,value,is_secret,updated_at) VALUES ('FALLBACK_ORDER',?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,is_secret=0,updated_at=unixepoch()").bind(newOrderStr).run();
       await audit(env, request, 'PROVIDER_ADDED_TO_ROUTING', { provider });
-      return redirect('/admin?view=providers&notice=' + encodeURIComponent('Provider added to fallback routing.'));
+      return redirect(targetBase + '?view=providers&notice=' + encodeURIComponent('Provider added to fallback routing.'));
     }
-    if (path === '/admin/providers/remove') {
+    if (actionPath === '/admin/providers/remove') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const provider = data.get('provider');
       const currentOrder = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',').map(p => p.trim()).filter(Boolean);
@@ -738,17 +765,17 @@ async function handler(request, env) {
       const newOrderStr = newOrder.join(',');
       await env.DB.prepare("INSERT INTO app_settings (name,value,is_secret,updated_at) VALUES ('FALLBACK_ORDER',?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,is_secret=0,updated_at=unixepoch()").bind(newOrderStr).run();
       await audit(env, request, 'PROVIDER_REMOVED_FROM_ROUTING', { provider });
-      return redirect('/admin?view=providers&notice=' + encodeURIComponent('Provider removed from fallback routing.'));
+      return redirect(targetBase + '?view=providers&notice=' + encodeURIComponent('Provider removed from fallback routing.'));
     }
-    if (path === '/admin/providers/reset-health') {
+    if (actionPath === '/admin/providers/reset-health') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const provider = data.get('provider');
       if (!PROVIDERS.includes(provider)) throw new HttpError(422, 'Invalid provider.');
       await env.DB.prepare("INSERT INTO provider_health (owner_subject,provider_name,is_active,consecutive_failures,updated_at) VALUES ('local-admin',?,1,0,unixepoch()) ON CONFLICT(owner_subject,provider_name) DO UPDATE SET consecutive_failures=0, is_active=1, updated_at=unixepoch()").bind(provider).run();
       await audit(env, request, 'PROVIDER_HEALTH_RESET', { provider });
-      return redirect('/admin?view=providers&notice=' + encodeURIComponent('Circuit breaker reset for ' + provider + '.'));
+      return redirect(targetBase + '?view=providers&notice=' + encodeURIComponent('Circuit breaker reset for ' + provider + '.'));
     }
-    if (path === '/admin/providers/configure') {
+    if (actionPath === '/admin/providers/configure') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const provider = data.get('provider');
       if (!PROVIDERS.includes(provider)) throw new HttpError(422, 'Invalid provider.');
@@ -781,9 +808,9 @@ async function handler(request, env) {
         }
       }
       await audit(env, request, 'PROVIDER_CONFIGURED', { provider });
-      return redirect('/admin?view=providers&notice=' + encodeURIComponent('Provider ' + provider + ' configured.'));
+      return redirect(targetBase + '?view=providers&notice=' + encodeURIComponent('Provider ' + provider + ' configured.'));
     }
-    if (path === '/admin/identities/create') {
+    if (actionPath === '/admin/identities/create') {
       const localPart = data.get('local_part') ? text(data.get('local_part'), 64) : '';
       const domain = data.get('domain') ? text(data.get('domain'), 253) : '';
       const address = email(data.get('email_address')) || (localPart && domain ? email(localPart + '@' + domain) : null);
@@ -796,9 +823,9 @@ async function handler(request, env) {
       if (domainRow.owner_subject !== subject) throw new HttpError(422, 'This sending domain belongs to another workspace.');
       const result = await env.DB.prepare('INSERT INTO sender_identities (id,email_address,display_name,is_default,is_active,created_at,owner_subject) VALUES (?,?,?,0,1,unixepoch(),?) ON CONFLICT(email_address) DO NOTHING RETURNING id').bind(crypto.randomUUID(), address, displayName, subject).first();
       if (!result) throw new HttpError(409, 'Sender identity already exists.');
-      await audit(env, request, 'IDENTITY_CREATED', { address }); return redirect('/admin?view=identities&notice=Identity+created');
+      await audit(env, request, 'IDENTITY_CREATED', { address }); return redirect(targetBase + '?view=identities&notice=Identity+created');
     }
-    if (path === '/admin/identities/request-otp' || path === '/dashboard/identities/request-otp') {
+    if (actionPath === '/admin/identities/request-otp') {
       sameOrigin(request);
       const data = await form(request);
       const { values: cfg } = await config(env);
@@ -868,7 +895,7 @@ async function handler(request, env) {
       await audit(env, request, 'IDENTITY_OTP_REQUESTED', { address: currentAddress, newAddress, recipient: adminEmail });
       return reply({ success: true, message: `Verification code sent to ${adminEmail}` });
     }
-    if (path === '/admin/identities/update') {
+    if (actionPath === '/admin/identities/update') {
       const address = email(data.get('email_address')), action = data.get('action');
       if (!address || !['default','toggle','rename','edit','delete'].includes(action)) throw new HttpError(422, 'Invalid identity action.');
       const identity = await env.DB.prepare('SELECT * FROM sender_identities WHERE email_address=?').bind(address).first();
@@ -881,7 +908,7 @@ async function handler(request, env) {
       if (action === 'delete') {
         if (identity.is_default || address === cfg.DEFAULT_SENDER) throw new HttpError(409, 'Choose another default sender before deleting this identity.');
         await env.DB.prepare(`DELETE FROM sender_identities WHERE email_address=?${ownClause}`).bind(address,...ownParams).run();
-        await audit(env, request, 'IDENTITY_DELETED', { address }); return redirect('/admin?view=identities&notice=Identity+deleted');
+        await audit(env, request, 'IDENTITY_DELETED', { address }); return redirect(targetBase + '?view=identities&notice=Identity+deleted');
       }
       if (action === 'rename' || action === 'edit') {
         const displayName = text(data.get('display_name'), 100);
@@ -926,14 +953,14 @@ async function handler(request, env) {
           }
           await env.DB.batch(changes);
           await audit(env, request, 'IDENTITY_TRANSFERRED', { oldAddress: address, newAddress, displayName });
-          return redirect('/admin?view=identities&notice=' + encodeURIComponent('Sender identity address updated successfully'));
+          return redirect(targetBase + '?view=identities&notice=' + encodeURIComponent('Sender identity address updated successfully'));
         }
 
         const changes = [env.DB.prepare(`UPDATE sender_identities SET display_name=? WHERE email_address=?${ownClause}`).bind(displayName, address, ...ownParams)];
         if (admin && address === cfg.DEFAULT_SENDER) changes.push(env.DB.prepare('INSERT INTO app_settings(name,value,is_secret,updated_at) VALUES (?,?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,updated_at=unixepoch()').bind('DEFAULT_SENDER_NAME', displayName));
         await env.DB.batch(changes);
         await audit(env, request, 'IDENTITY_RENAMED', { address, displayName });
-        return redirect('/admin?view=identities&notice=Identity+updated');
+        return redirect(targetBase + '?view=identities&notice=Identity+updated');
       } else if (action === 'toggle') {
         if (identity.is_default || address === cfg.DEFAULT_SENDER) throw new HttpError(409, 'Choose another default sender before pausing this identity.');
         await env.DB.prepare(`UPDATE sender_identities SET is_active=1-is_active WHERE email_address=?${ownClause}`).bind(address,...ownParams).run();
@@ -945,9 +972,9 @@ async function handler(request, env) {
           ...(admin ? [env.DB.prepare('INSERT INTO app_settings (name,value,is_secret,updated_at) VALUES (?,?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,updated_at=unixepoch()').bind('DEFAULT_SENDER', address)] : []),
         ]);
       }
-      await audit(env, request, 'IDENTITY_UPDATED', { address, action }); return redirect('/admin?view=identities&notice=Identity+updated');
+      await audit(env, request, 'IDENTITY_UPDATED', { address, action }); return redirect(targetBase + '?view=identities&notice=Identity+updated');
     }
-    if (path === '/admin/api-clients/create') {
+    if (actionPath === '/admin/api-clients/create') {
       const name = text(data.get('name'), 80);
       if (!name) throw new HttpError(422, 'Client name is required.');
       const senderRaw = data.get('sender_address');
@@ -955,6 +982,10 @@ async function handler(request, env) {
       if (senderRaw && !sender) throw new HttpError(422, 'Invalid sender address.');
       // A client key may only be pinned to a sender identity the workspace owns.
       const admin = await isSuperadmin(env, subject);
+      if (!admin) {
+        const verifiedDomain = await env.DB.prepare('SELECT 1 FROM managed_domains WHERE owner_subject=? AND is_verified=1').bind(subject).first();
+        if (!verifiedDomain) throw new HttpError(422, 'Domain verification required. You must add and verify at least one domain before creating API clients.');
+      }
       if (sender) {
         const identityRow = await env.DB.prepare(admin ? 'SELECT 1 FROM sender_identities WHERE email_address=? AND is_active=1' : 'SELECT 1 FROM sender_identities WHERE email_address=? AND is_active=1 AND owner_subject=?').bind(sender,...(admin?[]:[subject])).first();
         if (!identityRow) throw new HttpError(422, 'Sender must be an active identity owned by this workspace.');
@@ -964,17 +995,17 @@ async function handler(request, env) {
       const key = btoa(String.fromCharCode(...bytes)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
       await env.DB.prepare('INSERT INTO api_clients (id,name,key_hash,sender_address,is_active,created_at,owner_subject) VALUES (?,?,?,?,1,unixepoch(),?)').bind(crypto.randomUUID(), name, await hash(key), sender, subject).run();
       await audit(env, request, 'API_CLIENT_CREATED', { name, sender });
-      return redirect('/admin?view=clients&created_key=' + encodeURIComponent(key) + '&notice=' + encodeURIComponent('API client created. Copy the key now; it will not be shown again.'));
+      return redirect(targetBase + '?view=clients&created_key=' + encodeURIComponent(key) + '&notice=' + encodeURIComponent('API client created. Copy the key now; it will not be shown again.'));
     }
-    if (path === '/admin/api-clients/revoke') {
+    if (actionPath === '/admin/api-clients/revoke') {
       const id = data.get('id');
       if (typeof id !== 'string' || !id || id.length > 100) throw new HttpError(422, 'Invalid client.');
       const admin = await isSuperadmin(env, subject);
       await env.DB.prepare(admin ? 'UPDATE api_clients SET is_active=0 WHERE id=?' : 'UPDATE api_clients SET is_active=0 WHERE id=? AND owner_subject=?').bind(id,...(admin?[]:[subject])).run();
       await audit(env, request, 'API_CLIENT_REVOKED', { id });
-      return redirect('/admin?view=clients&notice=' + encodeURIComponent('API client revoked.'));
+      return redirect(targetBase + '?view=clients&notice=' + encodeURIComponent('API client revoked.'));
     }
-    if (path === '/admin/users/add') {
+    if (actionPath === '/admin/users/add') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const newSubject = subjectValue(data.get('subject'));
       if (newSubject === 'local-admin') throw new HttpError(422, 'The local administrator subject is reserved for deployment bootstrap.');
@@ -984,9 +1015,9 @@ async function handler(request, env) {
       const existing = await env.DB.prepare('SELECT role FROM admin_users WHERE subject=?').bind(newSubject).first();
       if (existing?.role === 'superadmin') throw new HttpError(409, 'Cannot demote or replace a superadmin from this panel.');
       await env.DB.prepare('INSERT INTO admin_users (subject,role,is_active,created_at,created_by) VALUES (?,?,1,unixepoch(),?) ON CONFLICT(subject) DO UPDATE SET role=excluded.role,is_active=1').bind(newSubject, role, subject).run();
-      await audit(env, request, 'ADMIN_USER_ADDED', { subject: newSubject, role }); return redirect('/admin?view=users&notice=' + encodeURIComponent('Administrator added.'));
+      await audit(env, request, 'ADMIN_USER_ADDED', { subject: newSubject, role }); return redirect(targetBase + '?view=users&notice=' + encodeURIComponent('Administrator added.'));
     }
-    if (path === '/admin/users/revoke') {
+    if (actionPath === '/admin/users/revoke') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const target = subjectValue(data.get('subject'));
       if (target === subject) throw new HttpError(422, 'Invalid target.');
@@ -1000,9 +1031,9 @@ async function handler(request, env) {
         env.DB.prepare('DELETE FROM admin_sessions WHERE access_subject=?').bind(target),
         env.DB.prepare('DELETE FROM admin_otps WHERE subject=?').bind(target),
       ]);
-      await audit(env, request, 'ADMIN_USER_REVOKED', { subject: target }); return redirect('/admin?view=users&notice=' + encodeURIComponent('Administrator revoked.'));
+      await audit(env, request, 'ADMIN_USER_REVOKED', { subject: target }); return redirect(targetBase + '?view=users&notice=' + encodeURIComponent('Administrator revoked.'));
     }
-    if (path === '/admin/users/approve-request') {
+    if (actionPath === '/admin/users/approve-request') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const reqId = data.get('request_id');
       const targetEmail = email(data.get('email'));
@@ -1012,17 +1043,17 @@ async function handler(request, env) {
         await env.DB.prepare("UPDATE access_requests SET status='approved' WHERE id=?").bind(reqId).run().catch(() => {});
       }
       await audit(env, request, 'ACCESS_REQUEST_APPROVED', { subject: targetEmail, approved_by: subject });
-      return redirect('/admin?view=users&notice=' + encodeURIComponent(`Account approved for ${targetEmail}. They can now sign in.`));
+      return redirect(targetBase + '?view=users&notice=' + encodeURIComponent(`Account approved for ${targetEmail}. They can now sign in.`));
     }
-    if (path === '/admin/users/reject-request') {
+    if (actionPath === '/admin/users/reject-request') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const reqId = data.get('request_id');
       if (reqId) {
         await env.DB.prepare("UPDATE access_requests SET status='rejected' WHERE id=?").bind(reqId).run().catch(() => {});
       }
-      return redirect('/admin?view=users&notice=' + encodeURIComponent('Registration request dismissed.'));
+      return redirect(targetBase + '?view=users&notice=' + encodeURIComponent('Registration request dismissed.'));
     }
-    if (path === '/admin/domains/create' || path === '/dashboard/domains/create') {
+    if (actionPath === '/admin/domains/create') {
       const domain = hostname(data.get('domain') || '');
       if (!domain) throw new HttpError(422, 'Enter a valid domain such as client.example.com.');
       const name = text(data.get('display_name'), 100, false) || domain;
@@ -1031,10 +1062,9 @@ async function handler(request, env) {
       const token = crypto.randomUUID().replace(/-/g, '');
       await env.DB.prepare('INSERT INTO managed_domains (domain,display_name,is_verified,created_at,created_by,owner_subject,verification_token) VALUES (?,?,0,unixepoch(),?,?,?)').bind(domain, name, subject, subject, token).run();
       await audit(env, request, 'DOMAIN_ADDED', { domain });
-      const base = (await adminRole(env, subject)) === 'superadmin' ? '/admin' : '/dashboard';
-      return redirect(`${base}/domains?notice=` + encodeURIComponent('Domain added.'));
+      return redirect(`${targetBase}/domains?notice=` + encodeURIComponent('Domain added.'));
     }
-    if (path === '/admin/domains/delete' || path === '/dashboard/domains/delete') {
+    if (actionPath === '/admin/domains/delete') {
       const domain = hostname(data.get('domain') || '');
       if (!domain) throw new HttpError(422, 'Enter a valid domain.');
       const admin = await isSuperadmin(env, subject);
@@ -1043,10 +1073,9 @@ async function handler(request, env) {
       await env.DB.prepare('DELETE FROM managed_domains WHERE domain=?').bind(domain).run();
       await env.DB.prepare('DELETE FROM admin_alerts WHERE domain=?').bind(domain).run().catch(() => {});
       await audit(env, request, 'DOMAIN_DELETED', { domain, owner: row.owner_subject });
-      const base = (await adminRole(env, subject)) === 'superadmin' ? '/admin' : '/dashboard';
-      return redirect(`${base}/domains?notice=` + encodeURIComponent(`Domain ${domain} removed.`));
+      return redirect(`${targetBase}/domains?notice=` + encodeURIComponent(`Domain ${domain} removed.`));
     }
-    if (path === '/admin/users/role') {
+    if (actionPath === '/admin/users/role') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const target = subjectValue(data.get('subject'));
       const role = data.get('role');
@@ -1055,9 +1084,9 @@ async function handler(request, env) {
       if (!row) throw new HttpError(404, 'User not found.');
       if (row.role === 'superadmin') throw new HttpError(409, 'Cannot change a superadmin role.');
       await env.DB.prepare('UPDATE admin_users SET role=? WHERE subject=?').bind(role, target).run();
-      await audit(env, request, 'ADMIN_USER_ROLE_CHANGED', { subject: target, role }); return redirect('/admin?view=users&notice=' + encodeURIComponent('Role updated.'));
+      await audit(env, request, 'ADMIN_USER_ROLE_CHANGED', { subject: target, role }); return redirect(targetBase + '?view=users&notice=' + encodeURIComponent('Role updated.'));
     }
-    if (path === '/admin/domains/verify' || path === '/dashboard/domains/verify') {
+    if (actionPath === '/admin/domains/verify') {
       const domain = hostname(data.get('domain') || '');
       if (!domain) throw new HttpError(422, 'Enter a valid domain such as client.example.com.');
       const admin = await isSuperadmin(env, subject);
@@ -1077,10 +1106,9 @@ async function handler(request, env) {
         ).run().catch(() => {});
       }
       await audit(env, request, 'DOMAIN_VERIFIED', { domain, ok });
-      const base = (await adminRole(env, subject)) === 'superadmin' ? '/admin' : '/dashboard';
-      return redirect(`${base}/domains?notice=` + encodeURIComponent(ok ? 'Domain verified.' : 'DNS record not found. Outbound sending from this domain is disabled until it verifies.'));
+      return redirect(`${targetBase}/domains?notice=` + encodeURIComponent(ok ? 'Domain verified.' : 'DNS record not found. Outbound sending from this domain is disabled until it verifies.'));
     }
-    if (path === '/admin/domains/auto-check' || path === '/dashboard/domains/auto-check') {
+    if (actionPath === '/admin/domains/auto-check') {
       const admin = await isSuperadmin(env, subject);
       const rowsToCheck = await rows(env, admin ? 'SELECT domain,verification_token,owner_subject FROM managed_domains' : 'SELECT domain,verification_token,owner_subject FROM managed_domains WHERE owner_subject=?', ...(admin ? [] : [subject]));
       let failed = 0;
@@ -1099,10 +1127,42 @@ async function handler(request, env) {
           await audit(env, request, 'DOMAIN_VERIFICATION_LAPSED', { domain: d.domain, owner });
         }
       }
-      const base = (await adminRole(env, subject)) === 'superadmin' ? '/admin' : '/dashboard';
-      return redirect(`${base}/domains?notice=` + encodeURIComponent(failed > 0 ? `DNS auto-check complete: ${failed} domain(s) failed verification and outbound sending was paused.` : 'DNS auto-check complete: all domains verified successfully.'));
+      return redirect(`${targetBase}/domains?notice=` + encodeURIComponent(failed > 0 ? `DNS auto-check complete: ${failed} domain(s) failed verification and outbound sending was paused.` : 'DNS auto-check complete: all domains verified successfully.'));
     }
-    if (path === '/admin/providers/limit' || path === '/dashboard/providers/limit') {
+    if (actionPath === '/admin/domains/white-label') {
+      if (!await isSuperadmin(env, subject)) throw new HttpError(403, 'Superadmin access required.');
+      const domainName = data.get('domain') ? text(data.get('domain'), 253) : '';
+      if (!domainName) throw new HttpError(422, 'Domain is required.');
+      const existing = await env.DB.prepare('SELECT domain, is_verified FROM managed_domains WHERE domain=?').bind(domainName).first();
+      if (!existing) throw new HttpError(404, 'Managed domain not found.');
+
+      const rawCustomHost = (data.get('custom_api_hostname') || '').trim();
+      const enforce = (data.get('enforce_custom_hostname') === '1' || data.get('enforce_custom_hostname') === 'true') ? 1 : 0;
+
+      let customHost = null;
+      let status = 'disabled';
+      if (rawCustomHost) {
+        customHost = hostname(rawCustomHost);
+        if (!customHost || isPrivateHost(customHost)) throw new HttpError(422, 'Enter a valid public custom hostname (e.g. api.yourdomain.com).');
+        if (customHost === 'mail.neopathshala.com' || customHost === 'mailer.neopathshala.com') {
+          throw new HttpError(422, 'Custom hostname cannot be the system primary gateway.');
+        }
+        status = 'active';
+      }
+
+      await env.DB.prepare(
+        'UPDATE managed_domains SET custom_api_hostname=?, custom_hostname_status=?, enforce_custom_hostname=? WHERE domain=?'
+      ).bind(customHost, status, enforce, domainName).run();
+
+      await audit(env, request, 'DOMAIN_WHITE_LABEL_CONFIGURED', {
+        domain: domainName,
+        custom_api_hostname: customHost,
+        enforce_custom_hostname: enforce
+      });
+
+      return redirect(`${targetBase}/domains?notice=` + encodeURIComponent('White-label endpoint settings updated for ' + domainName + '.'));
+    }
+    if (actionPath === '/admin/providers/limit') {
       const provider = (data.get('provider') || '').toLowerCase().trim();
       if (!PROVIDERS.includes(provider)) throw new HttpError(422, 'Invalid provider.');
       const limitVal = parseInt(data.get('limit'), 10);
@@ -1120,17 +1180,16 @@ async function handler(request, env) {
         ON CONFLICT(owner_subject, provider_name) DO UPDATE SET send_limit=excluded.send_limit, updated_at=unixepoch()
       `).bind(targetUser, provider, limitVal).run();
       await audit(env, request, 'PROVIDER_LIMIT_UPDATED', { provider, limit: limitVal, target_user: targetUser });
-      const base = isSuper ? '/admin' : '/dashboard';
       const fromView = data.get('from_view') === 'settings' ? 'settings' : 'providers';
-      return redirect(`${base}/${fromView}?notice=` + encodeURIComponent(`Sending limit for ${provider.toUpperCase()} (${targetUser}) updated to ${limitVal.toLocaleString()} emails.`));
+      return redirect(`${targetBase}/${fromView}?notice=` + encodeURIComponent(`Sending limit for ${provider.toUpperCase()} (${targetUser}) updated to ${limitVal.toLocaleString()} emails.`));
     }
-    if (path === '/admin/docs/save') {
+    if (actionPath === '/admin/docs/save') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const content = String(data.get('content') || '').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, '').slice(0, 20000);
       await env.DB.prepare("INSERT INTO app_settings (name,value,is_secret,updated_at) VALUES ('DOCS_CONTENT',?,0,unixepoch()) ON CONFLICT(name) DO UPDATE SET value=excluded.value,updated_at=unixepoch()").bind(content).run();
-      await audit(env, request, 'DOCS_UPDATED', {}); return redirect('/admin?view=docs&notice=' + encodeURIComponent('Documentation saved.'));
+      await audit(env, request, 'DOCS_UPDATED', {}); return redirect(targetBase + '/docs?notice=' + encodeURIComponent('Documentation saved.'));
     }
-    if (path === '/admin/users/update') {
+    if (actionPath === '/admin/users/update') {
       if (await adminRole(env, subject) !== 'superadmin') throw new HttpError(403, 'Superadmin required.');
       const oldSubject = subjectValue(data.get('old_subject'));
       const newSubject = subjectValue(data.get('new_subject'));
@@ -1156,14 +1215,18 @@ async function handler(request, env) {
       } catch {
         throw new HttpError(409, 'The target subject already owns workspace data.');
       }
-      await audit(env, request, 'ADMIN_USER_UPDATED', { from: oldSubject, to: newSubject, role }); return redirect('/admin?view=users&notice=' + encodeURIComponent('Administrator updated.'));
+      await audit(env, request, 'ADMIN_USER_UPDATED', { from: oldSubject, to: newSubject, role }); return redirect(targetBase + '/users?notice=' + encodeURIComponent('Administrator updated.'));
     }
-    if (path === '/admin/send-test') {
+    if (actionPath === '/admin/send-test') {
       await rate(env, 'admin:send:' + subject, 5, 60);
       const mode=data.get('delivery_mode') || 'normal';
       if (!['normal','mailgun-sandbox'].includes(mode)) throw new HttpError(422,'Invalid delivery mode.');
       // The Mailgun sandbox shares the deployment provider account; treat it as superadmin infrastructure.
       if (mode==='mailgun-sandbox' && !await isSuperadmin(env, subject)) throw new HttpError(403, 'Superadmin required.');
+      if (!await isSuperadmin(env, subject)) {
+        const hasVerified = await env.DB.prepare('SELECT 1 FROM managed_domains WHERE owner_subject=? AND is_verified=1').bind(subject).first();
+        if (!hasVerified) throw new HttpError(422, 'Domain verification required. You must add and verify a domain before sending test emails.');
+      }
       let dispatchConfig=cfg;const payload=Object.fromEntries(data);
       let owner = subject;
       if(mode==='mailgun-sandbox') {
@@ -1184,21 +1247,22 @@ async function handler(request, env) {
       }
       const result = await dispatch(env, dispatchConfig, validateMail(payload, dispatchConfig), data.get('idempotency_key'), owner);
       await audit(env, request, 'TEST_EMAIL_REQUESTED', { id: result.id, status: result.status });
-      return flash(result.success ? 'Test email accepted by ' + result.provider + '. Inspect its delivery status in Mail activity.' : result.uncertain ? 'Provider outcome uncertain. Inspect the mail log and provider dashboard before retrying.' : 'Test email failed. Check your provider configuration and mail log.');
+      return flash(result.success ? 'Test email accepted by ' + result.provider + '. Inspect its delivery status in Mail activity.' : result.uncertain ? 'Provider outcome uncertain. Inspect the mail log and provider dashboard before retrying.' : 'Test email failed. Check your provider configuration and mail log.', targetBase);
     }
     throw new HttpError(404, 'Endpoint not found.');
   }
   requireMethod(request, ['GET']);
-  if (path === '/admin/logout') throw new HttpError(405, 'Sign out using the panel form.');
-  if (['/admin/view-mail','/admin/email','/admin/preview'].includes(path)) {
+  if (path === '/admin/logout' || path === '/dashboard/logout') throw new HttpError(405, 'Sign out using the panel form.');
+  if (['/admin/view-mail','/dashboard/view-mail','/admin/email','/dashboard/email','/admin/preview','/dashboard/preview'].includes(path)) {
     const id = url.searchParams.get('id'); if (!id || id.length > 100) throw new HttpError(422, 'Invalid message identifier.');
     const admin = await isSuperadmin(env, subject);
     const mail = await env.DB.prepare(admin ? 'SELECT * FROM email_logs WHERE id=?' : 'SELECT * FROM email_logs WHERE id=? AND owner_subject=?').bind(id,...(admin?[]:[subject])).first();
     if (!mail) throw new HttpError(404, 'Message not found.');
-    if (path === '/admin/preview') return reply(mail.html_body || '<p>Content not retained.</p>', 200, {
+    if (path === '/admin/preview' || path === '/dashboard/preview') return reply(mail.html_body || '<p>Content not retained.</p>', 200, {
       'Content-Security-Policy': "sandbox; default-src 'none'; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'; frame-ancestors 'self'", 'X-Frame-Options': 'SAMEORIGIN',
     });
-    return reply(ui.page('mail','Message details','Inspect delivery metadata and isolated message content.',ui.inspector(mail),sess));
+    const base = path.startsWith('/admin') ? '/admin' : '/dashboard';
+    return reply(ui.page('mail','Message details','Inspect delivery metadata and isolated message content.',ui.inspector(mail, base),sess));
   }
   const VALID_VIEWS = ['overview','mail','providers','identities','clients','users','domains','docs','security','settings','setup','compose'];
   let slugView = null;
@@ -1221,6 +1285,7 @@ async function handler(request, env) {
     sess.script_nonce = crypto.randomUUID();
   }
   sess.role = role;
+  sess.base = path.startsWith('/admin') ? '/admin' : '/dashboard';
 
   let title, subtitle, content;
   if (view === 'settings') {
@@ -1233,10 +1298,11 @@ async function handler(request, env) {
     const usage = await getProviderUsage(env, subject);
     content=ui.settings(redactConfig(cfg),sess,superadmin,accountKeys,limits,usage);
   } else if (view === 'identities' || view === 'compose') {
+    const isSuper = await isSuperadmin(env, subject);
     const senders = await identities(env, subject);
-    const verifiedDomains = view === 'identities' ? (await rows(env, 'SELECT domain FROM managed_domains WHERE is_verified=1 AND owner_subject=? ORDER BY domain', subject)).map(r=>r.domain) : [];
+    const verifiedDomains = (await rows(env, isSuper ? 'SELECT domain FROM managed_domains WHERE is_verified=1 ORDER BY domain' : 'SELECT domain FROM managed_domains WHERE is_verified=1 AND owner_subject=? ORDER BY domain', ...(isSuper ? [] : [subject]))).map(r=>r.domain);
     title=view==='compose'?'Send a test':'Sender identities'; subtitle=view==='compose'?'Verify your email delivery setup.':'Manage approved addresses for outbound mail.';
-    content=view==='compose'?ui.compose(senders,sess):ui.identities(senders,sess,verifiedDomains);
+    content=view==='compose'?ui.compose(senders,sess,verifiedDomains.length > 0):ui.identities(senders,sess,verifiedDomains);
   } else if (view === 'providers') {
     title='Delivery providers'; subtitle='Priority failover routing, health monitoring, and credential management.';
     const safeCfg = redactConfig(cfg);
@@ -1264,14 +1330,16 @@ async function handler(request, env) {
       pageSize,
       totalCount,
       totalPages,
-      base: (await isSuperadmin(env, subject)) ? '/admin' : '/dashboard',
+      base: sess.base,
     });
   } else if (view === 'setup') {
     title='Integration guide'; subtitle='Prepare your Worker and connect the Nepathshala backend.'; content=ui.setup(url.origin,redactConfig(cfg));
   } else if (view === 'clients') {
     title='API clients'; subtitle='Issue and revoke integration keys for applications.';
-    const clients = await rows(env, await isSuperadmin(env, subject) ? 'SELECT id,name,sender_address,is_active,created_at,last_used_at FROM api_clients ORDER BY created_at DESC' : 'SELECT id,name,sender_address,is_active,created_at,last_used_at FROM api_clients WHERE owner_subject=? ORDER BY created_at DESC', ...(await isSuperadmin(env, subject)?[]:[subject]));
-    content = ui.apiClients(clients, sess, (url.searchParams.get('created_key') || '').slice(0, 128));
+    const isSuper = await isSuperadmin(env, subject);
+    const clients = await rows(env, isSuper ? 'SELECT id,name,sender_address,is_active,created_at,last_used_at FROM api_clients ORDER BY created_at DESC' : 'SELECT id,name,sender_address,is_active,created_at,last_used_at FROM api_clients WHERE owner_subject=? ORDER BY created_at DESC', ...(isSuper?[]:[subject]));
+    const verifiedCount = isSuper ? 1 : ((await env.DB.prepare('SELECT COUNT(*) AS count FROM managed_domains WHERE owner_subject=? AND is_verified=1').bind(subject).first())?.count || 0);
+    content = ui.apiClients(clients, sess, (url.searchParams.get('created_key') || '').slice(0, 128), verifiedCount > 0);
   } else if (view === 'users') {
     title='Admin users'; subtitle='Manage administrator identities authorized through Cloudflare Access.';
     const role = await adminRole(env, sess.access_subject || subject);
@@ -1283,6 +1351,7 @@ async function handler(request, env) {
     sess.script_nonce=crypto.randomUUID();
     const domains = await rows(env, await isSuperadmin(env, subject)
       ? `SELECT d.domain, d.display_name, d.is_verified, d.created_at, d.verification_token, d.owner_subject,
+                d.custom_api_hostname, d.custom_hostname_status, d.enforce_custom_hostname,
                 COALESCE(p.display_name, u.subject, d.owner_subject) AS owner_name,
                 p.avatar_mime, p.updated_at AS profile_updated_at
          FROM managed_domains d
@@ -1290,6 +1359,7 @@ async function handler(request, env) {
          LEFT JOIN admin_users u ON u.subject = d.owner_subject
          ORDER BY d.created_at DESC`
       : `SELECT d.domain, d.display_name, d.is_verified, d.created_at, d.verification_token, d.owner_subject,
+                d.custom_api_hostname, d.custom_hostname_status, d.enforce_custom_hostname,
                 d.owner_subject AS owner_name, NULL AS avatar_mime, NULL AS profile_updated_at
          FROM managed_domains d
          WHERE d.owner_subject=?
@@ -1314,7 +1384,7 @@ async function handler(request, env) {
     if (filters.search) { clauses.push('(subject LIKE ? OR recipient_address LIKE ?)'); const term='%'+filters.search.replace(/[\\%_]/g,'\\$&')+'%'; clauses[clauses.length-1]="(subject LIKE ? ESCAPE '\\' OR recipient_address LIKE ? ESCAPE '\\')"; params.push(term,term); }
     if (!await isSuperadmin(env, subject)) { clauses.push('owner_subject=?'); params.push(subject); }
     const logs=await rows(env,`SELECT id,direction,subject,recipient_address,transmission_status,provider_used,unix_timestamp FROM email_logs ${clauses.length?'WHERE '+clauses.join(' AND '):''} ORDER BY unix_timestamp DESC,id LIMIT 26 OFFSET ?`,...params,(page-1)*25);
-    content=ui.mailView(logs.slice(0,25),filters,page,logs.length>25);
+    content=ui.mailView(logs.slice(0,25),filters,page,logs.length>25,sess.base);
   } else if (view === 'overview') {
     title='Overview'; subtitle='A clear view of your email infrastructure.';
     const superadmin = await isSuperadmin(env, subject);
@@ -1332,7 +1402,8 @@ async function handler(request, env) {
       rows(env, superadmin ? 'SELECT id,direction,subject,recipient_address,transmission_status,provider_used,unix_timestamp FROM email_logs ORDER BY unix_timestamp DESC LIMIT 7' : 'SELECT id,direction,subject,recipient_address,transmission_status,provider_used,unix_timestamp FROM email_logs WHERE owner_subject=? ORDER BY unix_timestamp DESC LIMIT 7', ...(superadmin ? [] : [subject])),
       rows(env, 'SELECT * FROM provider_health WHERE owner_subject=?', superadmin ? 'local-admin' : subject),
     ]);
-    content=ui.overview(safeStats,logs || [],health || [],redactConfig(cfg));
+    const verifiedCount = superadmin ? 1 : ((await env.DB.prepare('SELECT COUNT(*) AS count FROM managed_domains WHERE owner_subject=? AND is_verified=1').bind(subject).first())?.count || 0);
+    content=ui.overview(safeStats,logs || [],health || [],redactConfig(cfg),superadmin,sess.base,verifiedCount > 0);
   } else throw new HttpError(404,'View not found.');
   sess.role=role;
   const activeAlerts = await rows(env, "SELECT id,domain,type,message,created_at FROM admin_alerts WHERE owner_subject=? AND is_read=0 ORDER BY created_at DESC", subject).catch(() => []);

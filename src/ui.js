@@ -842,14 +842,7 @@ nav {
   padding: 12px 14px 10px;
 }
 
-.side-docs-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
 .side-docs-link {
-  flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -863,6 +856,8 @@ nav {
   text-decoration: none;
   transition: all 0.15s ease;
   margin-bottom: 0;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .side-docs-link:hover {
@@ -871,41 +866,17 @@ nav {
   color: var(--accent);
 }
 
-.side-docs-edit-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px 10px;
-  border-radius: var(--radius-md);
-  background: var(--surface-hover);
-  border: 1px solid var(--line);
-  color: var(--text-secondary);
-  font-size: 11px;
-  font-weight: 600;
-  text-decoration: none;
-  transition: all 0.15s ease;
-  flex-shrink: 0;
-  height: 36px;
-  box-sizing: border-box;
-}
-
-.side-docs-edit-btn:hover {
-  background: var(--tint);
-  color: var(--accent);
-  border-color: var(--tint-strong);
-}
-
-.side-docs-edit-btn svg {
-  width: 13px;
-  height: 13px;
-}
-
 .sidefoot {
-  padding: 14px 14px;
+  height: 38px;
+  min-height: 38px;
+  max-height: 38px;
+  box-sizing: border-box;
+  padding: 0 14px;
   border-top: 1px solid var(--line);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .sidefoot-credit {
@@ -916,7 +887,7 @@ nav {
   font-size: 11px;
   color: var(--muted);
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1;
   letter-spacing: 0.1px;
   text-align: center;
   margin: 0;
@@ -926,28 +897,6 @@ nav {
 .sidefoot-credit strong {
   color: var(--text);
   font-weight: 600;
-}
-
-.sidefoot-credit-edit {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 4px;
-  color: var(--muted);
-  text-decoration: none;
-  transition: all 0.15s ease;
-}
-
-.sidefoot-credit-edit:hover {
-  color: var(--accent);
-  background: var(--tint);
-}
-
-.sidefoot-credit-edit svg {
-  width: 11px;
-  height: 11px;
 }
 
 .sidefoot small {
@@ -3112,16 +3061,32 @@ input[type=checkbox] {
 .profile-photo-actions {
   display: flex;
   flex-direction: column;
+  justify-content: center;
+  align-items: center;
   gap: 8px;
+  min-height: 80px;
 }
 .profile-photo-buttons {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 12px;
 }
 .profile-photo-hint {
   font-size: 13px;
   color: var(--muted);
+  text-align: center;
+}
+.profile-photo-actions .footnote,
+#profile-upload-status {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
+  text-align: center;
+}
+#profile-upload-status:empty {
+  display: none;
+  margin: 0;
 }
 
 /* Rich Text Editor */
@@ -3737,6 +3702,7 @@ details.docs-accordion .accordion-content {
 .app-footer {
   height: 38px;
   min-height: 38px;
+  max-height: 38px;
   background: var(--surface);
   border-top: 1px solid var(--line);
   display: flex;
@@ -3807,6 +3773,9 @@ details.docs-accordion .accordion-content {
   }
 }
 
+:root[data-theme="dark"] .sidefoot,
+:root.dark .sidefoot,
+:root:has(#theme-toggle:checked) .sidefoot,
 :root[data-theme="dark"] .app-footer,
 :root.dark .app-footer,
 :root:has(#theme-toggle:checked) .app-footer {
@@ -4354,7 +4323,7 @@ function formatCredit(credit = 'Developed by SoftLaya Tech') {
 }
 
 export function page(view, title, subtitle, content, sess, notice = '', alerts = [], footerCredit = 'Developed by SoftLaya Tech') {
-  const base = sess?.role === 'superadmin' ? '/admin' : '/dashboard';
+  const base = sess?.base || '/dashboard';
   const isDark = sess?.theme === 'dark';
   return document(title, `
     <input type="checkbox" id="theme-toggle" class="theme-toggle-input" aria-label="Toggle dark mode" ${isDark ? 'checked' : ''}>
@@ -4378,7 +4347,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
         <div class="side-docs-box">
           <div class="side-docs-row">
             <a class="navlink side-docs-link" href="/docs" target="_blank" title="View live documentation in a new tab">${icon('docs')}<span>Documentation ↗</span></a>
-            ${(!sess?.role || sess?.role === 'superadmin') ? `
+            ${sess?.role === 'superadmin' ? `
               <a class="side-docs-edit-btn" href="${base}/docs" title="Edit documentation in Documentation Studio" aria-label="Edit documentation in Studio">${icon('edit')}<span>Edit</span></a>
             ` : ''}
           </div>
@@ -4386,7 +4355,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
         <div class="sidefoot">
           <div class="sidefoot-credit">
             <span>${formatCredit(sess?.footerCredit || footerCredit)}</span>
-            ${(!sess?.role || sess?.role === 'superadmin') ? `
+            ${sess?.role === 'superadmin' ? `
               <a class="sidefoot-credit-edit" href="${base}/settings#branding" title="Edit branding &amp; footer credit in Settings" aria-label="Edit footer credit in Settings">${icon('edit')}</a>
             ` : ''}
           </div>
@@ -4406,7 +4375,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
             </label>
             <details class="custom-dropdown profile-dropdown">
               <summary class="profilelink" aria-label="User menu">
-                ${profileAvatar(sess.profile)}
+                ${profileAvatar(sess.profile, base)}
                 <span class="profilemeta">
                   <span class="profilename">${e(sess.profile?.display_name || sess.access_subject || 'Administrator')}</span>
                   <span class="roletag ${sess.role === 'superadmin' ? 'superadmin' : ''}">${sess.role === 'superadmin' ? 'Superadmin' : 'Admin'}</span>
@@ -4421,10 +4390,10 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
                 <div class="dropdown-divider"></div>
                 <a class="dropdown-item" href="${base}/settings#profile">${icon('edit')} Your profile</a>
                 <a class="dropdown-item" href="${base}/settings">${icon('settings')} Workspace settings</a>
-                <a class="dropdown-item" href="${base}/security">${icon('security')} Security events</a>
+                ${sess?.role === 'superadmin' ? `<a class="dropdown-item" href="${base}/security">${icon('security')} Security events</a>` : ''}
                 <a class="dropdown-item" href="${base}/compose">${icon('mail')} Send test email</a>
                 <div class="dropdown-divider"></div>
-                <form method="post" action="/admin/logout">
+                <form method="post" action="${base}/logout">
                   ${hidden(sess.csrf_token)}
                   <button class="dropdown-item text-danger" type="submit">${icon('arrow')} Sign out</button>
                 </form>
@@ -4478,7 +4447,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
             </div>
             <div class="footer-status-item">
               <span class="status-dot good"></span>
-              <span>D1 Database: <strong>Connected</strong></span>
+              <span>Database: <strong>Connected</strong></span>
             </div>
           </div>
           <div class="footer-right">
@@ -4540,12 +4509,12 @@ function empty(message = 'Your mail activity will appear here', help = 'Configur
   return `<div class="empty">${icon('mail')}<strong>${e(message)}</strong><p>${e(help)}</p></div>`;
 }
 
-export function mailTable(logs) {
+export function mailTable(logs, base = '/dashboard') {
   if (!logs.length) return empty();
-  return `<div class="tablewrap"><table><thead><tr><th>Message</th><th>Direction</th><th>Status</th><th>Provider</th><th>Time (UTC)</th><th>Details</th></tr></thead><tbody>${logs.map(m => `<tr><td><div class="subject">${e(m.subject)}</div><span class="muted">${e(m.recipient_address)}</span></td><td>${e(m.direction)}</td><td>${badge(m.transmission_status)}</td><td>${e(m.provider_used)}</td><td>${e(new Date(m.unix_timestamp * 1000).toISOString().slice(0, 16).replace('T', ' '))}</td><td><a class="button secondary small" href="/admin/view-mail?id=${e(m.id)}">Inspect ${icon('arrow')}</a></td></tr>`).join('')}</tbody></table></div>`;
+  return `<div class="tablewrap"><table><thead><tr><th>Message</th><th>Direction</th><th>Status</th><th>Provider</th><th>Time (UTC)</th><th>Details</th></tr></thead><tbody>${logs.map(m => `<tr><td><div class="subject">${e(m.subject)}</div><span class="muted">${e(m.recipient_address)}</span></td><td>${e(m.direction)}</td><td>${badge(m.transmission_status)}</td><td>${e(m.provider_used)}</td><td>${e(new Date(m.unix_timestamp * 1000).toISOString().slice(0, 16).replace('T', ' '))}</td><td><a class="button secondary small" href="${base}/view-mail?id=${e(m.id)}">Inspect ${icon('arrow')}</a></td></tr>`).join('')}</tbody></table></div>`;
 }
 
-export function providerList(rows = [], cfg = {}, csrf) {
+export function providerList(rows = [], cfg = {}, csrf, base = '/dashboard') {
   const safeRows = Array.isArray(rows) ? rows : [];
   return PROVIDERS.map(p => {
     const row = safeRows.find(r => r && r.provider_name === p);
@@ -4555,27 +4524,44 @@ export function providerList(rows = [], cfg = {}, csrf) {
     } else {
       configured = !!cfg[p.toUpperCase() + '_API_KEY'];
     }
-    return `<div class="provider"><div class="providerleft"><div class="providerlogo">${providerLogo(p)}</div><div><strong>${e(p)}</strong><p>${configured ? 'Credential configured' : 'Add a credential in Settings'}${row?.consecutive_failures ? ' · ' + e(row.consecutive_failures) + ' recent failures' : ''}</p></div></div><div class="actions">${badge(!configured ? 'Not configured' : row?.is_active === 0 ? 'Paused' : row?.consecutive_failures >= 5 ? 'Cooling down' : 'Ready')}<a class="button secondary small" href="/admin/settings" aria-label="Configure">${icon('settings')}</a>${csrf ? `<form method="post" action="/admin/providers/toggle">${hidden(csrf)}<input type="hidden" name="provider" value="${p}"><button class="button secondary small">${row?.is_active === 0 ? 'Enable' : 'Pause'}</button></form>` : ''}</div></div>`;
+    const failures = row?.consecutive_failures || 0;
+    const isPaused = row?.is_active === 0;
+    const inCooldown = failures >= 5;
+    const hasFailures = failures > 0;
+    const statusLabel = !configured ? 'Not configured'
+      : isPaused ? 'Paused'
+      : inCooldown ? 'Cooling down'
+      : hasFailures ? 'Failing (' + failures + ')'
+      : !row?.last_used_timestamp ? 'Configured'
+      : 'Ready';
+    return `<div class="provider"><div class="providerleft"><div class="providerlogo">${providerLogo(p)}</div><div><strong>${e(p)}</strong><p>${configured ? (row?.last_used_timestamp ? 'Operational' : 'Credential configured · Untested') : 'Add a credential in Settings'}${failures ? ' · ' + failures + ' recent failures' : ''}</p></div></div><div class="actions">${badge(statusLabel)}<a class="button secondary small" href="${base}/settings" aria-label="Configure">${icon('settings')}</a>${csrf ? `<form method="post" action="${base}/providers/toggle">${hidden(csrf)}<input type="hidden" name="provider" value="${p}"><button class="button secondary small">${row?.is_active === 0 ? 'Enable' : 'Pause'}</button></form>` : ''}</div></div>`;
   }).join('');
 }
 
-export function overview(stats = {}, logs = [], health = [], cfg = {}) {
+export function overview(stats = {}, logs = [], health = [], cfg = {}, isSuper = true, base = '/dashboard', hasVerifiedDomains = true) {
   const safeStats = stats || {};
-  return `<div class="stats">${[
+  const unverifiedNotice = (!isSuper && !hasVerifiedDomains) ? `
+    <div class="notice warn" style="margin-bottom:20px;border-left:4px solid var(--accent)">
+      <strong>⚠️ Action Required: Add & Verify Your Sending Domain</strong>
+      <p style="margin:4px 0 0;font-size:13px">To protect domain reputation and prevent unauthorized abuse, email sending and API keys are disabled until you verify domain ownership. <a href="${base}/domains" style="text-decoration:underline;font-weight:600">Configure your domain DNS now →</a></p>
+    </div>
+  ` : '';
+  return `${unverifiedNotice}<div class="stats">${[
     ['Total messages', safeStats.total ?? 0, 'Inbound and outbound'],
     ['Accepted / delivered', safeStats.accepted ?? 0, 'Provider acceptance is not inbox placement'],
     ['Delivery issues', safeStats.issues ?? 0, 'Failed or bounced'],
     ['Pending', safeStats.pending ?? 0, 'Queued or awaiting reconciliation']
-  ].map(([label, value, note]) => `<div class="stat"><div class="statlabel"><span>${e(label)}</span>${icon('mail')}</div><div class="statvalue">${e(Number(value || 0).toLocaleString())}</div><div class="statnote">${e(note)}</div></div>`).join('')}</div><div class="split"><div><section class="panel"><div class="panelhead"><div><h2>Recent mail</h2><p>Your latest messages, in one place.</p></div><a class="button secondary small" href="/admin/mail">View all</a></div>${mailTable(Array.isArray(logs) ? logs : [])}</section><div class="notice">Message bodies are ${cfg.STORE_MESSAGE_BODIES === 'true' ? 'stored for inspection. Avoid sending secrets in email.' : 'not retained. Metadata remains available for delivery tracking.'}</div></div><div><section class="panel"><div class="panelhead"><div><h2>Delivery providers</h2><p>Availability based on configuration and recent attempts.</p></div></div>${providerList(health, cfg)}</section><section class="panel"><div class="panelbody"><h2>Connect your platform</h2><p class="sub">Send transactional mail from your application backend using a dedicated API credential.</p><a class="button secondary" href="/admin/setup">Integration guide ${icon('arrow')}</a></div></section></div></div>`;
+  ].map(([label, value, note]) => `<div class="stat"><div class="statlabel"><span>${e(label)}</span>${icon('mail')}</div><div class="statvalue">${e(Number(value || 0).toLocaleString())}</div><div class="statnote">${e(note)}</div></div>`).join('')}</div><div class="split"><div><section class="panel"><div class="panelhead"><div><h2>Recent mail</h2><p>Your latest messages, in one place.</p></div><a class="button secondary small" href="${base}/mail">View all</a></div>${mailTable(Array.isArray(logs) ? logs : [], base)}</section><div class="notice">Message bodies are ${cfg.STORE_MESSAGE_BODIES === 'true' ? 'stored for inspection. Avoid sending secrets in email.' : 'not retained. Metadata remains available for delivery tracking.'}</div></div><div><section class="panel"><div class="panelhead"><div><h2>${isSuper ? 'Delivery providers' : 'Workspace Delivery'}</h2><p>${isSuper ? 'Availability based on configuration and recent attempts.' : 'Sending capability and provider connectivity for your workspace.'}</p></div></div>${isSuper ? providerList(health, cfg, undefined, base) : `<div class="panelbody"><p class="sub">Outbound sending from your workspace uses your verified domains and encrypted provider keys.</p><div style="display:flex;gap:10px;margin-top:14px"><a class="button secondary small" href="${base}/identities">Sender identities ${icon('arrow')}</a><a class="button secondary small" href="${base}/domains">Domains ${icon('arrow')}</a></div></div>`}</section><section class="panel"><div class="panelbody"><h2>${isSuper ? 'Connect your platform' : 'API Integration'}</h2><p class="sub">${isSuper ? 'Send transactional mail from your application backend using a dedicated API credential.' : 'Issue and manage dedicated API credentials to send transactional mail from your backend.'}</p><a class="button secondary" href="${base}/${isSuper ? 'setup' : 'clients'}">${isSuper ? 'Integration guide' : 'API clients'} ${icon('arrow')}</a></div></section></div></div>`;
 }
 
-export function mailView(logs, filters, currentPage, hasNext) {
+export function mailView(logs, filters, currentPage, hasNext, base = '/dashboard') {
   const query = new URLSearchParams(filters);
   const qStr = query.toString();
-  return `<section class="panel"><div class="panelhead"><div><h2>Mail activity</h2><p>Search and inspect inbound and outbound messages.</p></div></div><form class="filters" method="get" action="/admin/mail"><div class="filter-group filter-search"><span class="field-label">Search</span><div class="input-with-icon"><span class="input-icon">${icon('search')}</span><input name="search" maxlength="100" placeholder="Subject or recipient" value="${e(filters.search)}"></div></div><div class="filter-group"><label class="field-label">Direction</label><select name="direction" class="custom-select"><option value="">All directions</option>${['outbound', 'inbound'].map(v => `<option value="${v}" ${filters.direction === v ? 'selected' : ''}>${v === 'outbound' ? 'Outbound ↗' : 'Inbound ↙'}</option>`).join('')}</select></div><div class="filter-group"><label class="field-label">Status</label><select name="status" class="custom-select"><option value="">All statuses</option>${['Queued', 'Sent', 'Delivered', 'Bounced', 'Failed'].map(v => `<option value="${v}" ${filters.status === v ? 'selected' : ''}>${v}</option>`).join('')}</select></div><div class="filter-actions"><button class="button secondary">${icon('filter')} Apply filters</button>${(filters.search || filters.direction || filters.status) ? `<a href="/admin/mail" class="button secondary small" title="Reset filters">${icon('close')} Clear</a>` : ''}</div></form>${mailTable(logs)}<div class="pagination"><span>Page ${currentPage} · Up to 25 messages per page</span><div class="actions">${currentPage > 1 ? `<a class="button secondary small" href="/admin/mail?${qStr ? e(qStr) + '&' : ''}page=${currentPage - 1}">Previous</a>` : ''}${hasNext ? `<a class="button secondary small" href="/admin/mail?${qStr ? e(qStr) + '&' : ''}page=${currentPage + 1}">Next</a>` : ''}</div></div></section>`;
+  return `<section class="panel"><div class="panelhead"><div><h2>Mail activity</h2><p>Search and inspect inbound and outbound messages.</p></div></div><form class="filters" method="get" action="${base}/mail"><div class="filter-group filter-search"><span class="field-label">Search</span><div class="input-with-icon"><span class="input-icon">${icon('search')}</span><input name="search" maxlength="100" placeholder="Subject or recipient" value="${e(filters.search)}"></div></div><div class="filter-group"><label class="field-label">Direction</label><select name="direction" class="custom-select"><option value="">All directions</option>${['outbound', 'inbound'].map(v => `<option value="${v}" ${filters.direction === v ? 'selected' : ''}>${v === 'outbound' ? 'Outbound ↗' : 'Inbound ↙'}</option>`).join('')}</select></div><div class="filter-group"><label class="field-label">Status</label><select name="status" class="custom-select"><option value="">All statuses</option>${['Queued', 'Sent', 'Delivered', 'Bounced', 'Failed'].map(v => `<option value="${v}" ${filters.status === v ? 'selected' : ''}>${v}</option>`).join('')}</select></div><div class="filter-actions"><button class="button secondary">${icon('filter')} Apply filters</button>${(filters.search || filters.direction || filters.status) ? `<a href="${base}/mail" class="button secondary small" title="Reset filters">${icon('close')} Clear</a>` : ''}</div></form>${mailTable(logs, base)}<div class="pagination"><span>Page ${currentPage} · Up to 25 messages per page</span><div class="actions">${currentPage > 1 ? `<a class="button secondary small" href="${base}/mail?${qStr ? e(qStr) + '&' : ''}page=${currentPage - 1}">Previous</a>` : ''}${hasNext ? `<a class="button secondary small" href="${base}/mail?${qStr ? e(qStr) + '&' : ''}page=${currentPage + 1}">Next</a>` : ''}</div></div></section>`;
 }
 
 function accountProviderCredentials(accountKeys = [], sess) {
+  const base = sess?.base || '/dashboard';
   const map = new Map(accountKeys.map(k => [k.provider_name, k]));
   const providerMeta = {
     resend: { label: 'Resend', desc: 'Transactional email API (starts with re_)', placeholder: 're_1234567890abcdef' },
@@ -4595,7 +4581,7 @@ function accountProviderCredentials(accountKeys = [], sess) {
     </div>
     <div class="panelbody">
       <div class="notice">
-        <strong>🔒 Write-Only Zero-Trust Protection:</strong> Your API keys are encrypted at rest with AES-256-GCM in Cloudflare D1 (SQLite).
+        <strong>🔒 Write-Only Zero-Trust Protection:</strong> Your API keys are encrypted at rest with AES-256-GCM in Database (SQLite).
         To protect your credentials from accidental disclosure or extraction, <strong>stored keys are strictly write-only and can never be viewed again by anyone</strong>.
         To update or rotate an integration, enter a new key below.
       </div>
@@ -4616,14 +4602,14 @@ function accountProviderCredentials(accountKeys = [], sess) {
               <div class="actions">
                 ${badge(item ? 'Encrypted (AES-256-GCM)' : 'Not configured')}
                 ${item ? badge(item.is_active ? 'Active' : 'Paused') : ''}
-                ${item ? `<form method="post" action="/admin/account-keys/toggle">${hidden(sess.csrf_token)}<input type="hidden" name="provider" value="${p}"><button class="button secondary small">${item.is_active ? 'Pause' : 'Enable'}</button></form>` : ''}
-                ${item ? `<form method="post" action="/admin/account-keys/delete" onsubmit="return confirm('Remove this provider key?')">${hidden(sess.csrf_token)}<input type="hidden" name="provider" value="${p}"><button class="button danger small">Remove</button></form>` : ''}
+                ${item ? `<form method="post" action="${base}/account-keys/toggle">${hidden(sess.csrf_token)}<input type="hidden" name="provider" value="${p}"><button class="button secondary small">${item.is_active ? 'Pause' : 'Enable'}</button></form>` : ''}
+                ${item ? `<form method="post" action="${base}/account-keys/delete" onsubmit="return confirm('Remove this provider key?')">${hidden(sess.csrf_token)}<input type="hidden" name="provider" value="${p}"><button class="button danger small">Remove</button></form>` : ''}
               </div>
             </div>
             ${item ? `<div style="font-size:12px;margin-bottom:12px;color:var(--muted)">Key Hint: <code style="background:var(--surface);border:1px solid var(--line);padding:2px 6px;border-radius:4px;color:var(--text)">${e(item.key_hint)}</code>${p === 'mailgun' && extra.domain ? ` &nbsp; Domain: <code>${e(extra.domain)}</code>` : ''}${p === 'smtp' && extra.smtp_host ? ` &nbsp; Host: <code>${e(extra.smtp_host)}</code> (User: <code>${e(extra.smtp_user)}</code>)` : ''}</div>` : ''}
             <details style="border-top:1px solid var(--line);padding-top:10px">
               <summary style="font-size:12px;color:var(--accent);cursor:pointer;font-weight:600">${item ? 'Rotate / Replace Key' : '+ Configure ' + e(meta.label) + ' Key'}</summary>
-              <form method="post" action="/admin/account-keys/save" style="margin-top:10px">
+              <form method="post" action="${base}/account-keys/save" style="margin-top:10px">
                 ${hidden(sess.csrf_token)}
                 <input type="hidden" name="provider" value="${p}">
                 <div class="settingsgrid">
@@ -4648,7 +4634,7 @@ function accountProviderCredentials(accountKeys = [], sess) {
 }
 
 function providerLimitsPanel(sess, limits = {}, usage = {}) {
-  const base = sess?.role === 'superadmin' ? '/admin' : '/dashboard';
+  const base = sess?.base || '/dashboard';
   return `
     <section class="panel" id="provider-limits">
       <div class="panelhead">
@@ -4692,13 +4678,15 @@ function providerLimitsPanel(sess, limits = {}, usage = {}) {
 }
 
 export function settings(cfg, sess, canEditGlobal = true, accountKeys = [], limits = {}, usage = {}) {
+  const base = sess?.base || '/dashboard';
   const accountCredentialsSection = accountProviderCredentials(accountKeys, sess);
   const limitsSection = providerLimitsPanel(sess, limits, usage);
   if (!canEditGlobal) return `${profileSettings(sess)}${limitsSection}${accountCredentialsSection}`;
-  return `${profileSettings(sess)}${limitsSection}${accountCredentialsSection}${bimiSettings(cfg)}<div class="notice">Global settings apply to new requests without account-specific overrides. Global credentials are encrypted with your Worker’s encryption key.</div><div class="grid2"><section class="panel" id="branding"><div class="panelhead"><div><h2>Global Workspace settings</h2><p>Mail routing, limits, and retention.</p></div></div><div class="panelbody"><form method="post" action="/admin/settings">${hidden(sess.csrf_token)}<div class="settingsgrid">${Object.entries(SETTINGS).map(([name, spec]) => `<label class="field">${e(spec[0])}${spec[1] === 'boolean' ? `<select name="${name}" class="custom-select"><option value="false" ${cfg[name] === 'false' ? 'selected' : ''}>False</option><option value="true" ${cfg[name] === 'true' ? 'selected' : ''}>True</option></select>` : `<input name="${name}" value="${e(cfg[name])}" type="${spec[1] === 'number' ? 'number' : spec[1] === 'email' ? 'email' : 'text'}" ${spec[1] === 'number' ? `min="${spec[3]}" max="${spec[4]}"` : ''} ${['https-url', 'optional-domain', 'sandbox-domain'].includes(spec[1]) ? '' : 'required'} maxlength="255">`}</label>`).join('')}</div><button class="button">Save settings</button></form></div></section><div><section class="panel"><div class="panelhead"><div><h2>Global Fallback Credentials</h2><p>Blank values keep your current credential. Values are never displayed.</p></div></div>${SECRETS.map(name => `<details><summary>${e(name)} &nbsp; ${badge(cfg[name] ? 'Configured' : 'Not set')}</summary><form method="post" action="/admin/credentials">${hidden(sess.csrf_token)}<input type="hidden" name="name" value="${name}"><label class="field">New credential<input type="password" name="value" autocomplete="new-password" required minlength="${name === 'API_SECRET_KEY' ? 43 : 16}" maxlength="4096" placeholder="Paste a new credential"></label>${sess.local_dev ? '<label class="field">Confirm local administrator token<input type="password" name="admin_token" autocomplete="current-password" required minlength="43" maxlength="128"></label>' : '<p class="footnote">Credential changes require a Cloudflare Access token issued within the last five minutes. Sign out of Access and sign in again if requested. This checks token age; identity-provider policy controls fresh user verification.</p>'}<button class="button">Save credential</button></form></details>`).join('')}</section><div class="notice warn">Access policy, local development token, encryption key, database binding, and domain routes stay in Cloudflare. They cannot be changed through this panel. Rotate credentials by replacing their values here.</div></div></div>`;
+  return `${profileSettings(sess)}${limitsSection}${accountCredentialsSection}${bimiSettings(cfg)}<div class="notice">Global settings apply to new requests without account-specific overrides. Global credentials are encrypted with your Worker’s encryption key.</div><div class="grid2"><section class="panel" id="branding"><div class="panelhead"><div><h2>Global Workspace settings</h2><p>Mail routing, limits, and retention.</p></div></div><div class="panelbody"><form method="post" action="${base}/settings">${hidden(sess.csrf_token)}<div class="settingsgrid">${Object.entries(SETTINGS).map(([name, spec]) => `<label class="field">${e(spec[0])}${spec[1] === 'boolean' ? `<select name="${name}" class="custom-select"><option value="false" ${cfg[name] === 'false' ? 'selected' : ''}>False</option><option value="true" ${cfg[name] === 'true' ? 'selected' : ''}>True</option></select>` : `<input name="${name}" value="${e(cfg[name])}" type="${spec[1] === 'number' ? 'number' : spec[1] === 'email' ? 'email' : 'text'}" ${spec[1] === 'number' ? `min="${spec[3]}" max="${spec[4]}"` : ''} ${['https-url', 'optional-domain', 'sandbox-domain'].includes(spec[1]) ? '' : 'required'} maxlength="255">`}</label>`).join('')}</div><button class="button">Save settings</button></form></div></section><div><section class="panel"><div class="panelhead"><div><h2>Global Fallback Credentials</h2><p>Blank values keep your current credential. Values are never displayed.</p></div></div>${SECRETS.map(name => `<details><summary>${e(name)} &nbsp; ${badge(cfg[name] ? 'Configured' : 'Not set')}</summary><form method="post" action="${base}/credentials">${hidden(sess.csrf_token)}<input type="hidden" name="name" value="${name}"><label class="field">New credential<input type="password" name="value" autocomplete="new-password" required minlength="${name === 'API_SECRET_KEY' ? 43 : 16}" maxlength="4096" placeholder="Paste a new credential"></label>${sess.local_dev ? '<label class="field">Confirm local administrator token<input type="password" name="admin_token" autocomplete="current-password" required minlength="43" maxlength="128"></label>' : '<p class="footnote">Credential changes require a Cloudflare Access token issued within the last five minutes. Sign out of Access and sign in again if requested. This checks token age; identity-provider policy controls fresh user verification.</p>'}<button class="button">Save credential</button></form></details>`).join('')}</section><div class="notice warn">Access policy, local development token, encryption key, database binding, and domain routes stay in Cloudflare. They cannot be changed through this panel. Rotate credentials by replacing their values here.</div></div></div>`;
 }
 
 export function identities(rows, sess, domains = []) {
+  const base = sess?.base || '/dashboard';
   const countBadge = rows.length ? `<span class="tag good">${rows.length} ${rows.length === 1 ? 'identity' : 'identities'}</span>` : '';
   const rowsHtml = rows.map(r => `<tr>
     <td>
@@ -4721,7 +4709,7 @@ export function identities(rows, sess, domains = []) {
       </div>
     </td>
     <td>
-      <form method="post" action="/admin/identities/update" class="identity-actions">
+      <form method="post" action="${base}/identities/update" class="identity-actions">
         ${hidden(sess.csrf_token)}
         <input type="hidden" name="email_address" value="${e(r.email_address)}">
         <button type="button" class="button secondary small" data-action="rename-identity" data-address="${e(r.email_address)}" data-name="${e(r.display_name)}" onclick="openEditIdentityModal('${e(r.email_address)}', '${e(r.display_name)}')" title="Rename display name or change address">
@@ -4753,7 +4741,7 @@ export function identities(rows, sess, domains = []) {
           </div>
           <button type="button" class="modal-close-btn" onclick="document.getElementById('editIdentityModal').close()" aria-label="Close modal">&times;</button>
         </div>
-        <form method="post" action="/admin/identities/update" class="modal-body" id="editIdentityForm">
+        <form method="post" action="${base}/identities/update" class="modal-body" id="editIdentityForm">
           ${hidden(sess.csrf_token)}
           <input type="hidden" name="email_address" id="edit-id-original-address">
           <input type="hidden" name="action" value="rename">
@@ -4872,7 +4860,7 @@ document.addEventListener('click', function(ev) {
         formData.append('csrf_token', '${e(sess.csrf_token || '')}');
         formData.append('email_address', currentAddress);
         formData.append('new_email_address', newAddress);
-        var resp = await fetch('/admin/identities/request-otp', {
+        var resp = await fetch('${base}/identities/request-otp', {
           method: 'POST',
           body: formData,
           headers: { 'X-Requested-With': 'XMLHttpRequest' }
@@ -4908,6 +4896,7 @@ document.addEventListener('click', function(ev) {
 </script>` : '';
 
   return `<div class="notice warn">Creating an identity here does not verify its domain. Verify every sending domain with each active provider before sending.</div>
+${!domains.length && sess?.role !== 'superadmin' ? `<div class="notice warn" style="margin-bottom:16px;border-left:4px solid var(--accent)"><strong>⚠️ Domain Verification Required:</strong> You cannot create sender identities until you add and verify at least one sending domain under <a href="${base}/domains" style="text-decoration:underline;font-weight:600">Domains</a>.</div>` : ''}
 <section class="panel">
   <div class="panelhead">
     <div>
@@ -4941,7 +4930,7 @@ document.addEventListener('click', function(ev) {
     </div>
   </div>
   <div class="panelbody">
-    <form class="identityform-grid" method="post" action="/admin/identities/create">
+    <form class="identityform-grid" method="post" action="${base}/identities/create">
       ${hidden(sess.csrf_token)}
       <div class="form-row-grid">
         <label class="field">
@@ -4965,7 +4954,7 @@ document.addEventListener('click', function(ev) {
           <small>Active sending domain</small>
         </label>
         <div class="form-btn-col">
-          <button class="button submit-btn">${icon('plus')}<span>Add identity</span></button>
+          <button class="button submit-btn" ${!domains.length && sess?.role !== 'superadmin' ? 'disabled title="Verify a domain first"' : ''}>${icon('plus')}<span>Add identity</span></button>
         </div>
       </div>
     </form>
@@ -4975,8 +4964,17 @@ ${editModal}
 ${editIdentityScript}`;
 }
 
-export function compose(rows, sess) {
-  return `<div class="grid2"><section class="panel"><div class="panelhead"><div><h2>Send a test email</h2><p>This sends a real message through your configured providers.</p></div></div><div class="panelbody"><form method="post" action="/admin/send-test">${hidden(sess.csrf_token)}<input type="hidden" name="idempotency_key" value="${crypto.randomUUID()}"><label class="field">Delivery mode<select name="delivery_mode" class="custom-select"><option value="normal">Configured providers</option>${sess.role === 'superadmin' ? '<option value="mailgun-sandbox">Mailgun sandbox only</option>' : ''}</select><small>Sandbox uses postmaster@your-sandbox domain and only sends through Mailgun. The sender selection below is ignored in sandbox mode. Authorize the recipient in Mailgun first.</small></label><label class="field">Sender<select name="from" required class="custom-select">${rows.filter(r => r.is_active).map(r => `<option value="${e(r.email_address)}" ${r.is_default ? 'selected' : ''}>${e(r.display_name)} · ${e(r.email_address)}</option>`).join('')}</select></label><label class="field">Recipient<input type="email" name="to" maxlength="254" required autocomplete="off" spellcheck="false" placeholder="you@example.com"></label><label class="field">Subject<input name="subject" maxlength="255" required value="Your neoMailer connection is ready"></label><label class="field">Plain text message<textarea name="text" maxlength="50000" required>Hello! This is a test message from your neoMailer workspace.</textarea></label><button class="button">Send test email ${icon('arrow')}</button></form></div></section><section class="panel"><div class="panelbody"><h2>Before you send</h2><ul class="list"><li>Verify the sender domain with your delivery provider.</li><li>Configure a provider credential in Settings.</li><li>Use an inbox you control for your first test.</li><li>Inspect the result in Mail activity. “Sent” means accepted by the provider.</li><li>If the result is uncertain, reconcile with the provider before sending again.</li></ul></div></section></div>`;
+export function compose(rows, sess, hasVerifiedDomains = true) {
+  const base = sess?.base || '/dashboard';
+  const isSuper = sess?.role === 'superadmin';
+  const canSend = isSuper || (hasVerifiedDomains && rows.some(r => r.is_active));
+  const warning = (!isSuper && !hasVerifiedDomains) ? `
+    <div class="notice warn" style="margin-bottom:16px;border-left:4px solid var(--accent)">
+      <strong>⚠️ Domain Verification Required</strong>
+      <p style="margin:4px 0 0;font-size:13px">You cannot send test emails until you add and verify ownership of a sending domain under <a href="${base}/domains" style="text-decoration:underline;font-weight:600">Domains</a>.</p>
+    </div>
+  ` : '';
+  return `<div class="grid2"><section class="panel">${warning}<div class="panelhead"><div><h2>Send a test email</h2><p>This sends a real message through your configured providers.</p></div></div><div class="panelbody"><form method="post" action="${base}/send-test">${hidden(sess.csrf_token)}<input type="hidden" name="idempotency_key" value="${crypto.randomUUID()}"><label class="field">Delivery mode<select name="delivery_mode" class="custom-select"><option value="normal">Configured providers</option>${isSuper ? '<option value="mailgun-sandbox">Mailgun sandbox only</option>' : ''}</select><small>Sandbox uses postmaster@your-sandbox domain and only sends through Mailgun. The sender selection below is ignored in sandbox mode. Authorize the recipient in Mailgun first.</small></label><label class="field">Sender<select name="from" required class="custom-select" ${!canSend ? 'disabled' : ''}>${rows.filter(r => r.is_active).map(r => `<option value="${e(r.email_address)}" ${r.is_default ? 'selected' : ''}>${e(r.display_name)} · ${e(r.email_address)}</option>`).join('') || '<option value="" disabled>No active sender identities</option>'}</select></label><label class="field">Recipient<input type="email" name="to" maxlength="254" required autocomplete="off" spellcheck="false" placeholder="you@example.com" ${!canSend ? 'disabled' : ''}></label><label class="field">Subject<input name="subject" maxlength="255" required value="Your neoMailer connection is ready" ${!canSend ? 'disabled' : ''}></label><label class="field">Plain text message<textarea name="text" maxlength="50000" required ${!canSend ? 'disabled' : ''}>Hello! This is a test message from your neoMailer workspace.</textarea></label><button class="button" ${!canSend ? 'disabled' : ''}>Send test email ${icon('arrow')}</button></form></div></section><section class="panel"><div class="panelbody"><h2>Before you send</h2><ul class="list"><li>Verify the sender domain with your delivery provider.</li><li>Configure a provider credential in Settings.</li><li>Use an inbox you control for your first test.</li><li>Inspect the result in Mail activity. “Sent” means accepted by the provider.</li><li>If the result is uncertain, reconcile with the provider before sending again.</li></ul></div></section></div>`;
 }
 
 export function security(rows, env) {
@@ -4984,7 +4982,7 @@ export function security(rows, env) {
   const pageSize = env?.pageSize || 10;
   const totalCount = env?.totalCount !== undefined ? env.totalCount : rows.length;
   const totalPages = env?.totalPages || Math.max(1, Math.ceil(totalCount / pageSize));
-  const base = env?.base || '/admin';
+  const base = env?.base || '/dashboard';
 
   const startIdx = totalCount === 0 ? 0 : (page - 1) * pageSize + 1;
   const endIdx = Math.min(page * pageSize, totalCount);
@@ -5024,7 +5022,7 @@ export function security(rows, env) {
           <h2>Recent security events</h2>
           <p>Review sign-ins, configuration changes, and access controls (10 events per page).</p>
         </div>
-        <form method="post" action="/admin/sessions/revoke">
+        <form method="post" action="${base}/sessions/revoke">
           ${hidden(env.csrf)}
           <button class="button secondary small">Sign out all sessions</button>
         </form>
@@ -5051,22 +5049,23 @@ export function security(rows, env) {
   `;
 }
 
-export function inspector(mail) {
+export function inspector(mail, base = '/dashboard') {
   let attempts;
   try {
     attempts = JSON.stringify(JSON.parse(mail.attempt_history || '[]'), null, 2);
   } catch {
     attempts = 'No trace available';
   }
-  return `<section class="panel"><div class="panelhead"><div><h2>${e(mail.subject)}</h2><p>${e(mail.id)}</p></div>${badge(mail.transmission_status)}</div><div class="panelbody"><dl>${[['From', mail.sender_address], ['To', mail.recipient_address], ['Provider', mail.provider_used], ['Provider ID', mail.provider_message_id || 'Not available'], ['Content hash', mail.html_hash], ['Delivery note', mail.error_message || 'No delivery error recorded']].map(([k, v]) => `<dt>${e(k)}</dt><dd>${e(v)}</dd>`).join('')}</dl><h3>Message preview</h3>${mail.html_body ? `<iframe title="Isolated email preview" sandbox="" referrerpolicy="no-referrer" src="/admin/preview?id=${e(mail.id)}"></iframe>` : empty('HTML content was not retained', 'Enable body retention only if required. Existing content cannot be recovered.')}<details><summary>Plain text / raw inbound message</summary><pre>${e(mail.text_body || 'Message body was not retained.')}</pre></details><details><summary>Provider attempts</summary><pre class="trace">${e(attempts)}</pre></details></div></section>`;
+  return `<section class="panel"><div class="panelhead"><div><h2>${e(mail.subject)}</h2><p>${e(mail.id)}</p></div>${badge(mail.transmission_status)}</div><div class="panelbody"><dl>${[['From', mail.sender_address], ['To', mail.recipient_address], ['Provider', mail.provider_used], ['Provider ID', mail.provider_message_id || 'Not available'], ['Content hash', mail.html_hash], ['Delivery note', mail.error_message || 'No delivery error recorded']].map(([k, v]) => `<dt>${e(k)}</dt><dd>${e(v)}</dd>`).join('')}</dl><h3>Message preview</h3>${mail.html_body ? `<iframe title="Isolated email preview" sandbox="" referrerpolicy="no-referrer" src="${base}/preview?id=${e(mail.id)}"></iframe>` : empty('HTML content was not retained', 'Enable body retention only if required. Existing content cannot be recovered.')}<details><summary>Plain text / raw inbound message</summary><pre>${e(mail.text_body || 'Message body was not retained.')}</pre></details><details><summary>Provider attempts</summary><pre class="trace">${e(attempts)}</pre></details></div></section>`;
 }
 
 export function setup(origin, cfg) {
   const snippet = `// Server-side only. Never expose the API token in browser code.\nconst response = await fetch('${origin}/api/v1/send', {\n  method: 'POST',\n  headers: {\n    'Authorization': 'Bearer ' + process.env.NEOMAILER_API_KEY,\n    'Content-Type': 'application/json',\n    'Idempotency-Key': 'welcome:' + user.id + ':v1'\n  },\n  body: JSON.stringify({\n    from: '${cfg.DEFAULT_SENDER}',\n    to: user.email,\n    subject: 'Welcome to your account',\n    text: 'Your account is ready.'\n  })\n});\nconst result = await response.json();\nif (!response.ok) throw new Error('Mail request failed');`;
-  return `<div class="grid2"><section class="panel"><div class="panelhead"><h2>Connect your platform</h2></div><div class="panelbody"><ol class="list">${[['Deploy the Worker', 'Create D1, apply the schema and migration, configure secrets, and bind your chosen custom domain.'], ['Protect the console', 'Create a Cloudflare Access application for /admin and /admin/* with an explicit administrator allowlist and MFA. Configure team domain and audience in the Worker.'], ['Verify your sending domain', 'Copy provider-generated DNS records exactly. Enable one provider first, then verify fallback providers.'], ['Configure the workspace', 'Add a sender identity matching your verified domain, then save provider credentials and your separate API token in Settings.'], ['Connect your backend', 'Store NEOMAILER_URL and NEOMAILER_API_KEY in your application server environment. Send from authenticated backend flows only.'], ['Test and operate', 'Test acceptance, delivery webhooks, duplicate requests, invalid credentials, backups, and retention before launch.']].map(([title, desc], i) => `<li class="step"><span class="stepnum">${i + 1}</span><div><h3>${e(title)}</h3><p>${e(desc)}</p></div></li>`).join('')}</ol></div></section><section class="panel"><div class="panelhead"><h2>Backend request example</h2></div><div class="panelbody"><pre>${e(snippet)}</pre><div class="notice warn">Confirmed sender: your-sender@your-verified-domain.com. Verify this sending domain with each active provider before deployment.</div><p class="sub">Full deployment, security, API, recovery, and DNS instructions are included in the project’s docs directory.</p></div></section></div>`;
+  return `<div class="grid2"><section class="panel"><div class="panelhead"><h2>Connect your platform</h2></div><div class="panelbody"><ol class="list">${[['Deploy the Worker', 'Create Database, apply the schema and migration, configure secrets, and bind your chosen custom domain.'], ['Protect the console', 'Create a Cloudflare Access application for /admin and /admin/* with an explicit administrator allowlist and MFA. Configure team domain and audience in the Worker.'], ['Verify your sending domain', 'Copy provider-generated DNS records exactly. Enable one provider first, then verify fallback providers.'], ['Configure the workspace', 'Add a sender identity matching your verified domain, then save provider credentials and your separate API token in Settings.'], ['Connect your backend', 'Store NEOMAILER_URL and NEOMAILER_API_KEY in your application server environment. Send from authenticated backend flows only.'], ['Test and operate', 'Test acceptance, delivery webhooks, duplicate requests, invalid credentials, backups, and retention before launch.']].map(([title, desc], i) => `<li class="step"><span class="stepnum">${i + 1}</span><div><h3>${e(title)}</h3><p>${e(desc)}</p></div></li>`).join('')}</ol></div></section><section class="panel"><div class="panelhead"><h2>Backend request example</h2></div><div class="panelbody"><pre>${e(snippet)}</pre><div class="notice warn">Confirmed sender: your-sender@your-verified-domain.com. Verify this sending domain with each active provider before deployment.</div><p class="sub">Full deployment, security, API, recovery, and DNS instructions are included in the project’s docs directory.</p></div></section></div>`;
 }
 
 export function docsEditor(content, sess) {
+  const base = sess?.base || '/dashboard';
   return `<section class="panel docs-studio-panel">
     <div class="panelhead" style="padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;background:var(--surface);flex-shrink:0">
       <div style="display:flex;align-items:center;gap:12px">
@@ -5134,7 +5133,7 @@ export function docsEditor(content, sess) {
           <button type="button" class="studio-nav-item" data-title="REST API Reference" data-snippet="## REST API Reference\n\nPOST \`/api/v1/send\` with Bearer token authentication and Idempotency-Key.">
             ${icon('code')} <span>API Reference</span>
           </button>
-          <button type="button" class="studio-nav-item" data-title="Zero-Trust Security" data-snippet="## Zero-Trust Security\n\nAccount-isolated provider credentials are encrypted at rest with AES-256-GCM in Cloudflare D1.">
+          <button type="button" class="studio-nav-item" data-title="Zero-Trust Security" data-snippet="## Zero-Trust Security\n\nAccount-isolated provider credentials are encrypted at rest with AES-256-GCM in Database.">
             ${icon('security')} <span>Zero-Trust Security</span>
           </button>
           <button type="button" class="studio-nav-item" data-title="Webhooks & Events" data-snippet="## Webhooks & Event Tracking\n\nReceive real-time delivery status updates, bounces, and complaints.">
@@ -5156,7 +5155,7 @@ export function docsEditor(content, sess) {
 
       <!-- CENTER: Studio Markdown Editor -->
       <div class="docs-studio-editor-center" style="display:flex;flex-direction:column;min-height:0;min-width:0;background:var(--surface)">
-        <form id="docs-editor-form" method="post" action="/admin/docs/save" style="display:flex;flex-direction:column;flex:1;min-height:0;margin:0">
+        <form id="docs-editor-form" method="post" action="${base}/docs/save" style="display:flex;flex-direction:column;flex:1;min-height:0;margin:0">
           ${hidden(sess.csrf_token)}
           <div class="rich-editor-container" style="display:flex;flex-direction:column;flex:1;min-height:0;margin:0;border:0;border-radius:0">
             <!-- EXTENDED TOOLBAR WITH MODERN FEATURES -->
@@ -6267,7 +6266,7 @@ function inlineDocFmt(str) {
 }
 
 export function publicDocs(content, isDark = false, footerCredit = 'Developed by SoftLaya Tech') {
-  const defaultContent = `# neoMailer Documentation\n\nWelcome to **neoMailer** — hardened transactional email infrastructure designed for high deliverability, automated fallback routing, and zero-trust tenant isolation.\n\n> [!NOTE]\n> All tenant API keys and provider credentials are encrypted at rest with AES-256-GCM in Cloudflare D1.\n\n## Getting Started\n\nneoMailer provides a unified REST API and native SMTP relay that routes outbound transactional emails across multiple tier-1 providers with automated failover:\n\n- **Primary Provider**: Resend / Brevo\n- **Fallback Chain**: Resend → Brevo → Mailgun → Mailtrap → MailerSend → Custom SMTP\n- **Zero Downtime**: Circuit breakers automatically isolate unhealthy providers\n\n## System Guide\n\nConnect your application backend using the official REST API or native SMTP credentials.\n\n\`\`\`javascript\n// Node.js Dispatch Example\nconst response = await fetch('https://mail.neopathshala.com/api/v1/send', {\n  method: 'POST',\n  headers: {\n    'Authorization': 'Bearer ' + process.env.NEOMAILER_API_KEY,\n    'Content-Type': 'application/json',\n    'Idempotency-Key': 'order:10294:invoice'\n  },\n  body: JSON.stringify({\n    from: 'support@mail.neopathshala.com',\n    to: 'customer@example.com',\n    subject: 'Your Invoice #10294 is Ready',\n    html: '<p>Thank you for your order! Your receipt is attached.</p>'\n  })\n});\n\`\`\`\n\n## Sending Domains & DNS\n\nBefore sending, configure these standard DNS verification records:\n\n| Record Type | Hostname | Value | Purpose |\n| ----------- | -------- | ----- | ------- |\n| TXT | \`_neomail-verification\` | \`[domain_token]\` | Domain Ownership & Anti-Scam Protection |\n| TXT | \`@\` | \`v=spf1 include:mail.neopathshala.com ~all\` | SPF Alignment |\n| CNAME | \`default._domainkey\` | \`dkim.mail.neopathshala.com\` | DKIM Signature |\n| TXT | \`_dmarc\` | \`v=DMARC1; p=reject; sp=reject;\` | DMARC Enforcement |\n\n> [!TIP]\n> neoMailer continuously monitors your domain DNS. If verification fails or records are tampered with, sending is paused automatically to protect your reputation.\n\n## REST API Reference\n\n### POST \`/api/v1/send\`\n\nDispatches an email through the optimal healthy provider.\n\n#### Request Headers\n\n- \`Authorization: Bearer <API_KEY>\` *(Required)*\n- \`Content-Type: application/json\` *(Required)*\n- \`Idempotency-Key: <unique_string>\` *(Recommended)*\n\n#### Response Schema\n\n\`\`\`json\n{\n  \"status\": \"success\",\n  \"id\": \"msg_90f23d8c11e74a6b\",\n  \"provider\": \"resend\",\n  \"transmission_status\": \"Delivered\",\n  \"timestamp\": 1730462400\n}\n\`\`\`\n\n## Provider Quotas & Rate Limits\n\nPer-user quotas prevent sudden spikes from degrading sender score.\n\n- [x] **Resend**: Tier 1 primary delivery\n- [x] **Brevo**: Global & EU transactional mail\n- [x] **Mailgun**: High-volume failover burst capacity\n- [x] **Mailtrap**: Production failover and sandbox staging\n- [x] **MailerSend**: Template fallback\n- [x] **SMTP Relay**: Port 465 (TLS) & 587 (STARTTLS)\n\n## Zero-Trust Security\n\n- **Session Binding**: Cryptographic SHA-256 session tokens with Cloudflare Access identity binding.\n- **Encrypted Storage**: Provider credentials and tenant secrets are sealed with authenticated AES-256-GCM.\n- **Immutable Auditing**: Every administrative change and dispatch event is logged.`;
+  const defaultContent = `# neoMailer Documentation\n\nWelcome to **neoMailer** — hardened transactional email infrastructure designed for high deliverability, automated fallback routing, and zero-trust tenant isolation.\n\n> [!NOTE]\n> All tenant API keys and provider credentials are encrypted at rest with AES-256-GCM in Database.\n\n## Getting Started\n\nneoMailer provides a unified REST API and native SMTP relay that routes outbound transactional emails across multiple tier-1 providers with automated failover:\n\n- **Primary Provider**: Resend / Brevo\n- **Fallback Chain**: Resend → Brevo → Mailgun → Mailtrap → MailerSend → Custom SMTP\n- **Zero Downtime**: Circuit breakers automatically isolate unhealthy providers\n\n## System Guide\n\nConnect your application backend using the official REST API or native SMTP credentials.\n\n\`\`\`javascript\n// Node.js Dispatch Example\nconst response = await fetch('https://mail.neopathshala.com/api/v1/send', {\n  method: 'POST',\n  headers: {\n    'Authorization': 'Bearer ' + process.env.NEOMAILER_API_KEY,\n    'Content-Type': 'application/json',\n    'Idempotency-Key': 'order:10294:invoice'\n  },\n  body: JSON.stringify({\n    from: 'support@mail.neopathshala.com',\n    to: 'customer@example.com',\n    subject: 'Your Invoice #10294 is Ready',\n    html: '<p>Thank you for your order! Your receipt is attached.</p>'\n  })\n});\n\`\`\`\n\n## Sending Domains & DNS\n\nBefore sending, configure these standard DNS verification records:\n\n| Record Type | Hostname | Value | Purpose |\n| ----------- | -------- | ----- | ------- |\n| TXT | \`_neomail-verification\` | \`[domain_token]\` | Domain Ownership & Anti-Scam Protection |\n| TXT | \`@\` | \`v=spf1 include:mail.neopathshala.com ~all\` | SPF Alignment |\n| CNAME | \`default._domainkey\` | \`dkim.mail.neopathshala.com\` | DKIM Signature |\n| TXT | \`_dmarc\` | \`v=DMARC1; p=reject; sp=reject;\` | DMARC Enforcement |\n\n> [!TIP]\n> neoMailer continuously monitors your domain DNS. If verification fails or records are tampered with, sending is paused automatically to protect your reputation.\n\n## REST API Reference\n\n### POST \`/api/v1/send\`\n\nDispatches an email through the optimal healthy provider.\n\n#### Request Headers\n\n- \`Authorization: Bearer <API_KEY>\` *(Required)*\n- \`Content-Type: application/json\` *(Required)*\n- \`Idempotency-Key: <unique_string>\` *(Recommended)*\n\n#### Response Schema\n\n\`\`\`json\n{\n  \"status\": \"success\",\n  \"id\": \"msg_90f23d8c11e74a6b\",\n  \"provider\": \"resend\",\n  \"transmission_status\": \"Delivered\",\n  \"timestamp\": 1730462400\n}\n\`\`\`\n\n## Provider Quotas & Rate Limits\n\nPer-user quotas prevent sudden spikes from degrading sender score.\n\n- [x] **Resend**: Tier 1 primary delivery\n- [x] **Brevo**: Global & EU transactional mail\n- [x] **Mailgun**: High-volume failover burst capacity\n- [x] **Mailtrap**: Production failover and sandbox staging\n- [x] **MailerSend**: Template fallback\n- [x] **SMTP Relay**: Port 465 (TLS) & 587 (STARTTLS)\n\n## Zero-Trust Security\n\n- **Session Binding**: Cryptographic SHA-256 session tokens with Cloudflare Access identity binding.\n- **Encrypted Storage**: Provider credentials and tenant secrets are sealed with authenticated AES-256-GCM.\n- **Immutable Auditing**: Every administrative change and dispatch event is logged.`;
 
   const md = content && content.trim() ? content : defaultContent;
   const { html, toc } = parseDocsMarkdown(md);
@@ -6617,7 +6616,7 @@ export function publicDocs(content, isDark = false, footerCredit = 'Developed by
 
     <div class="docs-nav-actions">
       <a href="#rest-api-reference" class="docs-link-btn">API Reference</a>
-      <a href="/admin" class="docs-link-btn" style="color:var(--accent);font-weight:700">Console ↗</a>
+      <a href="/dashboard" class="docs-link-btn" style="color:var(--accent);font-weight:700">Console ↗</a>
       <button type="button" id="docs-theme-toggle" class="btn-theme-toggle" title="Toggle theme">
         ${isDark ? icon('sun') : icon('moon')}
       </button>
@@ -6638,7 +6637,7 @@ export function publicDocs(content, isDark = false, footerCredit = 'Developed by
       <a href="#sending-domains-dns" class="docs-nav-link">DNS Verification</a>
       <a href="#rest-api-reference" class="docs-nav-link">REST API Reference</a>
       <a href="#zero-trust-security" class="docs-nav-link">Zero-Trust Isolation</a>
-      <a href="/admin/docs" class="docs-nav-link" style="color:var(--accent);font-weight:600;margin-top:12px">
+      <a href="/dashboard/docs" class="docs-nav-link" style="color:var(--accent);font-weight:600;margin-top:12px">
         ${icon('code')} Studio Editor ↗
       </a>
     </aside>
@@ -6655,7 +6654,7 @@ export function publicDocs(content, isDark = false, footerCredit = 'Developed by
 
       <div style="margin-top:48px;padding-top:20px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
         <span style="font-size:12px;color:var(--muted)">Need help or have security inquiries? Contact your workspace administrator.</span>
-        <a href="/admin" style="font-size:12px;color:var(--accent);font-weight:600;text-decoration:none">Open neoMailer Workspace →</a>
+        <a href="/dashboard" style="font-size:12px;color:var(--accent);font-weight:600;text-decoration:none">Open neoMailer Workspace →</a>
       </div>
     </main>
 
@@ -6781,6 +6780,7 @@ export function docsViewer(content, sess) {
 }
 
 export function providersView(rows, cfg, sess, limits = {}, usage = {}, userLimits = [], users = []) {
+  const base = sess?.base || '/dashboard';
   const currentOrder = (cfg.FALLBACK_ORDER || 'resend,brevo,mailgun,mailtrap,mailersend').split(',').map(p => p.trim()).filter(Boolean);
   const unassigned = PROVIDERS.filter(p => !currentOrder.includes(p));
 
@@ -6811,19 +6811,25 @@ export function providersView(rows, cfg, sess, limits = {}, usage = {}, userLimi
             const failures = row?.consecutive_failures || 0;
             const isPaused = row?.is_active === 0;
             const inCooldown = failures >= 5;
-            const statusLabel = !configured ? 'Not configured' : isPaused ? 'Paused' : inCooldown ? 'Cooling down' : 'Ready';
+            const hasFailures = failures > 0;
+            const statusLabel = !configured ? 'Not configured'
+              : isPaused ? 'Paused'
+              : inCooldown ? 'Cooling down'
+              : hasFailures ? 'Failing (' + failures + ')'
+              : !row?.last_used_timestamp ? 'Configured'
+              : 'Ready';
 
             return `
               <div class="routing-card ${i === 0 ? 'priority-primary' : ''}">
                 <div class="routing-card-left">
                   <div class="order-btn-group">
-                    <form method="post" action="/admin/providers/reorder">
+                    <form method="post" action="${base}/providers/reorder">
                       ${hidden(sess.csrf_token)}
                       <input type="hidden" name="provider" value="${p}">
                       <input type="hidden" name="direction" value="up">
                       <button class="order-btn" title="Move up in priority" ${i === 0 ? 'disabled' : ''}>${icon('arrowUp')}</button>
                     </form>
-                    <form method="post" action="/admin/providers/reorder">
+                    <form method="post" action="${base}/providers/reorder">
                       ${hidden(sess.csrf_token)}
                       <input type="hidden" name="provider" value="${p}">
                       <input type="hidden" name="direction" value="down">
@@ -6840,18 +6846,18 @@ export function providersView(rows, cfg, sess, limits = {}, usage = {}, userLimi
                 <div class="routing-actions">
                   ${badge(statusLabel)}
                   ${failures > 0 ? `
-                    <form method="post" action="/admin/providers/reset-health">
+                    <form method="post" action="${base}/providers/reset-health">
                       ${hidden(sess.csrf_token)}
                       <input type="hidden" name="provider" value="${p}">
                       <button class="button secondary small" title="Reset failure counter and circuit breaker">${icon('zap')} Reset breaker</button>
                     </form>
                   ` : ''}
-                  <form method="post" action="/admin/providers/toggle">
+                  <form method="post" action="${base}/providers/toggle">
                     ${hidden(sess.csrf_token)}
                     <input type="hidden" name="provider" value="${p}">
                     <button class="button secondary small">${isPaused ? 'Enable' : 'Pause'}</button>
                   </form>
-                  <form method="post" action="/admin/providers/remove">
+                  <form method="post" action="${base}/providers/remove">
                     ${hidden(sess.csrf_token)}
                     <input type="hidden" name="provider" value="${p}">
                     <button class="button danger small" title="Remove from active routing" ${currentOrder.length <= 1 ? 'disabled' : ''}>Remove</button>
@@ -6868,7 +6874,7 @@ export function providersView(rows, cfg, sess, limits = {}, usage = {}, userLimi
               <strong>Enrol Unassigned Provider</strong>
               <p class="sub" style="margin:2px 0 0">Add an available supported provider to the end of the failover routing chain.</p>
             </div>
-            <form method="post" action="/admin/providers/add" style="display:flex;align-items:center;gap:10px">
+            <form method="post" action="${base}/providers/add" style="display:flex;align-items:center;gap:10px">
               ${hidden(sess.csrf_token)}
               <select name="provider" class="custom-select" style="padding:6px 32px 6px 12px;font-size:12px">
                 ${unassigned.map(p => `<option value="${p}">${p.toUpperCase()}</option>`).join('')}
@@ -6909,7 +6915,7 @@ export function providersView(rows, cfg, sess, limits = {}, usage = {}, userLimi
                 <div style="width:100%;height:6px;background:var(--surface-hover);border-radius:3px;overflow:hidden;margin-bottom:12px">
                   <div style="width:${pct}%;height:100%;background:${isExceeded ? 'var(--danger)' : 'var(--accent)'};transition:width 0.3s"></div>
                 </div>
-                <form method="post" action="/admin/providers/limit" style="display:flex;gap:8px;align-items:center">
+                <form method="post" action="${base}/providers/limit" style="display:flex;gap:8px;align-items:center">
                   ${hidden(sess.csrf_token)}
                   <input type="hidden" name="provider" value="${p}">
                   <input type="hidden" name="from_view" value="providers">
@@ -6931,7 +6937,7 @@ export function providersView(rows, cfg, sess, limits = {}, usage = {}, userLimi
         </div>
       </div>
       <div class="panelbody">
-        <form method="post" action="/admin/providers/limit" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:20px">
+        <form method="post" action="${base}/providers/limit" style="display:flex;flex-wrap:wrap;gap:12px;align-items:flex-end;margin-bottom:20px">
           ${hidden(sess.csrf_token)}
           <input type="hidden" name="from_view" value="providers">
           <label class="field" style="margin:0;min-width:220px;flex:1">
@@ -6973,7 +6979,7 @@ export function providersView(rows, cfg, sess, limits = {}, usage = {}, userLimi
                     <td><span class="tag good" style="font-weight:600">${Number(ul.send_limit).toLocaleString()} emails</span></td>
                     <td class="muted">${e(new Date(ul.updated_at * 1000).toISOString().slice(0, 16))}</td>
                     <td style="text-align:right">
-                      <form method="post" action="/admin/providers/limit" style="display:inline-flex;align-items:center;gap:6px">
+                      <form method="post" action="${base}/providers/limit" style="display:inline-flex;align-items:center;gap:6px">
                         ${hidden(sess.csrf_token)}
                         <input type="hidden" name="target_user" value="${e(ul.owner_subject)}">
                         <input type="hidden" name="provider" value="${e(ul.provider_name)}">
@@ -7000,7 +7006,7 @@ export function providersView(rows, cfg, sess, limits = {}, usage = {}, userLimi
           </div>
         </div>
         <div class="panelbody">
-          <form method="post" action="/admin/providers/configure">
+          <form method="post" action="${base}/providers/configure">
             ${hidden(sess.csrf_token)}
             <label class="field">Provider
               <select name="provider" class="custom-select" id="provider-select-configure">
@@ -7081,10 +7087,20 @@ export function providersView(rows, cfg, sess, limits = {}, usage = {}, userLimi
   `;
 }
 
-export function apiClients(clients, sess, createdKey = '') {
+export function apiClients(clients, sess, createdKey = '', hasVerifiedDomains = true) {
+  const base = sess?.base || '/dashboard';
+  const isSuper = sess?.role === 'superadmin';
+  const canCreate = isSuper || hasVerifiedDomains;
   const keyNotice = createdKey ? `<div class="notice">New API key (shown once): <code>${e(createdKey)}</code>. Store it securely; it will not be displayed again.</div>` : '';
+  const domainWarning = (!isSuper && !hasVerifiedDomains) ? `
+    <div class="notice warn" style="margin-bottom:16px;border-left:4px solid var(--accent)">
+      <strong>⚠️ Domain Verification Required</strong>
+      <p style="margin:4px 0 0;font-size:13px">You cannot generate API client keys until you add and verify ownership of a sending domain under <a href="${base}/domains" style="text-decoration:underline;font-weight:600">Domains</a>.</p>
+    </div>
+  ` : '';
   const createPanel = `
     <section class="panel">
+      ${domainWarning}
       <div class="panelhead" style="display:flex;align-items:center;gap:8px">
         <h2 style="margin:0">Create API client</h2>
         <span class="info-help-btn" tabindex="0" role="tooltip" title="Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender." aria-label="Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender.">
@@ -7093,17 +7109,17 @@ export function apiClients(clients, sess, createdKey = '') {
         </span>
       </div>
       <div class="panelbody">
-        <form method="post" action="/admin/api-clients/create">
+        <form method="post" action="${base}/api-clients/create">
           ${hidden(sess.csrf_token)}
           <div class="settingsgrid">
             <label class="field">Client name
-              <input name="name" required maxlength="80" placeholder="App backend">
+              <input name="name" required maxlength="80" placeholder="App backend" ${!canCreate ? 'disabled' : ''}>
             </label>
             <label class="field">Restricted sender (optional)
-              <input type="email" name="sender_address" maxlength="254" autocomplete="off" spellcheck="false" placeholder="your-sender@your-verified-domain.com">
+              <input type="email" name="sender_address" maxlength="254" autocomplete="off" spellcheck="false" placeholder="your-sender@your-verified-domain.com" ${!canCreate ? 'disabled' : ''}>
             </label>
           </div>
-          <button class="button">Create client key</button>
+          <button class="button" ${!canCreate ? 'disabled' : ''}>Create client key</button>
         </form>
         <p class="footnote">Leave sender blank to allow any active sender identity. A restricted client can only send from its assigned sender.</p>
       </div>
@@ -7140,7 +7156,7 @@ export function apiClients(clients, sess, createdKey = '') {
                 <td><span style="color:var(--muted);font-size:12px">${c.last_used_at ? e(new Date(c.last_used_at * 1000).toISOString().slice(0, 16).replace('T', ' ')) : 'Never'}</span></td>
                 <td style="text-align:right">
                   ${c.is_active ? `
-                    <form method="post" action="/admin/api-clients/revoke" style="display:inline;margin:0" onsubmit="return confirm('Revoke API client ${e(c.name)}?');">
+                    <form method="post" action="${base}/api-clients/revoke" style="display:inline;margin:0" onsubmit="return confirm('Revoke API client ${e(c.name)}?');">
                       ${hidden(sess.csrf_token)}
                       <input type="hidden" name="id" value="${e(c.id)}">
                       <button class="button secondary small">Revoke</button>
@@ -7165,6 +7181,7 @@ function renderNoticeText(msg) {
 }
 
 export function users(rows, sess, isSuperadmin = false, accessRequests = []) {
+  const base = sess?.base || '/dashboard';
   const requestsPanel = (isSuperadmin && accessRequests.length > 0) ? `
     <section class="panel" style="margin-top:24px">
       <div class="panelhead">
@@ -7194,14 +7211,14 @@ export function users(rows, sess, isSuperadmin = false, accessRequests = []) {
                 <td>${e(new Date(r.created_at * 1000).toISOString().slice(0, 16).replace('T', ' '))}</td>
                 <td>
                   <div style="display:flex;gap:6px">
-                    <form method="post" action="/admin/users/approve-request" style="display:inline">
+                    <form method="post" action="${base}/users/approve-request" style="display:inline">
                       ${hidden(sess.csrf_token)}
                       <input type="hidden" name="email" value="${e(r.email)}">
                       <input type="hidden" name="name" value="${e(r.name)}">
                       <input type="hidden" name="request_id" value="${e(r.id)}">
                       <button class="button small">Approve as Admin</button>
                     </form>
-                    <form method="post" action="/admin/users/reject-request" style="display:inline">
+                    <form method="post" action="${base}/users/reject-request" style="display:inline">
                       ${hidden(sess.csrf_token)}
                       <input type="hidden" name="request_id" value="${e(r.id)}">
                       <button class="button secondary small">Dismiss</button>
@@ -7229,7 +7246,7 @@ export function users(rows, sess, isSuperadmin = false, accessRequests = []) {
           </div>
           <button type="button" class="modal-close-btn" onclick="document.getElementById('addAdminModal').close()" aria-label="Close modal">&times;</button>
         </div>
-        <form method="post" action="/admin/users/add" class="modal-body">
+        <form method="post" action="${base}/users/add" class="modal-body">
           ${hidden(sess.csrf_token)}
           <label class="field" style="margin-bottom:12px">
             <span style="font-size:11px;font-weight:600;display:block;margin-bottom:4px">Access subject (email)</span>
@@ -7310,7 +7327,7 @@ document.addEventListener('click', function(ev) {
                             ${icon('users')}
                             <span>Edit administrator</span>
                           </div>
-                          <form method="post" action="/admin/users/update" style="margin:0">
+                          <form method="post" action="${base}/users/update" style="margin:0">
                             ${hidden(sess.csrf_token)}
                             <input type="hidden" name="old_subject" value="${e(r.subject)}">
                             <label class="field" style="margin-bottom:10px">
@@ -7330,7 +7347,7 @@ document.addEventListener('click', function(ev) {
                           </form>
                         </div>
                       </details>
-                      <form method="post" action="/admin/users/revoke" style="display:inline;margin:0" onsubmit="return confirm('Revoke console access for ${e(r.subject)}?');">
+                      <form method="post" action="${base}/users/revoke" style="display:inline;margin:0" onsubmit="return confirm('Revoke console access for ${e(r.subject)}?');">
                         ${hidden(sess.csrf_token)}
                         <input type="hidden" name="subject" value="${e(r.subject)}">
                         <button type="submit" class="button danger small" title="Revoke administrator access">${icon('trash')}<span>Revoke</span></button>
@@ -7399,7 +7416,7 @@ export function otpVerify(email, error = '', isDark = false, footerCredit = 'Dev
 }
 
 export function domains(rows, sess) {
-  const base = sess?.role === 'superadmin' ? '/admin' : '/dashboard';
+  const base = sess?.base || '/dashboard';
   const isSuper = sess?.role === 'superadmin';
   const currentSubject = sess?.access_subject || sess?.subject || 'local-admin';
 
@@ -7417,6 +7434,26 @@ export function domains(rows, sess) {
       <button class="button danger small iconb" type="submit" title="Delete domain" aria-label="Delete domain">${icon('trash')}</button>
     </form>
   `;
+
+  const whiteLabelForm = (r) => isSuper ? `
+    <details style="margin-top:6px;text-align:left">
+      <summary style="font-size:11px;color:var(--accent);cursor:pointer;font-weight:600">⚙ White-Label API</summary>
+      <form method="post" action="${base}/domains/white-label" style="margin-top:8px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--line);min-width:240px">
+        ${hidden(sess.csrf_token)}
+        <input type="hidden" name="domain" value="${e(r.domain)}">
+        <label class="field" style="margin-bottom:6px">
+          <span style="font-size:11px;font-weight:600">Custom API Hostname</span>
+          <input name="custom_api_hostname" value="${e(r.custom_api_hostname || '')}" placeholder="api.${e(r.domain)}" maxlength="253" style="font-size:12px;padding:4px 8px">
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;font-size:11px;margin-bottom:8px;cursor:pointer">
+          <input type="checkbox" name="enforce_custom_hostname" value="1" ${r.enforce_custom_hostname ? 'checked' : ''}>
+          <span>Enforce custom domain (block shared)</span>
+        </label>
+        ${r.custom_api_hostname ? `<div style="font-size:11px;color:var(--muted);margin-bottom:8px">Client DNS: <code>CNAME ${e(r.custom_api_hostname)} -> mail.neopathshala.com</code></div>` : ''}
+        <button class="button small" style="width:100%">Save White-Label</button>
+      </form>
+    </details>
+  ` : '';
 
   const otherDomainsPanel = otherRows.length > 0 ? `
     <details class="collapsible-domains-panel panel" open style="margin-top:24px;border:1px solid var(--line) !important;border-radius:12px;overflow:hidden">
@@ -7454,7 +7491,7 @@ export function domains(rows, sess) {
                 const ownerName = r.owner_name || r.owner_subject || 'Admin';
                 const ownerEmail = r.owner_subject || '';
                 const avatar = r.avatar_mime
-                  ? `<img src="/admin/profile-image?subject=${encodeURIComponent(r.owner_subject)}" alt="${e(ownerName)}" style="width:34px;height:34px;border-radius:8px;object-fit:cover;border:1px solid var(--line);flex-shrink:0">`
+                  ? `<img src="${base}/profile-image?subject=${encodeURIComponent(r.owner_subject)}" alt="${e(ownerName)}" style="width:34px;height:34px;border-radius:8px;object-fit:cover;border:1px solid var(--line);flex-shrink:0">`
                   : `<span style="width:34px;height:34px;border-radius:8px;background:var(--surface-hover);border:1px solid var(--line);display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:var(--text);flex-shrink:0">${e(initial(ownerName))}</span>`;
 
                 return `
@@ -7483,6 +7520,7 @@ export function domains(rows, sess) {
                         </form>
                         ${deleteDomainForm(r.domain)}
                       </div>
+                      ${whiteLabelForm(r)}
                     </td>
                   </tr>
                 `;
@@ -7530,6 +7568,7 @@ export function domains(rows, sess) {
                 <td>
                   <div class="subject" style="font-weight:600">${e(r.domain)}</div>
                   <span class="muted" style="font-size:11px">${e(r.display_name || r.domain)}</span>
+                  ${r.custom_api_hostname ? `<div style="margin-top:4px"><span class="tag ${r.enforce_custom_hostname ? 'danger' : 'good'}" style="font-size:10px">${icon('security')} ${e(r.custom_api_hostname)} (${r.enforce_custom_hostname ? 'Enforced' : 'Dual'})</span></div>` : ''}
                 </td>
                 <td>${r.is_verified ? '<span class="tag good">' + icon('check') + ' Active · Verified</span>' : '<span class="tag danger">' + icon('security') + ' Paused · DNS Failed</span>'}</td>
                 <td>${record(r)}</td>
@@ -7542,6 +7581,7 @@ export function domains(rows, sess) {
                     </form>
                     ${deleteDomainForm(r.domain)}
                   </div>
+                  ${whiteLabelForm(r)}
                 </td>
               </tr>
             `).join('') || '<tr><td colspan="4">No domains created in your workspace yet.</td></tr>'}
@@ -7594,11 +7634,13 @@ export function errorIllustrationSvg() {
         <stop offset="0%" stop-color="var(--illus-mascot)"/>
         <stop offset="100%" stop-color="var(--illus-mascot-dark)"/>
       </linearGradient>
+      <clipPath id="albumPhotoClip">
+        <rect x="89" y="67" width="46" height="46" rx="2"/>
+      </clipPath>
     </defs>
     <ellipse cx="270" cy="220" rx="190" ry="170" fill="url(#errBackdropGlow)"/>
     <ellipse cx="270" cy="378" rx="145" ry="16" fill="var(--text)" opacity="0.06"/>
-    <ellipse cx="68" cy="374" rx="26" ry="7" fill="var(--text)" opacity="0.06"/>
-    <ellipse cx="145" cy="370" rx="36" ry="9" fill="var(--text)" opacity="0.06"/>
+    <ellipse cx="112" cy="374" rx="46" ry="9" fill="var(--text)" opacity="0.06"/>
     <ellipse cx="445" cy="372" rx="30" ry="8" fill="var(--text)" opacity="0.06"/>
     <g transform="translate(355, 30)" id="wallClockGroup">
       <circle cx="45" cy="45" r="38" fill="var(--surface)" stroke="var(--illus-clock-rim)" stroke-width="4"/>
@@ -7612,56 +7654,91 @@ export function errorIllustrationSvg() {
       <circle cx="45" cy="45" r="3.2" fill="var(--accent)"/>
       <circle cx="45" cy="45" r="1.2" fill="#ffffff"/>
     </g>
-    <g id="serverRack">
-      <rect x="46" y="282" width="44" height="90" rx="6" fill="var(--illus-chair-shadow)" stroke="var(--line-strong)" stroke-width="1.2"/>
-      <rect x="49" y="285" width="38" height="11" rx="2" fill="var(--surface)" fill-opacity="0.12"/>
-      <rect x="52" y="289" width="12" height="3" rx="1" fill="var(--accent)"/>
-      <circle cx="81" cy="290.5" r="1.8" fill="var(--accent)" class="server-led-1"/>
-      <rect x="49" y="299" width="38" height="20" rx="2" fill="var(--surface)" fill-opacity="0.06" stroke="var(--line)" stroke-width="0.8"/>
-      <line x1="53" y1="306" x2="69" y2="306" stroke="var(--text)" stroke-width="1" opacity="0.25"/>
-      <line x1="53" y1="312" x2="69" y2="312" stroke="var(--text)" stroke-width="1" opacity="0.25"/>
-      <circle cx="75" cy="306" r="1.5" fill="var(--accent)" class="server-led-1"/>
-      <circle cx="80" cy="306" r="1.5" fill="#3b82f6" class="server-led-2"/>
-      <circle cx="75" cy="312" r="1.2" fill="var(--accent)" class="server-led-3"/>
-      <rect x="49" y="322" width="38" height="20" rx="2" fill="var(--surface)" fill-opacity="0.06" stroke="var(--line)" stroke-width="0.8"/>
-      <line x1="53" y1="329" x2="69" y2="329" stroke="var(--text)" stroke-width="1" opacity="0.25"/>
-      <line x1="53" y1="335" x2="69" y2="335" stroke="var(--text)" stroke-width="1" opacity="0.25"/>
-      <circle cx="75" cy="329" r="1.5" fill="var(--accent)" class="server-led-2"/>
-      <circle cx="80" cy="329" r="1.5" fill="var(--accent)" class="server-led-1"/>
-      <circle cx="75" cy="335" r="1.2" fill="#10b981" class="server-led-3"/>
-      <rect x="49" y="345" width="38" height="20" rx="2" fill="var(--surface)" fill-opacity="0.06" stroke="var(--line)" stroke-width="0.8"/>
-      <line x1="53" y1="352" x2="69" y2="352" stroke="var(--text)" stroke-width="1" opacity="0.25"/>
-      <line x1="53" y1="358" x2="69" y2="358" stroke="var(--text)" stroke-width="1" opacity="0.25"/>
-      <circle cx="75" cy="352" r="1.5" fill="var(--accent)" class="server-led-3"/>
-      <circle cx="80" cy="352" r="1.5" fill="var(--accent)" class="server-led-1"/>
-      <circle cx="75" cy="358" r="1.2" fill="var(--accent)" class="server-led-2"/>
-      <rect x="49" y="371" width="8" height="3" rx="1" fill="var(--illus-chair-shadow)"/>
-      <rect x="79" y="371" width="8" height="3" rx="1" fill="var(--illus-chair-shadow)"/>
-    </g>
-    <g id="sideTable" transform="translate(5, 0)">
-      <line x1="120" y1="310" x2="105" y2="370" stroke="var(--illus-chair-shadow)" stroke-width="4" stroke-linecap="round"/>
-      <line x1="140" y1="310" x2="140" y2="372" stroke="var(--illus-chair-shadow)" stroke-width="4" stroke-linecap="round"/>
-      <line x1="160" y1="310" x2="175" y2="370" stroke="var(--illus-chair-shadow)" stroke-width="4" stroke-linecap="round"/>
-      <ellipse cx="140" cy="308" rx="46" ry="14" fill="var(--illus-table)"/>
-      <ellipse cx="140" cy="305" rx="46" ry="13" fill="var(--illus-wood)"/>
-      <path d="M125 296 L152 292 L162 298 L135 302 Z" fill="var(--accent)"/>
-      <path d="M125 298 L152 294 L162 300 L135 304 Z" fill="var(--surface)"/>
-      <ellipse cx="126" cy="287" rx="14" ry="4" fill="var(--text)" opacity="0.1"/>
-      <path d="M118 288 L122 272 L132 272 L136 288 Z" fill="var(--illus-pot)" stroke="var(--line)" stroke-width="1"/>
-      <g>
-        <path d="M127 272 C120 262, 114 266, 122 258 C128 266, 127 270, 127 272 Z" fill="var(--illus-plant-light)"/>
-        <path d="M127 272 C134 262, 140 266, 132 258 C126 266, 127 270, 127 272 Z" fill="var(--illus-plant-dark)"/>
-        <path d="M127 272 C127 256, 131 254, 127 250 C123 254, 127 266, 127 272 Z" fill="#10b981"/>
+    <g id="wallAlbumPhoto">
+      <circle cx="112" cy="46" r="2.2" fill="var(--illus-chair-shadow)"/>
+      <path d="M 112 46 L 94 60 M 112 46 L 130 60" stroke="var(--line-strong)" stroke-width="1.2" stroke-linecap="round"/>
+      <rect x="82" y="60" width="60" height="70" rx="3.5" fill="var(--surface)" stroke="var(--illus-chair-shadow)" stroke-width="3"/>
+      <rect x="86" y="64" width="52" height="62" rx="1.5" fill="#f8fafc" stroke="var(--line)" stroke-width="0.6"/>
+      <g clip-path="url(#albumPhotoClip)">
+        <rect x="89" y="67" width="46" height="46" fill="#e0f2fe"/>
+        <circle cx="123" cy="76" r="4.5" fill="#f59e0b"/>
+        <path d="M 87 113 Q 102 96 116 113 Z" fill="#059669" opacity="0.65"/>
+        <path d="M 104 113 Q 118 99 137 113 Z" fill="var(--accent)" opacity="0.85"/>
+        <ellipse cx="107" cy="103" r="5" fill="#334155"/>
+        <ellipse cx="107" cy="96" r="4" fill="#334155"/>
+        <circle cx="105.5" cy="95.5" r="1.5" fill="none" stroke="#ffffff" stroke-width="0.6"/>
+        <circle cx="108.5" cy="95.5" r="1.5" fill="none" stroke="#ffffff" stroke-width="0.6"/>
+        <path d="M 112 97 Q 115 93 117 95" stroke="#334155" stroke-width="1.2" stroke-linecap="round" fill="none"/>
+        <path d="M 107 89 C 105.5 87 103 89 107 92.5 C 111 89 108.5 87 107 89 Z" fill="#ef4444"/>
+        <polygon points="89,67 115,67 95,113 89,113" fill="#ffffff" opacity="0.2"/>
       </g>
+      <line x1="97" y1="120" x2="127" y2="120" stroke="var(--line-strong)" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
+      <circle cx="112" cy="120" r="1.5" fill="var(--accent)"/>
+    </g>
+    <g id="serverRack">
+      <rect x="72" y="220" width="80" height="150" rx="8" fill="var(--illus-chair-shadow)" stroke="var(--line-strong)" stroke-width="1.5"/>
+      <rect x="76" y="224" width="72" height="142" rx="5" fill="var(--surface)" fill-opacity="0.05" stroke="var(--line)" stroke-width="0.8"/>
+      <rect x="79" y="227" width="66" height="17" rx="3" fill="var(--surface)" fill-opacity="0.12"/>
+      <rect x="84" y="233" width="18" height="4.5" rx="1.5" fill="var(--accent)"/>
+      <circle cx="106" cy="235.2" r="1.5" fill="var(--accent)"/>
+      <circle cx="132" cy="235.5" r="2.2" fill="var(--accent)" class="server-led-1"/>
+      <circle cx="138" cy="235.5" r="1.5" fill="#3b82f6" class="server-led-2"/>
+      <rect x="79" y="247" width="66" height="20" rx="2" fill="var(--surface)" fill-opacity="0.07" stroke="var(--line)" stroke-width="0.7"/>
+      <rect x="84" y="255" width="5.5" height="5.5" rx="1" fill="var(--illus-chair-shadow)"/>
+      <rect x="91" y="255" width="5.5" height="5.5" rx="1" fill="var(--illus-chair-shadow)"/>
+      <rect x="98" y="255" width="5.5" height="5.5" rx="1" fill="var(--illus-chair-shadow)"/>
+      <rect x="105" y="255" width="5.5" height="5.5" rx="1" fill="var(--illus-chair-shadow)"/>
+      <circle cx="86.7" cy="252" r="1" fill="var(--accent)" class="server-led-1"/>
+      <circle cx="93.7" cy="252" r="1" fill="var(--accent)" class="server-led-2"/>
+      <circle cx="100.7" cy="252" r="1" fill="#3b82f6" class="server-led-3"/>
+      <circle cx="107.7" cy="252" r="1" fill="var(--accent)" class="server-led-1"/>
+      <rect x="120" y="253" width="18" height="8" rx="1.5" fill="var(--surface)" fill-opacity="0.15"/>
+      <circle cx="125" cy="257" r="1.2" fill="var(--accent)" class="server-led-2"/>
+      <circle cx="132" cy="257" r="1.2" fill="var(--accent)" class="server-led-1"/>
+      <rect x="79" y="270" width="66" height="25" rx="2" fill="var(--surface)" fill-opacity="0.07" stroke="var(--line)" stroke-width="0.7"/>
+      <line x1="84" y1="277" x2="114" y2="277" stroke="var(--text)" stroke-width="1.2" opacity="0.25" stroke-linecap="round"/>
+      <line x1="84" y1="282" x2="114" y2="282" stroke="var(--text)" stroke-width="1.2" opacity="0.25" stroke-linecap="round"/>
+      <line x1="84" y1="287" x2="114" y2="287" stroke="var(--text)" stroke-width="1.2" opacity="0.25" stroke-linecap="round"/>
+      <rect x="120" y="276" width="19" height="9" rx="1.5" fill="var(--surface)" fill-opacity="0.2"/>
+      <line x1="123" y1="280.5" x2="135" y2="280.5" stroke="var(--accent)" stroke-width="1.5" stroke-linecap="round"/>
+      <circle cx="124" cy="289" r="1.3" fill="var(--accent)" class="server-led-1"/>
+      <circle cx="129" cy="289" r="1.3" fill="var(--accent)" class="server-led-2"/>
+      <circle cx="134" cy="289" r="1.3" fill="#10b981" class="server-led-3"/>
+      <rect x="79" y="298" width="66" height="25" rx="2" fill="var(--surface)" fill-opacity="0.07" stroke="var(--line)" stroke-width="0.7"/>
+      <rect x="84" y="302" width="12" height="17" rx="1.5" fill="var(--surface)" fill-opacity="0.12" stroke="var(--line)" stroke-width="0.5"/>
+      <rect x="99" y="302" width="12" height="17" rx="1.5" fill="var(--surface)" fill-opacity="0.12" stroke="var(--line)" stroke-width="0.5"/>
+      <rect x="114" y="302" width="12" height="17" rx="1.5" fill="var(--surface)" fill-opacity="0.12" stroke="var(--line)" stroke-width="0.5"/>
+      <rect x="129" y="302" width="12" height="17" rx="1.5" fill="var(--surface)" fill-opacity="0.12" stroke="var(--line)" stroke-width="0.5"/>
+      <line x1="86" y1="306" x2="94" y2="306" stroke="var(--text)" stroke-width="1" opacity="0.3"/>
+      <line x1="101" y1="306" x2="109" y2="306" stroke="var(--text)" stroke-width="1" opacity="0.3"/>
+      <line x1="116" y1="306" x2="124" y2="306" stroke="var(--text)" stroke-width="1" opacity="0.3"/>
+      <line x1="131" y1="306" x2="139" y2="306" stroke="var(--text)" stroke-width="1" opacity="0.3"/>
+      <circle cx="90" cy="315" r="1.1" fill="var(--accent)" class="server-led-1"/>
+      <circle cx="105" cy="315" r="1.1" fill="var(--accent)" class="server-led-2"/>
+      <circle cx="120" cy="315" r="1.1" fill="var(--accent)" class="server-led-3"/>
+      <circle cx="135" cy="315" r="1.1" fill="var(--accent)" class="server-led-1"/>
+      <rect x="79" y="326" width="66" height="25" rx="2" fill="var(--surface)" fill-opacity="0.07" stroke="var(--line)" stroke-width="0.7"/>
+      <line x1="84" y1="333" x2="116" y2="333" stroke="var(--text)" stroke-width="1.2" opacity="0.25" stroke-linecap="round"/>
+      <line x1="84" y1="338" x2="116" y2="338" stroke="var(--text)" stroke-width="1.2" opacity="0.25" stroke-linecap="round"/>
+      <line x1="84" y1="343" x2="116" y2="343" stroke="var(--text)" stroke-width="1.2" opacity="0.25" stroke-linecap="round"/>
+      <rect x="122" y="333" width="18" height="11" rx="2" fill="var(--surface)" fill-opacity="0.12"/>
+      <circle cx="127" cy="338.5" r="1.3" fill="var(--accent)" class="server-led-2"/>
+      <circle cx="133" cy="338.5" r="1.3" fill="var(--accent)" class="server-led-1"/>
+      <rect x="79" y="354" width="66" height="8" rx="2" fill="var(--surface)" fill-opacity="0.15"/>
+      <circle cx="87" cy="358" r="1.2" fill="var(--accent)"/>
+      <circle cx="92" cy="358" r="1.2" fill="var(--accent)"/>
+      <line x1="102" y1="358" x2="138" y2="358" stroke="var(--text)" stroke-width="1" opacity="0.2" stroke-linecap="round"/>
+      <rect x="77" y="369" width="13" height="4" rx="1.5" fill="var(--illus-chair-shadow)"/>
+      <rect x="134" y="369" width="13" height="4" rx="1.5" fill="var(--illus-chair-shadow)"/>
     </g>
     <g id="armchair">
       <path d="M200 280 C185 190, 205 130, 270 130 C335 130, 355 190, 340 280 Z" fill="url(#chairGrad)"/>
       <path d="M185 240 C180 240, 175 250, 175 270 C175 305, 195 320, 215 320 C222 320, 226 312, 226 300 C226 265, 205 240, 185 240 Z" fill="url(#chairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
       <path d="M355 240 C360 240, 365 250, 365 270 C365 305, 345 320, 325 320 C318 320, 314 312, 314 300 C314 265, 335 240, 355 240 Z" fill="url(#chairGrad)" stroke="var(--illus-chair-shadow)" stroke-width="1"/>
-      <line x1="228" y1="330" x2="220" y2="368" stroke="var(--illus-chair-shadow)" stroke-width="4.5" stroke-linecap="round"/>
-      <line x1="312" y1="330" x2="320" y2="368" stroke="var(--illus-chair-shadow)" stroke-width="4.5" stroke-linecap="round"/>
-      <line x1="206" y1="334" x2="192" y2="374" stroke="var(--illus-chair-shadow)" stroke-width="5" stroke-linecap="round"/>
-      <line x1="334" y1="334" x2="348" y2="374" stroke="var(--illus-chair-shadow)" stroke-width="5" stroke-linecap="round"/>
+      <line x1="234" y1="300" x2="220" y2="368" stroke="var(--illus-chair-shadow)" stroke-width="4.5" stroke-linecap="round"/>
+      <line x1="306" y1="300" x2="320" y2="368" stroke="var(--illus-chair-shadow)" stroke-width="4.5" stroke-linecap="round"/>
+      <line x1="217" y1="300" x2="192" y2="374" stroke="var(--illus-chair-shadow)" stroke-width="5" stroke-linecap="round"/>
+      <line x1="323" y1="300" x2="348" y2="374" stroke="var(--illus-chair-shadow)" stroke-width="5" stroke-linecap="round"/>
     </g>
     <g id="mascot">
       <path d="M225 300 C210 240, 225 170, 270 170 C315 170, 330 240, 315 300 C305 325, 235 325, 225 300 Z" fill="url(#errMascotGrad)"/>
@@ -7753,16 +7830,16 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
       <button type="button" class="button" id="btn-retry" onclick="location.reload()">
         ${icon('refresh')} Try Again
       </button>
-      <a class="button secondary" href="/admin">Return to workspace</a>
+      <a class="button secondary" href="/dashboard">Return to workspace</a>
     </div>
   ` : isServerError ? `
     <div class="error-page-actions">
       <button type="button" class="button" onclick="location.reload()">${icon('refresh')} Reload page</button>
-      <a class="button secondary" href="/admin">Return to workspace</a>
+      <a class="button secondary" href="/dashboard">Return to workspace</a>
     </div>
   ` : `
     <div class="error-page-actions">
-      <a class="button" href="/admin">Return to workspace</a>
+      <a class="button" href="/dashboard">Return to workspace</a>
       <a class="button secondary" href="/login">Back to Sign In</a>
     </div>
   `;
@@ -7784,8 +7861,21 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
         ${isRateLimit ? `
         var sec = ${seconds};
         var disp = document.getElementById('neomail-rate-timer');
+        var container = document.getElementById('neomail-rate-container');
         var btn = document.getElementById('btn-retry');
-        if (disp) {
+        function markFinished() {
+          if (container) {
+            container.innerHTML = '<span style="color:var(--accent);font-weight:600">Ready — try now</span>';
+          }
+          if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '${icon('refresh')} Try Now';
+            btn.focus();
+          }
+        }
+        if (sec <= 0) {
+          markFinished();
+        } else if (disp) {
           function fmt(s) {
             var m = Math.floor(s / 60);
             var rem = s % 60;
@@ -7795,8 +7885,7 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
             sec--;
             if (sec <= 0) {
               clearInterval(iv);
-              disp.textContent = 'Ready to retry';
-              if (btn) { btn.disabled = false; btn.focus(); }
+              markFinished();
             } else {
               disp.textContent = fmt(sec);
             }
@@ -7811,7 +7900,7 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
     <div class="error-page-wrapper">
       <div class="error-page-card">
         <div class="error-page-content">
-          <a class="error-page-brand" href="/admin">
+          <a class="error-page-brand" href="/dashboard">
             <span class="brandmark">${neomailLogoSvg}</span>
             <div class="brand-text">
               <span class="brand-title">neo<span>Mail</span></span>
@@ -7841,23 +7930,24 @@ export function accessLogin() {
   return document('Secure sign-in', `<div class="loginform" style="min-height:100vh"><div class="logininner"><span class="tag good">${icon('security')} Verified by Cloudflare Access</span><h1>Welcome to neoMailer</h1><!-- Welcome to neoMail --><!-- Welcome to NeoMail --><p>Your identity has been verified through your configured email OTP or passkey sign-in provider.</p><form method="post" action="/login"><button class="button">Continue to workspace</button></form><p class="footnote">Sign-in options and approved administrator emails are managed in Cloudflare Access.</p></div></div>`);
 }
 
-function profileAvatar(profile) {
+function profileAvatar(profile, base = '/dashboard') {
   const name = profile?.display_name || 'Administrator';
   const parts = name.trim().split(/\s+/).filter(Boolean);
   const initials = parts.slice(0, 2).map(part => part[0] || '').join('').toUpperCase() || 'A';
   const v = profile?.updated_at || Date.now();
-  return `<span class="avatar">${profile?.avatar_mime ? `<img src="/admin/profile-image?v=${e(v)}" alt="${e(name)} profile image" onerror="this.style.display='none';this.parentElement.textContent='${e(initials)}'">` : e(initials)}</span>`;
+  return `<span class="avatar">${profile?.avatar_mime ? `<img src="${base}/profile-image?v=${e(v)}" alt="${e(name)} profile image" onerror="this.style.display='none';this.parentElement.textContent='${e(initials)}'">` : e(initials)}</span>`;
 }
 
-function profileSquircle(profile) {
+function profileSquircle(profile, base = '/dashboard') {
   const name = profile?.display_name || 'Administrator';
   const parts = name.trim().split(/\s+/).filter(Boolean);
   const initials = parts.slice(0, 2).map(part => part[0] || '').join('').toUpperCase() || 'A';
   const v = profile?.updated_at || Date.now();
-  return `<div class="avatar-squircle" id="avatar-squircle-preview" title="Click to change photo" role="button" tabindex="0">${profile?.avatar_mime ? `<img src="/admin/profile-image?v=${e(v)}" alt="${e(name)} profile image" onerror="this.style.display='none';this.parentElement.textContent='${e(initials)}'">` : e(initials)}</div>`;
+  return `<div class="avatar-squircle" id="avatar-squircle-preview" title="Click to change photo" role="button" tabindex="0">${profile?.avatar_mime ? `<img src="${base}/profile-image?v=${e(v)}" alt="${e(name)} profile image" onerror="this.style.display='none';this.parentElement.textContent='${e(initials)}'">` : e(initials)}</div>`;
 }
 
 function profileSettings(sess) {
+  const base = sess?.base || '/dashboard';
   const hasAvatar = !!sess.profile?.avatar_mime;
   return `<section class="panel" id="profile">
     <div class="panelhead">
@@ -7867,13 +7957,13 @@ function profileSettings(sess) {
       </div>
     </div>
     <div class="panelbody">
-      <form method="post" action="/admin/profile" enctype="multipart/form-data">
+      <form method="post" action="${base}/profile" enctype="multipart/form-data">
         ${hidden(sess.csrf_token)}
         <div class="profile-photo-section">
           <label class="profile-photo-title">Profile photo</label>
           <div class="profile-photo-card">
             <div class="avatar-wrapper">
-              ${profileSquircle(sess.profile)}
+              ${profileSquircle(sess.profile, base)}
               <button type="button" class="avatar-camera-btn" id="btn-camera-trigger" title="Change photo" aria-label="Change photo">
                 ${icon('camera')}
               </button>

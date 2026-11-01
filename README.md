@@ -3,7 +3,7 @@
 > **Authentication update:** Production now uses Cloudflare Access with email OTP and a passkey-capable identity provider, without the shared admin token. Local HTTP retains its development token. See [current administrator sign-in instructions](docs/ADMIN-SIGN-IN.md); these supersede older token/MFA/credential-reauthentication instructions below. Account configuration and live OTP/passkey verification remain pending.
 
 
-A private transactional email gateway and console for Cloudflare Workers and D1. Redesigned console: overview, mail activity, provider routing, sender identities, test dispatch, settings, security events, and integration guide.
+A private transactional email gateway and console for Cloudflare Workers and Database. Redesigned console: overview, mail activity, provider routing, sender identities, test dispatch, settings, security events, and integration guide.
 
 **Security is an ongoing process; this project does not guarantee immunity from compromise.** Deployment, provider DNS, Access policy, and account security must be configured and verified before production.
 
@@ -29,13 +29,13 @@ For an existing local database, apply `npm run db:migrate:local`; fresh installa
 1. Add sender identities matching your provider-verified domain.
 2. Open Settings, set a default sender, configure routing and retention, and save.
 3. Configure your account's provider keys in **Workspace Provider Keys (Encrypted in SQLite)**:
-   - Each account / workspace stores its own provider API keys (Resend, Brevo, Mailgun, Mailtrap, MailerSend, SMTP) in SQLite (D1).
+   - Each account / workspace stores its own provider API keys (Resend, Brevo, Mailgun, Mailtrap, MailerSend, SMTP) in SQLite Database.
    - Keys are encrypted at rest with **AES-256-GCM** using `CONFIG_ENCRYPTION_KEY` and account-bound authenticated data (AAD).
    - **Write-Only Security**: Stored keys can never be viewed or retrieved by anyone, including the account owner. The UI renders only masked hints (`re_••••••••3a9f`). Decryption occurs strictly in-memory during dispatch.
 4. Generate a separate integration token under **API Clients** for backend dispatches via `/api/v1/send`.
 5. Send a test email to an inbox you control.
 
-Panel settings override Worker defaults for allowlisted keys. Credentials entered in the panel are AES-256-GCM encrypted in D1. Bootstrap secrets, Access policy, bindings, and deployment routes remain in Cloudflare.
+Panel settings override Worker defaults for allowlisted keys. Credentials entered in the panel are AES-256-GCM encrypted in Database. Bootstrap secrets, Access policy, bindings, and deployment routes remain in Cloudflare.
 
 ## Documentation
 

@@ -36,7 +36,7 @@ LOCAL_DEV = "false"
 #   npx wrangler secret put ADMIN_TOKEN_HASH        # only if ALLOW_TOKEN_LOGIN=true
 #   npx wrangler secret put LOCAL_ADMIN_TOKEN       # only for loopback development
 #   npx wrangler secret put SMTP_PASS               # optional deployment OTP relay
-# Provider keys are encrypted in D1 from the admin panel and never committed.
+# Provider keys are encrypted in Database from the admin panel and never committed.
 
 # Set these before production admin access. No production bypass is provided.
 ACCESS_TEAM_DOMAIN = ""

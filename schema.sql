@@ -167,12 +167,15 @@ CREATE TABLE IF NOT EXISTS managed_domains (
  created_at INTEGER NOT NULL,
  created_by TEXT,
  owner_subject TEXT,
- verification_token TEXT
+ verification_token TEXT,
+ custom_api_hostname TEXT,
+ custom_hostname_status TEXT DEFAULT 'disabled',
+ enforce_custom_hostname INTEGER DEFAULT 0 CHECK(enforce_custom_hostname IN (0,1))
 );
 CREATE INDEX IF NOT EXISTS idx_managed_domains_owner ON managed_domains(owner_subject);
 CREATE INDEX IF NOT EXISTS idx_sender_identities_owner ON sender_identities(owner_subject);
 
--- 9. Encrypted per-account provider credentials in SQLite (D1).
+-- 9. Encrypted per-account provider credentials in Database (SQLite).
 -- Credentials are encrypted with AES-256-GCM using CONFIG_ENCRYPTION_KEY and isolated per workspace.
 CREATE TABLE IF NOT EXISTS account_provider_keys (
   id TEXT PRIMARY KEY,
