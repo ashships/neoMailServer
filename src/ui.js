@@ -4241,24 +4241,6 @@ main.docs-main-studio {
   transform-origin: 270px 225px;
   animation: mascotBlink 4.2s ease-in-out infinite;
 }
-@keyframes drinkTea {
-  0%, 55%, 100% {
-    transform: translate(0, 0) rotate(0deg);
-  }
-  66% {
-    transform: translate(2px, -3px) rotate(6deg);
-  }
-  72%, 78% {
-    transform: translate(2px, -5px) rotate(9deg);
-  }
-  88% {
-    transform: translate(1px, -1px) rotate(2deg);
-  }
-}
-.mascot-drink-tea {
-  transform-origin: 232px 264px;
-  animation: drinkTea 7.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-}
 @keyframes neomailSteamFloat {
   0% { opacity: 0; transform: translateY(0) scaleX(0.8); }
   50% { opacity: 0.7; transform: translateY(-8px) scaleX(1.1); }
@@ -7784,27 +7766,16 @@ export function errorIllustrationSvg() {
       <path d="M266 244 Q272 250 278 244" stroke="var(--illus-glasses)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
       <ellipse cx="236" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
       <ellipse cx="304" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
-      <!-- Fixed Left Arm (Anchored to torso & chair, does not move as a whole) -->
-      <path d="M226 254 C218 262, 216 272, 224 278 C228 282, 230 274, 232 264" stroke="var(--illus-arms)" stroke-width="12" stroke-linecap="round" fill="none"/>
-      <!-- Cup closer to mouth & Enlarged Hand gripping the handle (NOT the cup body) -->
-      <g class="mascot-drink-tea">
-        <g transform="translate(248, 246)">
-          <!-- Handle attached to left of mug, looping through the grip -->
-          <path d="M0 4 C-12 4, -12 18, 0 18" fill="none" stroke="#ffffff" stroke-width="4.5" stroke-linecap="round"/>
-          <path d="M0 4 C-12 4, -12 18, 0 18" fill="none" stroke="var(--line-strong)" stroke-width="1.4" stroke-linecap="round"/>
-          <!-- Clean Mug Body (Pristine ceramic, no fingers overlapping the cup face) -->
-          <rect x="0" y="0" width="19" height="23" rx="4" fill="#ffffff" stroke="var(--line-strong)" stroke-width="1.5"/>
-          <path d="M6 -2 Q9 -6 6 -10" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-1"/>
-          <path d="M13 -3 Q16 -8 13 -13" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-2"/>
-        </g>
-        <!-- Enlarged Hand Paw GRIPPING THE HANDLE (Grip strictly on the handle, not the cup!) -->
-        <ellipse cx="230" cy="258" rx="9.5" ry="11.5" fill="var(--illus-arms)"/>
-        <!-- Thumb resting on top of the handle loop -->
-        <path d="M228 248 C232 246, 238 246, 243 249" stroke="var(--illus-arms)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-        <!-- Fingers curling through the handle loop -->
-        <path d="M228 255 C233 254, 239 255, 242 258" stroke="var(--illus-arms)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
-        <path d="M227 262 C232 262, 238 263, 241 266" stroke="var(--illus-arms)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
+      <path d="M225 270 C216 276, 212 284, 222 288" stroke="var(--illus-arms)" stroke-width="12" stroke-linecap="round" fill="none"/>
+      <g transform="translate(228, 274)">
+        <path d="M0 6 C-9 6, -9 18, 0 18" fill="none" stroke="#ffffff" stroke-width="3.8" stroke-linecap="round"/>
+        <path d="M0 6 C-9 6, -9 18, 0 18" fill="none" stroke="var(--line-strong)" stroke-width="1.3" stroke-linecap="round"/>
+        <rect x="0" y="0" width="20" height="24" rx="4" fill="#ffffff" stroke="var(--line-strong)" stroke-width="1.5"/>
+        <path d="M7 -2 Q10 -6 7 -10" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-1"/>
+        <path d="M14 -3 Q17 -8 14 -13" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none" class="error-steam-2"/>
       </g>
+      <ellipse cx="224" cy="284" rx="6" ry="7" fill="var(--illus-arms)"/>
+      <path d="M224 278 C220 281, 219 289, 223 293" stroke="var(--illus-arms)" stroke-width="4.5" stroke-linecap="round" fill="none"/>
       <path d="M312 265 C326 270, 334 285, 310 292" stroke="var(--illus-arms)" stroke-width="12" stroke-linecap="round" fill="none"/>
       <ellipse cx="304" cy="289" rx="6" ry="5" fill="var(--illus-arms)"/>
       <g transform="translate(306, 280)">
