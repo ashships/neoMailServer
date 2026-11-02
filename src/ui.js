@@ -4339,31 +4339,22 @@ main.docs-main-studio {
 }
 
 @keyframes mascotWave {
-  0%, 68%, 100% {
-    transform: rotate(0deg);
-  }
-  73% {
-    transform: rotate(-82deg);
-  }
-  77% {
-    transform: rotate(-66deg);
-  }
-  81% {
-    transform: rotate(-84deg);
-  }
-  85% {
-    transform: rotate(-68deg);
-  }
-  89% {
-    transform: rotate(-82deg);
-  }
-  94% {
-    transform: rotate(0deg);
-  }
+  /* Immediate welcome wave when visiting page */
+  0% { transform: rotate(-80deg); }
+  4% { transform: rotate(-64deg); }
+  8% { transform: rotate(-84deg); }
+  12% { transform: rotate(-64deg); }
+  16% { transform: rotate(-80deg); }
+  /* Smoothly lowers down to rest on armchair cushion */
+  23% { transform: rotate(0deg); }
+  /* Hand stays completely DOWN on cushion for 4.5 seconds (from 23% to 92% of 6.5s = 4.5s) */
+  23%, 92% { transform: rotate(0deg); }
+  /* Lifts back up to wave again */
+  98%, 100% { transform: rotate(-80deg); }
 }
 .mascot-waving-arm {
   transform-origin: 308px 262px;
-  animation: mascotWave 9.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: mascotWave 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 /* Server Activity LEDs */
