@@ -764,8 +764,8 @@ select option::checkmark {
   align-items: center;
   gap: 10px;
   font-weight: 750;
-  font-size: 18px;
-  letter-spacing: -0.5px;
+  font-size: 16px;
+  letter-spacing: -0.35px;
   color: var(--text);
 }
 
@@ -773,29 +773,32 @@ select option::checkmark {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  height: 32px;
+  width: auto;
   flex-shrink: 0;
 }
 
 .brandmark svg {
-  width: 44px;
-  height: 30px;
-  max-width: 44px;
+  height: 32px;
+  width: auto;
   max-height: 32px;
+  aspect-ratio: 450 / 290;
   display: block;
 }
 
 .brand-text {
   display: flex;
   flex-direction: column;
-  line-height: 1.15;
+  justify-content: space-between;
+  height: 32px;
+  box-sizing: border-box;
 }
 
 .brand-title {
-  font-size: 21px;
+  font-size: 16px;
   font-weight: 800;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.35px;
+  line-height: 1.1;
   color: var(--text);
 }
 
@@ -804,12 +807,12 @@ select option::checkmark {
 }
 
 .brand-sub {
-  font-size: 11.5px;
+  font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--muted);
-  margin-top: 2px;
+  line-height: 1;
 }
 
 .brand span span {
@@ -2038,28 +2041,38 @@ iframe {
 }
 
 .login-brand-header .brandmark {
-  width: 44px;
-  height: 44px;
+  height: 32px;
+  width: auto;
 }
 
 .login-brand-header .brandmark svg {
-  width: 44px;
-  height: 30px;
-  max-width: 44px;
+  height: 32px;
+  width: auto;
   max-height: 32px;
+  aspect-ratio: 450 / 290;
+}
+
+.login-brand-header .brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 32px;
+  box-sizing: border-box;
 }
 
 .login-brand-header .brand-title {
-  font-size: 21px;
+  font-size: 16px;
   font-weight: 800;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.35px;
+  line-height: 1.1;
 }
 
 .login-brand-header .brand-sub {
-  font-size: 11.5px;
+  font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.8px;
-  margin-top: 2px;
+  text-transform: uppercase;
+  line-height: 1;
 }
 
 .login-card-title {
@@ -4221,25 +4234,34 @@ main.docs-main-studio {
   margin-bottom: 8px;
 }
 .error-page-brand .brandmark {
-  width: 44px;
-  height: 44px;
+  height: 32px;
+  width: auto;
 }
 .error-page-brand .brandmark svg {
-  max-width: 44px;
+  height: 32px;
+  width: auto;
   max-height: 32px;
-  width: 44px;
-  height: 30px;
+  aspect-ratio: 450 / 290;
+}
+.error-page-brand .brand-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 32px;
+  box-sizing: border-box;
 }
 .error-page-brand .brand-title {
-  font-size: 21px;
+  font-size: 16px;
   font-weight: 800;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.35px;
+  line-height: 1.1;
 }
 .error-page-brand .brand-sub {
-  font-size: 11.5px;
+  font-size: 9.5px;
   font-weight: 700;
   letter-spacing: 0.8px;
-  margin-top: 2px;
+  text-transform: uppercase;
+  line-height: 1;
 }
 @media (max-width: 860px) {
   .error-page-brand {
@@ -8570,22 +8592,22 @@ export function healthPage(isDark = false) {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      width: 44px;
-      height: 44px;
+      height: 32px;
+      width: auto;
       flex-shrink: 0;
     }
     .brandmark svg {
-      width: 44px;
-      height: 30px;
-      max-width: 44px;
+      height: 32px;
+      width: auto;
       max-height: 32px;
+      aspect-ratio: 450 / 290;
       display: block;
     }
     .brand-title {
-      font-size: 21px;
+      font-size: 16px;
       font-weight: 800;
-      letter-spacing: -0.5px;
-      line-height: 1.2;
+      letter-spacing: -0.35px;
+      line-height: 1.1;
     }
     .brand-title span { color: var(--accent); }
     .status-badge {
