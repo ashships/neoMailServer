@@ -4348,17 +4348,32 @@ main.docs-main-studio {
   transform-origin: 270px 225px;
   animation: mascotBlink 4.2s ease-in-out infinite;
 }
-/* Steam float animation */
-@keyframes neomailSteamFloat {
-  0% { opacity: 0; transform: translateY(0) scaleX(0.8); }
-  50% { opacity: 0.7; transform: translateY(-8px) scaleX(1.1); }
-  100% { opacity: 0; transform: translateY(-16px) scaleX(1.3); }
+/* Steam float animation — wavy rise with sideways sway */
+@keyframes neomailSteamFloat1 {
+  0%   { opacity: 0;   transform: translate(0px, 0px)   scaleX(1);   }
+  20%  { opacity: 0.6; transform: translate(1.5px, -5px) scaleX(0.9); }
+  45%  { opacity: 0.75;transform: translate(-1.5px,-10px) scaleX(1.1); }
+  70%  { opacity: 0.5; transform: translate(2px, -15px)  scaleX(0.85);}
+  100% { opacity: 0;   transform: translate(-1px,-22px)  scaleX(1.2); }
+}
+@keyframes neomailSteamFloat2 {
+  0%   { opacity: 0;   transform: translate(0px, 0px)   scaleX(1);   }
+  20%  { opacity: 0.6; transform: translate(-2px, -5px)  scaleX(1.1); }
+  45%  { opacity: 0.8; transform: translate(2px, -11px)  scaleX(0.9); }
+  70%  { opacity: 0.5; transform: translate(-2px,-17px)  scaleX(1.15);}
+  100% { opacity: 0;   transform: translate(1px, -23px)  scaleX(0.8); }
 }
 .error-steam-1 {
-  animation: neomailSteamFloat 2.8s ease-out infinite;
+  animation: neomailSteamFloat1 2.6s ease-out infinite;
 }
 .error-steam-2 {
-  animation: neomailSteamFloat 2.8s ease-out infinite 1.4s;
+  animation: neomailSteamFloat2 2.9s ease-out infinite 1.3s;
+}
+/* Hide steam while drinking (is-sipping class on body) */
+.is-sipping .error-steam-1,
+.is-sipping .error-steam-2 {
+  opacity: 0 !important;
+  animation: none !important;
 }
 
 /* Waving animation from Koko */
@@ -8101,8 +8116,10 @@ export function errorIllustrationSvg() {
         <path d="M0 4 C-8 4, -8 16, 0 16" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>
         <path d="M0 4 C-8 4, -8 16, 0 16" fill="none" stroke="var(--line-strong)" stroke-width="1.3" stroke-linecap="round"/>
         <rect x="0" y="0" width="18" height="22" rx="4" fill="#ffffff" stroke="var(--line-strong)" stroke-width="1.5"/>
-        <path d="M5 -2 Q8 -6 5 -10" stroke="var(--muted)" stroke-width="1.4" stroke-linecap="round" fill="none" class="error-steam-1"/>
-        <path d="M12 -3 Q15 -8 12 -13" stroke="var(--muted)" stroke-width="1.4" stroke-linecap="round" fill="none" class="error-steam-2"/>
+        <g id="kokoSteamGroup">
+          <path d="M5 -2 Q8 -7 5 -12" stroke="var(--muted)" stroke-width="1.6" stroke-linecap="round" fill="none" class="error-steam-1"/>
+          <path d="M12 -3 Q16 -9 12 -15" stroke="var(--muted)" stroke-width="1.6" stroke-linecap="round" fill="none" class="error-steam-2"/>
+        </g>
       </g>
       <!-- Hand Paw wrapping and gripping the cup -->
       <g id="kokoLeftPaw">
@@ -8230,7 +8247,7 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
         };
         var ARM_SIP = {
           p0: [220, 262], p1: [216, 252], p2: [230, 238], p3: [256, 244],
-          mug: [256, 230], rot: 24, paw: [31, -38]
+          mug: [251, 232], rot: 24, paw: [31, -38]
         };
 
         function lerp(a, b, t) { return a + (b - a) * t; }
@@ -8249,6 +8266,12 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
           leftArmPath.setAttribute('d', 'M ' + p0[0] + ' ' + p0[1] + ' C ' + p1[0] + ' ' + p1[1] + ', ' + p2[0] + ' ' + p2[1] + ', ' + p3[0] + ' ' + p3[1]);
           coffeeMugGroup.setAttribute('transform', 'translate(' + mug[0] + ', ' + mug[1] + ') rotate(' + rot + ', 9, 11)');
           leftPaw.setAttribute('transform', 'translate(' + paw[0] + ', ' + paw[1] + ')');
+          // Hide steam while cup is at lips (t > 0.35), show steam when arm is resting (t < 0.15)
+          if (t > 0.35) {
+            document.body.classList.add('is-sipping');
+          } else {
+            document.body.classList.remove('is-sipping');
+          }
         }
 
         function triggerWave(cb) {
