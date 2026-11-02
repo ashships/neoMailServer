@@ -4345,35 +4345,30 @@ main.docs-main-studio {
   animation: neomailSteamFloat 2.8s ease-out infinite 1.4s;
 }
 
-/* Waving animation */
+/* Waving animation from Koko */
 .arm-rest {
-  transition: opacity 0.25s ease-out;
-  opacity: 1;
+  display: inline;
 }
 .arm-wave {
-  transform-origin: 308px 258px;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s ease-in;
+  display: none;
+  transform-origin: 310px 254px;
 }
 
 @keyframes waveGesture {
   0% { transform: rotate(0deg); }
-  20% { transform: rotate(-18deg); }
-  40% { transform: rotate(12deg); }
-  60% { transform: rotate(-16deg); }
-  80% { transform: rotate(8deg); }
+  20% { transform: rotate(-26deg); }
+  40% { transform: rotate(2deg); }
+  60% { transform: rotate(-24deg); }
+  80% { transform: rotate(-2deg); }
   100% { transform: rotate(0deg); }
 }
 
 .is-waving .arm-rest {
-  opacity: 0;
-  pointer-events: none;
+  display: none !important;
 }
 .is-waving .arm-wave {
-  opacity: 1;
-  pointer-events: auto;
-  animation: waveGesture 1.6s ease-in-out;
+  display: inline !important;
+  animation: waveGesture 1.6s ease-in-out infinite;
 }
 
 /* Server Activity LEDs */
@@ -4405,8 +4400,8 @@ main.docs-main-studio {
 }
 `;
 
-function document(title, content, nonce = '', isDark = false) {
-  return `<!doctype html><html lang="en" ${isDark ? 'data-theme="dark" class="dark"' : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#063b2c"><link rel="icon" type="image/svg+xml" href="${faviconUri}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="preload" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwgknk-6nFg.woff2" as="font" type="font/woff2" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"><title>${e(title)} · neoMailer</title><style>${css}</style>${nonce ? `<script nonce="${nonce}">try{var cf=localStorage.getItem('neomail_font_css');if(cf){var s=document.createElement('style');s.id='neomail-fonts-cached';s.textContent=cf;document.head.appendChild(s);}var t=localStorage.getItem('neomail_theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark');}}catch(e){}</script>` : ''}</head><body>${content}</body></html>`;
+function document(title, content, nonce = '', isDark = false, bodyClass = '') {
+  return `<!doctype html><html lang="en" ${isDark ? 'data-theme="dark" class="dark"' : ''}><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark"><meta name="theme-color" content="#063b2c"><link rel="icon" type="image/svg+xml" href="${faviconUri}"><link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="preload" href="https://fonts.gstatic.com/s/plusjakartasans/v12/LDIoaomQNQcsA88c7O9yZ4KMCoOg4Ko20yygg_vb.woff2" as="font" type="font/woff2" crossorigin><link rel="preload" href="https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4zr3E_BX0PnT8RD8yKwBNntkaToggR7BYRbKPx7cwgknk-6nFg.woff2" as="font" type="font/woff2" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300..800;1,300..800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"><title>${e(title)} · neoMailer</title><style>${css}</style>${nonce ? `<script nonce="${nonce}">try{var cf=localStorage.getItem('neomail_font_css');if(cf){var s=document.createElement('style');s.id='neomail-fonts-cached';s.textContent=cf;document.head.appendChild(s);}var t=localStorage.getItem('neomail_theme');if(t==='dark'||(!t&&window.matchMedia('(prefers-color-scheme: dark)').matches)){document.documentElement.setAttribute('data-theme','dark');document.documentElement.classList.add('dark');}}catch(e){}</script>` : ''}</head><body${bodyClass ? ` class="${e(bodyClass)}"` : ''}>${content}</body></html>`;
 }
 
 const navAll = [
@@ -8243,7 +8238,7 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
             // Right hand is now down on cushion. Stay down for 4.5 seconds (4500ms):
             setTimeout(function() {
               triggerSip();
-            }, 700);
+            }, 600);
 
             setTimeout(function() {
               runMascotCycle();
@@ -8251,9 +8246,16 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
           });
         }
 
-        if (leftArmPath && coffeeMugGroup) {
-          runMascotCycle();
-        }
+        // Initial welcoming wave completes at 1600ms, then hand rests down for 4.5s with coffee sip
+        setTimeout(function() {
+          document.body.classList.remove('is-waving');
+          setTimeout(function() {
+            triggerSip();
+          }, 600);
+          setTimeout(function() {
+            runMascotCycle();
+          }, 4500);
+        }, 1600);
         ${isRateLimit ? `
         var sec = ${seconds};
         var disp = document.getElementById('neomail-rate-timer');
@@ -8319,7 +8321,7 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
     ${pageScript}
   `;
 
-  return document(pageTitle, content, nonce, isDark);
+  return document(pageTitle, content, nonce, isDark, 'is-waving');
 }
 
 export function accessLogin() {
