@@ -7930,7 +7930,7 @@ export function errorIllustrationSvg() {
     </defs>
     <ellipse cx="270" cy="220" rx="190" ry="170" fill="url(#errBackdropGlow)"/>
     <ellipse cx="270" cy="378" rx="145" ry="16" fill="var(--text)" opacity="0.06"/>
-    <ellipse cx="112" cy="374" rx="46" ry="9" fill="var(--text)" opacity="0.06"/>
+    <ellipse cx="80" cy="374" rx="46" ry="9" fill="var(--text)" opacity="0.06"/>
     <ellipse cx="445" cy="372" rx="30" ry="8" fill="var(--text)" opacity="0.06"/>
     <g transform="translate(355, 30)" id="wallClockGroup">
       <circle cx="45" cy="45" r="38" fill="var(--surface)" stroke="var(--illus-clock-rim)" stroke-width="4"/>
@@ -7944,7 +7944,7 @@ export function errorIllustrationSvg() {
       <circle cx="45" cy="45" r="3.2" fill="var(--accent)"/>
       <circle cx="45" cy="45" r="1.2" fill="#ffffff"/>
     </g>
-    <g id="wallAlbumPhoto">
+    <g id="wallAlbumPhoto" transform="translate(-32, 0)">
       <circle cx="112" cy="30" r="2.2" fill="var(--illus-frame-border)"/>
       <path d="M 112 30 L 96 37 M 112 30 L 128 37" stroke="var(--line-strong)" stroke-width="1.2" stroke-linecap="round"/>
       <rect x="82" y="37" width="60" height="76" rx="3.5" fill="var(--illus-frame-border)" stroke="var(--illus-frame-border)" stroke-width="1.5"/>
@@ -7965,7 +7965,7 @@ export function errorIllustrationSvg() {
       <line x1="97" y1="102" x2="127" y2="102" stroke="var(--line-strong)" stroke-width="1" stroke-linecap="round" opacity="0.4"/>
       <circle cx="112" cy="102" r="1.5" fill="var(--accent)"/>
     </g>
-    <g id="serverRack">
+    <g id="serverRack" transform="translate(-32, 0)">
       <rect x="72" y="220" width="80" height="150" rx="8" fill="var(--illus-server)" stroke="var(--line-strong)" stroke-width="1.5"/>
       <rect x="76" y="224" width="72" height="142" rx="5" fill="var(--surface)" fill-opacity="0.05" stroke="var(--line)" stroke-width="0.8"/>
       <rect x="79" y="227" width="66" height="17" rx="3" fill="var(--surface)" fill-opacity="0.12"/>
