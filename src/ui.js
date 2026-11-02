@@ -4339,22 +4339,31 @@ main.docs-main-studio {
 }
 
 @keyframes mascotWave {
-  0%, 100% {
+  0%, 68%, 100% {
     transform: rotate(0deg);
   }
-  14%, 42%, 70% {
-    transform: rotate(15deg);
+  73% {
+    transform: rotate(-82deg);
   }
-  28%, 56% {
-    transform: rotate(-8deg);
+  77% {
+    transform: rotate(-66deg);
   }
-  84% {
+  81% {
+    transform: rotate(-84deg);
+  }
+  85% {
+    transform: rotate(-68deg);
+  }
+  89% {
+    transform: rotate(-82deg);
+  }
+  94% {
     transform: rotate(0deg);
   }
 }
 .mascot-waving-arm {
-  transform-origin: 310px 254px;
-  animation: mascotWave 3.5s ease-in-out infinite;
+  transform-origin: 308px 262px;
+  animation: mascotWave 9.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 /* Server Activity LEDs */
@@ -8048,14 +8057,11 @@ export function errorIllustrationSvg() {
       <path d="M225 280 C230 279, 235 280, 238 282" stroke="var(--illus-arms)" stroke-width="4.2" stroke-linecap="round" fill="none"/>
       <path d="M224 286 C229 285, 234 286, 236 288" stroke="var(--illus-arms)" stroke-width="4.2" stroke-linecap="round" fill="none"/>
 
-      <!-- RIGHT ARM (Friendly Animated Waving Hand 👋) -->
+      <!-- RIGHT ARM (Rests down on cushion most of the time; periodically lifts to wave) -->
       <g class="mascot-waving-arm">
-        <path d="M308 258 C320 252, 328 238, 332 218" stroke="var(--illus-arms)" stroke-width="11" stroke-linecap="round" fill="none"/>
-        <ellipse cx="334" cy="214" rx="7.5" ry="8.5" fill="var(--illus-arms)"/>
-        <circle cx="327" cy="215" r="3.2" fill="var(--illus-arms)"/>
-        <rect x="330" y="202" width="3.5" height="9" rx="1.75" fill="var(--illus-arms)"/>
-        <rect x="334" y="200" width="3.5" height="10" rx="1.75" fill="var(--illus-arms)"/>
-        <rect x="338" y="202" width="3.5" height="8.5" rx="1.75" fill="var(--illus-arms)"/>
+        <path d="M308 262 C316 268, 324 278, 320 292" stroke="var(--illus-arms)" stroke-width="11" stroke-linecap="round" fill="none"/>
+        <ellipse cx="318" cy="292" rx="7" ry="6.5" fill="var(--illus-arms)"/>
+        <path d="M315 290 C319 289, 323 290, 325 292" stroke="var(--illus-arms)" stroke-width="3" stroke-linecap="round" fill="none"/>
       </g>
 
       <!-- Feet -->
