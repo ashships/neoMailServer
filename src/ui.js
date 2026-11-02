@@ -4348,12 +4348,6 @@ main.docs-main-studio {
   transform-origin: 270px 225px;
   animation: mascotBlink 4.2s ease-in-out infinite;
 }
-@keyframes neomailSteamFloat {
-  0% { opacity: 0; transform: translateY(0) scaleX(0.8); }
-  50% { opacity: 0.7; transform: translateY(-8px) scaleX(1.1); }
-  100% { opacity: 0; transform: translateY(-16px) scaleX(1.3); }
-}
-.error-steam-1 {
 /* Steam float animation */
 @keyframes neomailSteamFloat {
   0% { opacity: 0; transform: translateY(0) scaleX(0.8); }
