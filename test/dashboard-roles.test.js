@@ -76,7 +76,7 @@ test('unified /dashboard portal: superadmin and admin roles, role-specific menus
   for (const view of superViews) {
     assert.ok(superOverviewHtml.includes(`href="/dashboard/${view}"`), `Superadmin sidebar must include link to /dashboard/${view}`);
   }
-  assert.ok(superOverviewHtml.includes('side-docs-edit-btn'), 'Superadmin sidebar must render Docs Studio edit shortcut');
+  assert.ok(!superOverviewHtml.includes('side-docs-edit-btn'), 'Superadmin sidebar must not render Docs Studio edit shortcut');
   assert.ok(superOverviewHtml.includes('sidefoot-credit-edit'), 'Superadmin sidebar must render footer credit edit icon');
   assert.ok(superOverviewHtml.includes('/dashboard/security'), 'Superadmin profile dropdown must include Security events link');
   assert.ok(superOverviewHtml.includes('Delivery providers'), 'Superadmin overview must render Delivery providers panel');

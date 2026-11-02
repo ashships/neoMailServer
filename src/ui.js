@@ -4463,12 +4463,7 @@ export function page(view, title, subtitle, content, sess, notice = '', alerts =
         <div class="eyebrow">Workspace</div>
         <nav>${navFor(sess?.role).map(([id, label]) => `<a class="navlink ${id === view ? 'active' : ''}" ${id === view ? 'aria-current="page"' : ''} href="${base}/${id}">${icon(id)}<span>${label}</span></a>`).join('')}</nav>
         <div class="side-docs-box">
-          <div class="side-docs-row">
-            <a class="navlink side-docs-link" href="/docs" target="_blank" title="View live documentation in a new tab">${icon('docs')}<span>Documentation ↗</span></a>
-            ${sess?.role === 'superadmin' ? `
-              <a class="side-docs-edit-btn" href="${base}/docs" title="Edit documentation in Documentation Studio" aria-label="Edit documentation in Studio">${icon('edit')}<span>Edit</span></a>
-            ` : ''}
-          </div>
+          <a class="navlink side-docs-link" href="/docs" target="_blank" title="View live documentation in a new tab">${icon('docs')}<span>Documentation ↗</span></a>
         </div>
         <div class="sidefoot">
           <div class="sidefoot-credit">
@@ -5003,7 +4998,7 @@ export function identities(rows, sess, domains = []) {
             <div id="edit-id-otp-msg" style="font-size:11px;margin-bottom:8px;display:none;line-height:1.4"></div>
             <label class="field" style="margin:0">
               <span style="font-size:11px;font-weight:600;display:block;margin-bottom:4px">6-digit confirmation code</span>
-              <input name="otp_code" id="edit-id-otp-input" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="123456" style="width:100%;letter-spacing:4px;font-weight:700;font-family:monospace;font-size:16px">
+              <input name="otp_code" id="edit-id-otp-input" type="text" inputmode="numeric" maxlength="6" pattern="[0-9]{6}" autocomplete="one-time-code" placeholder="123456" style="width:100%;letter-spacing:4px;font-weight:700;font-family:monospace;font-size:16px">
             </label>
           </div>
 
@@ -5067,6 +5062,22 @@ document.addEventListener('click', function(ev) {
   if (emailInput) {
     emailInput.addEventListener('input', checkAddressChange);
     emailInput.addEventListener('change', checkAddressChange);
+  }
+
+  if (otpInput) {
+    otpInput.addEventListener('input', function() {
+      this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6);
+    });
+    otpInput.addEventListener('keydown', function(e) {
+      if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+    });
+    otpInput.addEventListener('paste', function(e) {
+      e.preventDefault();
+      var paste = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+      this.value = paste.replace(/[^0-9]/g, '').slice(0, 6);
+    });
   }
 
   if (sendBtn) {
@@ -7674,8 +7685,29 @@ export function otpRequest(error = '', isDark = false, emailVal = '', showRegist
   </div>`, '', isDark);
 }
 
-export function otpVerify(email, error = '', isDark = false, footerCredit = 'Developed by SoftLaya Tech') {
+export function otpVerify(email, error = '', isDark = false, footerCredit = 'Developed by SoftLaya Tech', nonce = '') {
   const renderedError = error ? renderNoticeText(error) : '';
+  const verifyScript = nonce ? `
+    <script nonce="${e(nonce)}">
+      (function() {
+        var input = document.getElementById('login-code');
+        if (!input) return;
+        input.addEventListener('input', function() {
+          this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6);
+        });
+        input.addEventListener('keydown', function(e) {
+          if (['Backspace', 'Delete', 'Tab', 'Escape', 'Enter', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) return;
+          if (e.ctrlKey || e.metaKey || e.altKey) return;
+          if (!/^[0-9]$/.test(e.key)) e.preventDefault();
+        });
+        input.addEventListener('paste', function(e) {
+          e.preventDefault();
+          var paste = (e.clipboardData || window.clipboardData)?.getData('text') || '';
+          this.value = paste.replace(/[^0-9]/g, '').slice(0, 6);
+        });
+      })();
+    </script>
+  ` : '';
   return document('Sign in', `<div class="login">
     <div class="login-card loginform">
       <div class="logininner">
@@ -7687,7 +7719,7 @@ export function otpVerify(email, error = '', isDark = false, footerCredit = 'Dev
           <input type="hidden" name="email" value="${e(email)}">
           <div class="login-field-group">
             <label class="login-label" for="login-code" style="text-align:center">Verification code</label>
-            <input id="login-code" name="code" class="login-input code-input" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" autofocus style="text-align:center;letter-spacing:6px;font-size:22px;font-weight:700;font-family:var(--font-mono, monospace);" ${error ? 'aria-invalid="true"' : ''}>
+            <input id="login-code" name="code" type="text" inputmode="numeric" class="login-input code-input" required pattern="[0-9]{6}" maxlength="6" autocomplete="one-time-code" placeholder="123456" autofocus style="text-align:center;letter-spacing:6px;font-size:22px;font-weight:700;font-family:var(--font-mono, monospace);" ${error ? 'aria-invalid="true"' : ''}>
             ${renderedError ? `<div class="notice error" role="alert">${renderedError}</div>` : ''}
           </div>
           <button type="submit" class="button login-submit-btn">Verify and sign in ${icon('arrow')}</button>
@@ -7698,7 +7730,7 @@ export function otpVerify(email, error = '', isDark = false, footerCredit = 'Dev
         <span style="display:none" aria-hidden="true">${e(footerCredit)}</span>
       </div>
     </div>
-  </div>`, '', isDark);
+  </div>${verifyScript}`, nonce, isDark);
 }
 
 export function domains(rows, sess) {

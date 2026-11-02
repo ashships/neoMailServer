@@ -278,7 +278,7 @@ test('neoMail enhancements: clean slugs, dark mode hover, SPA encrypted cache, D
   assert.ok(domainsHtml.includes('System: <strong>Operational</strong>'), 'Must render system status');
   assert.ok(domainsHtml.includes('API v1: <strong>Active · Healthy</strong>'), 'Must render API status');
   assert.ok(domainsHtml.includes('class="sidefoot"'), 'Must render sidebar footer');
-  assert.ok(domainsHtml.includes('side-docs-edit-btn'), 'Superadmin sidebar includes Docs Studio shortcut');
+  assert.ok(!domainsHtml.includes('side-docs-edit-btn'), 'Superadmin sidebar does not include Docs Studio edit shortcut');
   assert.ok(domainsHtml.includes('sidefoot-credit-edit'), 'Superadmin sidebar includes credit edit shortcut');
 
   const tenantDomainsRes = await call('tenant@neomail.internal', '/dashboard/domains', { headers: { cookie: tenantCookie } });

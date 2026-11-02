@@ -446,7 +446,13 @@ async function handler(request, env) {
       if (otpLoginConfigured(env) && url.searchParams.get('mode') !== 'token') {
         const email = (url.searchParams.get('email') || '').slice(0, 254);
         const pending = email ? await env.DB.prepare('SELECT 1 FROM admin_otps WHERE subject=? AND expires_at>unixepoch()').bind(email).first() : null;
-        return reply(pending ? ui.otpVerify(email, '', isDark, cfg.FOOTER_CREDIT) : ui.otpRequest('', isDark, '', showReg, '', cfg.FOOTER_CREDIT));
+        if (pending) {
+          const script_nonce = crypto.randomUUID();
+          return reply(ui.otpVerify(email, '', isDark, cfg.FOOTER_CREDIT, script_nonce), 200, {
+            'Content-Security-Policy': headers['Content-Security-Policy'].replace("script-src 'none'", `script-src 'nonce-${script_nonce}'`),
+          });
+        }
+        return reply(ui.otpRequest('', isDark, '', showReg, '', cfg.FOOTER_CREDIT));
       }
       return reply((local(request, env) || tokenLoginConfigured(env)) ? ui.login('', isDark, showReg, cfg.FOOTER_CREDIT) : ui.accessLogin());
     }
@@ -519,7 +525,10 @@ async function handler(request, env) {
         const existing = await env.DB.prepare('SELECT created_at FROM admin_otps WHERE subject=?').bind(emailAddr).first().catch(() => null);
         const nowSec = now();
         if (existing && nowSec - existing.created_at < 60) {
-          return reply(ui.otpVerify(emailAddr, '', isDark, cfg.FOOTER_CREDIT));
+          const script_nonce = crypto.randomUUID();
+          return reply(ui.otpVerify(emailAddr, '', isDark, cfg.FOOTER_CREDIT, script_nonce), 200, {
+            'Content-Security-Policy': headers['Content-Security-Policy'].replace("script-src 'none'", `script-src 'nonce-${script_nonce}'`),
+          });
         }
         {
           const otpBytes = new Uint32Array(1); crypto.getRandomValues(otpBytes); const code = String(100000 + (otpBytes[0] % 900000));
@@ -552,7 +561,10 @@ async function handler(request, env) {
           }
           await audit(env, request, 'OTP_SENT', { subject: emailAddr });
         }
-        return reply(ui.otpVerify(emailAddr, '', isDark, cfg.FOOTER_CREDIT));
+        const script_nonce = crypto.randomUUID();
+        return reply(ui.otpVerify(emailAddr, '', isDark, cfg.FOOTER_CREDIT, script_nonce), 200, {
+          'Content-Security-Policy': headers['Content-Security-Policy'].replace("script-src 'none'", `script-src 'nonce-${script_nonce}'`),
+        });
       }
       if (step === 'verify') {
         const emailAddr = email(data.get('email'));

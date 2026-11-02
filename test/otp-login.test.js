@@ -65,6 +65,12 @@ test('OTP login: robust default sender fallback, multi-provider dispatch, and ze
     const reqHtml = await reqCode.text();
     assert.ok(reqHtml.includes('Enter your code'));
     assert.ok(reqHtml.includes('admin@neopathshala.com'));
+    assert.ok(reqHtml.includes('inputmode="numeric"'), 'OTP input must specify inputmode="numeric"');
+    assert.ok(reqHtml.includes('pattern="[0-9]{6}"'), 'OTP input must specify pattern="[0-9]{6}"');
+    assert.ok(reqHtml.includes('maxlength="6"'), 'OTP input must specify maxlength="6"');
+    assert.ok(reqHtml.includes('replace(/[^0-9]/g'), 'Must include client-side numeric sanitization script');
+    const csp = reqCode.headers.get('content-security-policy') || '';
+    assert.ok(csp.includes("script-src 'nonce-"), 'CSP must allow the verification script via nonce');
 
     // Verify OTP record exists in DB
     const otpRow = await db.prepare('SELECT subject, salt, code_hash FROM admin_otps WHERE subject=?').bind('admin@neopathshala.com').first();
