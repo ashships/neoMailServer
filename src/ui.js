@@ -4332,29 +4332,48 @@ main.docs-main-studio {
   100% { opacity: 0; transform: translateY(-16px) scaleX(1.3); }
 }
 .error-steam-1 {
+/* Steam float animation */
+@keyframes neomailSteamFloat {
+  0% { opacity: 0; transform: translateY(0) scaleX(0.8); }
+  50% { opacity: 0.7; transform: translateY(-8px) scaleX(1.1); }
+  100% { opacity: 0; transform: translateY(-16px) scaleX(1.3); }
+}
+.error-steam-1 {
   animation: neomailSteamFloat 2.8s ease-out infinite;
 }
 .error-steam-2 {
   animation: neomailSteamFloat 2.8s ease-out infinite 1.4s;
 }
 
-@keyframes mascotWave {
-  /* Immediate welcome wave when visiting page */
-  0% { transform: rotate(-80deg); }
-  4% { transform: rotate(-64deg); }
-  8% { transform: rotate(-84deg); }
-  12% { transform: rotate(-64deg); }
-  16% { transform: rotate(-80deg); }
-  /* Smoothly lowers down to rest on armchair cushion */
-  23% { transform: rotate(0deg); }
-  /* Hand stays completely DOWN on cushion for 4.5 seconds (from 23% to 92% of 6.5s = 4.5s) */
-  23%, 92% { transform: rotate(0deg); }
-  /* Lifts back up to wave again */
-  98%, 100% { transform: rotate(-80deg); }
+/* Waving animation from Koko */
+.arm-rest {
+  transition: opacity 0.25s ease-out;
+  opacity: 1;
 }
-.mascot-waving-arm {
-  transform-origin: 308px 262px;
-  animation: mascotWave 6.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+.arm-wave {
+  transform-origin: 315px 262px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease-in;
+}
+
+@keyframes waveGesture {
+  0% { transform: rotate(0deg); }
+  20% { transform: rotate(-26deg); }
+  40% { transform: rotate(2deg); }
+  60% { transform: rotate(-24deg); }
+  80% { transform: rotate(-2deg); }
+  100% { transform: rotate(0deg); }
+}
+
+.is-waving .arm-rest {
+  opacity: 0;
+  pointer-events: none;
+}
+.is-waving .arm-wave {
+  opacity: 1;
+  pointer-events: auto;
+  animation: waveGesture 1.6s ease-in-out;
 }
 
 /* Server Activity LEDs */
@@ -8033,26 +8052,36 @@ export function errorIllustrationSvg() {
       <ellipse cx="236" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
       <ellipse cx="304" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
 
-      <!-- LEFT ARM & CUP (Hand securely grabbing the steaming cup) -->
-      <path d="M220 262 C210 270, 208 280, 222 284" stroke="var(--illus-arms)" stroke-width="11" stroke-linecap="round" fill="none"/>
-      <g transform="translate(230, 270)">
-        <path d="M0 4 C-8 4, -8 16, 0 16" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>
-        <path d="M0 4 C-8 4, -8 16, 0 16" fill="none" stroke="var(--line-strong)" stroke-width="1.3" stroke-linecap="round"/>
-        <rect x="0" y="0" width="18" height="22" rx="4" fill="#ffffff" stroke="var(--line-strong)" stroke-width="1.5"/>
-        <path d="M5 -2 Q8 -6 5 -10" stroke="var(--muted)" stroke-width="1.4" stroke-linecap="round" fill="none" class="error-steam-1"/>
-        <path d="M12 -3 Q15 -8 12 -13" stroke="var(--muted)" stroke-width="1.4" stroke-linecap="round" fill="none" class="error-steam-2"/>
+      <!-- LEFT ARM & CUP (Koko smooth sip animation) -->
+      <g id="kokoDrinkingArmGroup">
+        <path id="kokoLeftArmPath" d="M 225 262 C 214 270, 210 282, 222 286" stroke="var(--illus-arms)" stroke-width="11" stroke-linecap="round" fill="none"/>
+        <g id="kokoCoffeeMugGroup" transform="translate(226, 274)">
+          <rect x="0" y="0" width="18" height="22" rx="3.5" fill="#ffffff" stroke="var(--line-strong)" stroke-width="1.2"/>
+          <path d="M 0 4 C -7 4, -7 16, 0 16" fill="none" stroke="#ffffff" stroke-width="4.2" stroke-linecap="round"/>
+          <path d="M 0 4 C -7 4, -7 16, 0 16" fill="none" stroke="var(--line-strong)" stroke-width="1.2" stroke-linecap="round"/>
+          <path class="error-steam-1" d="M 6 -2 Q 9 -6 6 -10" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          <path class="error-steam-2" d="M 12 -3 Q 15 -8 12 -13" stroke="var(--muted)" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+        </g>
+        <ellipse id="kokoLeftHand" cx="224" cy="284" rx="6" ry="6.5" fill="var(--illus-arms)"/>
       </g>
-      <!-- Hand Paw wrapping and gripping the cup -->
-      <ellipse cx="225" cy="281" rx="7" ry="8" fill="var(--illus-arms)"/>
-      <path d="M224 274 C228 273, 233 273, 237 275" stroke="var(--illus-arms)" stroke-width="4.2" stroke-linecap="round" fill="none"/>
-      <path d="M225 280 C230 279, 235 280, 238 282" stroke="var(--illus-arms)" stroke-width="4.2" stroke-linecap="round" fill="none"/>
-      <path d="M224 286 C229 285, 234 286, 236 288" stroke="var(--illus-arms)" stroke-width="4.2" stroke-linecap="round" fill="none"/>
 
-      <!-- RIGHT ARM (Rests down on cushion most of the time; periodically lifts to wave) -->
-      <g class="mascot-waving-arm">
-        <path d="M308 262 C316 268, 324 278, 320 292" stroke="var(--illus-arms)" stroke-width="11" stroke-linecap="round" fill="none"/>
-        <ellipse cx="318" cy="292" rx="7" ry="6.5" fill="var(--illus-arms)"/>
-        <path d="M315 290 C319 289, 323 290, 325 292" stroke="var(--illus-arms)" stroke-width="3" stroke-linecap="round" fill="none"/>
+      <!-- RIGHT ARM: RESTING (Koko natural rest) -->
+      <g id="kokoArmRightRest" class="arm-rest">
+        <path d="M 315 262 C 326 270, 326 288, 318 304" stroke="var(--illus-arms)" stroke-width="11" stroke-linecap="round" fill="none"/>
+        <ellipse cx="317" cy="306" rx="6.5" ry="6" fill="var(--illus-arms)"/>
+        <path d="M 314 310 L 314 314" stroke="var(--illus-arms)" stroke-width="3" stroke-linecap="round"/>
+        <path d="M 318 310 L 319 314" stroke="var(--illus-arms)" stroke-width="3" stroke-linecap="round"/>
+      </g>
+
+      <!-- RIGHT ARM: WAVING (Koko raised hand & waveGesture) -->
+      <g id="kokoArmRightWave" class="arm-wave">
+        <path d="M 315 262 C 332 258, 338 235, 332 216" stroke="var(--illus-arms)" stroke-width="11" stroke-linecap="round" fill="none"/>
+        <ellipse cx="332" cy="210" rx="7.5" ry="6.5" fill="var(--illus-arms)"/>
+        <path d="M 326 213 C 323 210, 324 206, 327 206" stroke="var(--illus-arms)" stroke-width="3.5" stroke-linecap="round" fill="none"/>
+        <path d="M 330 206 L 330 201" stroke="var(--illus-arms)" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M 334 206 L 335 200" stroke="var(--illus-arms)" stroke-width="3.5" stroke-linecap="round"/>
+        <path d="M 338 208 L 340 203" stroke="var(--illus-arms)" stroke-width="3.2" stroke-linecap="round"/>
+        <path d="M 346 198 C 350 204, 350 214, 346 220" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" fill="none" opacity="0.8"/>
       </g>
 
       <!-- Feet -->
@@ -8126,8 +8155,8 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
     </div>
   `;
 
-  const pageScript = nonce ? `
-    <script nonce="${e(nonce)}">
+  const pageScript = `
+    <script ${nonce ? `nonce="${e(nonce)}"` : ''}>
       (function(){
         function uClk() {
           var d = new Date(), s = d.getSeconds(), m = d.getMinutes(), h = d.getHours();
@@ -8140,6 +8169,90 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
         }
         uClk();
         setInterval(uClk, 1000);
+
+        // Koko Automatic Mascot Animation:
+        // 1. Welcoming wave on visit
+        // 2. Hand rests down for 4.5 seconds
+        // 3. Smooth coffee sip during rest
+        // 4. Loops automatically
+        var leftArmPath = document.getElementById('kokoLeftArmPath');
+        var coffeeMugGroup = document.getElementById('kokoCoffeeMugGroup');
+        var leftHand = document.getElementById('kokoLeftHand');
+
+        var ARM_REST = {
+          p0: [225, 262], p1: [214, 270], p2: [210, 282], p3: [222, 286],
+          hand: [224, 284], mug: [226, 274], rot: 0
+        };
+        var ARM_SIP = {
+          p0: [225, 262], p1: [216, 256], p2: [234, 244], p3: [258, 248],
+          hand: [258, 248], mug: [260, 236], rot: 24
+        };
+
+        function lerp(a, b, t) { return a + (b - a) * t; }
+        function ease(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+
+        function renderArm(t) {
+          if (!leftArmPath || !coffeeMugGroup || !leftHand) return;
+          var p0 = ARM_REST.p0;
+          var p1 = [lerp(ARM_REST.p1[0], ARM_SIP.p1[0], t), lerp(ARM_REST.p1[1], ARM_SIP.p1[1], t)];
+          var p2 = [lerp(ARM_REST.p2[0], ARM_SIP.p2[0], t), lerp(ARM_REST.p2[1], ARM_SIP.p2[1], t)];
+          var p3 = [lerp(ARM_REST.p3[0], ARM_SIP.p3[0], t), lerp(ARM_REST.p3[1], ARM_SIP.p3[1], t)];
+          var hand = [lerp(ARM_REST.hand[0], ARM_SIP.hand[0], t), lerp(ARM_REST.hand[1], ARM_SIP.hand[1], t)];
+          var mug = [lerp(ARM_REST.mug[0], ARM_SIP.mug[0], t), lerp(ARM_REST.mug[1], ARM_SIP.mug[1], t)];
+          var rot = lerp(ARM_REST.rot, ARM_SIP.rot, t);
+
+          leftArmPath.setAttribute('d', 'M ' + p0[0] + ' ' + p0[1] + ' C ' + p1[0] + ' ' + p1[1] + ', ' + p2[0] + ' ' + p2[1] + ', ' + p3[0] + ' ' + p3[1]);
+          leftHand.setAttribute('cx', hand[0]);
+          leftHand.setAttribute('cy', hand[1]);
+          coffeeMugGroup.setAttribute('transform', 'translate(' + mug[0] + ', ' + mug[1] + ') rotate(' + rot + ', 9, 11)');
+        }
+
+        function triggerWave(cb) {
+          document.body.classList.add('is-waving');
+          setTimeout(function() {
+            document.body.classList.remove('is-waving');
+            if (cb) cb();
+          }, 1600);
+        }
+
+        function triggerSip(cb) {
+          var start = performance.now();
+          var dur = 2200;
+          function step(now) {
+            var el = now - start;
+            if (el < 700) {
+              renderArm(ease(el / 700));
+            } else if (el < 1500) {
+              renderArm(1);
+            } else if (el < 2200) {
+              renderArm(1 - ease((el - 1500) / 700));
+            }
+            if (el < dur) {
+              requestAnimationFrame(step);
+            } else {
+              renderArm(0);
+              if (cb) cb();
+            }
+          }
+          requestAnimationFrame(step);
+        }
+
+        function runMascotCycle() {
+          triggerWave(function() {
+            // Right hand is now down on cushion. Stay down for 4.5 seconds (4500ms):
+            setTimeout(function() {
+              triggerSip();
+            }, 700);
+
+            setTimeout(function() {
+              runMascotCycle();
+            }, 4500);
+          });
+        }
+
+        if (leftArmPath && coffeeMugGroup) {
+          runMascotCycle();
+        }
         ${isRateLimit ? `
         var sec = ${seconds};
         var disp = document.getElementById('neomail-rate-timer');
@@ -8176,7 +8289,7 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
         ` : ''}
       })();
     </script>
-  ` : '';
+  `;
 
   const content = `
     <div class="error-page-wrapper">
