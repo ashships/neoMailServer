@@ -4369,10 +4369,23 @@ main.docs-main-studio {
 .error-steam-2 {
   animation: neomailSteamFloat2 2.9s ease-out infinite 1.3s;
 }
-/* Hide steam while drinking (is-sipping class on body) */
+/* Mascot mouth states */
+.mascot-mouth-sip {
+  display: none;
+}
+.is-sipping .mascot-mouth-smile {
+  display: none !important;
+}
+.is-sipping .mascot-mouth-sip {
+  display: inline !important;
+}
+
+/* Hide steam and cup handle while drinking (is-sipping class on body) */
 .is-sipping .error-steam-1,
-.is-sipping .error-steam-2 {
+.is-sipping .error-steam-2,
+.is-sipping #kokoCupHandle {
   opacity: 0 !important;
+  display: none !important;
   animation: none !important;
 }
 
@@ -8095,6 +8108,9 @@ export function errorIllustrationSvg() {
     </g>
     <g id="mascot">
       <path d="M225 300 C210 240, 225 170, 270 170 C315 170, 330 240, 315 300 C305 325, 235 325, 225 300 Z" fill="url(#errMascotGrad)"/>
+      <!-- Cheeks (Blushing) rendered on the body before glasses so they sit naturally under the frames -->
+      <ellipse cx="236" cy="245" rx="4.5" ry="2.2" fill="#f87171" opacity="0.45"/>
+      <ellipse cx="304" cy="245" rx="4.5" ry="2.2" fill="#f87171" opacity="0.45"/>
       <rect x="238" y="212" width="28" height="26" rx="8" fill="#ffffff" fill-opacity="0.92" stroke="var(--illus-glasses)" stroke-width="3"/>
       <rect x="274" y="212" width="28" height="26" rx="8" fill="#ffffff" fill-opacity="0.92" stroke="var(--illus-glasses)" stroke-width="3"/>
       <line x1="266" y1="223" x2="274" y2="223" stroke="var(--illus-glasses)" stroke-width="3.5" stroke-linecap="round"/>
@@ -8106,15 +8122,17 @@ export function errorIllustrationSvg() {
         <ellipse cx="286" cy="225" rx="5.5" ry="7" fill="#142822"/>
         <circle cx="284" cy="222" r="2.2" fill="#ffffff"/>
       </g>
-      <path d="M266 244 Q272 250 278 244" stroke="var(--illus-glasses)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
-      <ellipse cx="236" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
-      <ellipse cx="304" cy="235" rx="4" ry="2" fill="#f87171" opacity="0.4"/>
+      <!-- MOUTH: Smile when resting, Cute Sip when drinking -->
+      <path id="kokoMouthSmile" class="mascot-mouth-smile" d="M266 244 Q272 250 278 244" stroke="var(--illus-glasses)" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+      <ellipse id="kokoMouthSip" class="mascot-mouth-sip" cx="271.5" cy="245.5" rx="2.8" ry="3.6" fill="#142822"/>
 
       <!-- LEFT ARM & CUP (Hand securely grabbing the steaming cup) -->
       <path id="kokoLeftArmPath" d="M220 262 C210 270, 208 280, 222 284" stroke="var(--illus-arms)" stroke-width="11" stroke-linecap="round" fill="none"/>
       <g id="kokoCoffeeMugGroup" transform="translate(230, 270)">
-        <path d="M0 4 C-8 4, -8 16, 0 16" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>
-        <path d="M0 4 C-8 4, -8 16, 0 16" fill="none" stroke="var(--line-strong)" stroke-width="1.3" stroke-linecap="round"/>
+        <g id="kokoCupHandle">
+          <path d="M0 4 C-8 4, -8 16, 0 16" fill="none" stroke="#ffffff" stroke-width="3.5" stroke-linecap="round"/>
+          <path d="M0 4 C-8 4, -8 16, 0 16" fill="none" stroke="var(--line-strong)" stroke-width="1.3" stroke-linecap="round"/>
+        </g>
         <rect x="0" y="0" width="18" height="22" rx="4" fill="#ffffff" stroke="var(--line-strong)" stroke-width="1.5"/>
         <g id="kokoSteamGroup">
           <path d="M5 -2 Q8 -7 5 -12" stroke="var(--muted)" stroke-width="1.6" stroke-linecap="round" fill="none" class="error-steam-1"/>
@@ -8246,8 +8264,8 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
           mug: [230, 270], rot: 0, paw: [0, 0]
         };
         var ARM_SIP = {
-          p0: [220, 262], p1: [216, 252], p2: [230, 238], p3: [256, 244],
-          mug: [251, 232], rot: 24, paw: [31, -38]
+          p0: [220, 262], p1: [216, 256], p2: [230, 248], p3: [252, 254],
+          mug: [251, 244], rot: 22, paw: [28, -26]
         };
 
         function lerp(a, b, t) { return a + (b - a) * t; }
