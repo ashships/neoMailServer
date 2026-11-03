@@ -8302,15 +8302,15 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
 
         function triggerSip(cb) {
           var start = performance.now();
-          var dur = 2200;
+          var dur = 2400;
           function step(now) {
             var el = now - start;
-            if (el < 700) {
-              renderArm(ease(el / 700));
-            } else if (el < 1500) {
+            if (el < 750) {
+              renderArm(ease(el / 750));
+            } else if (el < 1650) {
               renderArm(1);
-            } else if (el < 2200) {
-              renderArm(1 - ease((el - 1500) / 700));
+            } else if (el < 2400) {
+              renderArm(1 - ease((el - 1650) / 750));
             }
             if (el < dur) {
               requestAnimationFrame(step);
@@ -8324,26 +8324,28 @@ export function errorPage(message, status = 500, retryAfter = 60, nonce = '', is
 
         function runMascotCycle() {
           triggerWave(function() {
-            // Right hand is now down on cushion. Stay down for 4.5 seconds (4500ms):
+            // Natural pause (1.8s) resting on the armchair cushion before sipping
             setTimeout(function() {
-              triggerSip();
-            }, 600);
-
-            setTimeout(function() {
-              runMascotCycle();
-            }, 4500);
+              triggerSip(function() {
+                // Generous natural rest gap (6.5s) while coffee steams before next wave
+                setTimeout(function() {
+                  runMascotCycle();
+                }, 6500);
+              });
+            }, 1800);
           });
         }
 
-        // Initial welcoming wave completes at 1600ms, then hand rests down for 4.5s with coffee sip
+        // Initial welcoming wave completes at 1600ms, then hand rests down naturally
         setTimeout(function() {
           document.body.classList.remove('is-waving');
           setTimeout(function() {
-            triggerSip();
-          }, 600);
-          setTimeout(function() {
-            runMascotCycle();
-          }, 4500);
+            triggerSip(function() {
+              setTimeout(function() {
+                runMascotCycle();
+              }, 6500);
+            });
+          }, 1800);
         }, 1600);
         ${isRateLimit ? `
         var sec = ${seconds};
